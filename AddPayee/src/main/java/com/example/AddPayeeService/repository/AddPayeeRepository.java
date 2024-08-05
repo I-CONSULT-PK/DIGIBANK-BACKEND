@@ -1,6 +1,5 @@
 package com.example.AddPayeeService.repository;
 
-import com.example.AddPayeeService.model.Status;
 import com.example.AddPayeeService.model.entity.AddPayee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

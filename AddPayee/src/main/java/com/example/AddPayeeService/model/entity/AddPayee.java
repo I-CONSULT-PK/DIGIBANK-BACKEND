@@ -1,6 +1,5 @@
 package com.example.AddPayeeService.model.entity;
 
-import com.example.AddPayeeService.model.Status;
 import jakarta.persistence.*;
 import lombok.*;
 
