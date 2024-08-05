@@ -1,0 +1,18 @@
+package com.iconsult.userservice.service;
+
+import com.iconsult.userservice.model.dto.request.CardDto;
+import com.iconsult.userservice.model.dto.response.CardResponseDto;
+import com.iconsult.userservice.model.dto.response.SignUpResponse;
+import com.iconsult.userservice.model.entity.Card;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
+
+import java.util.List;
+
+public interface CardService {
+    CustomResponseEntity cardExist(CardDto cardDto);
+
+    CustomResponseEntity getAllCardById(Long id);
+
+    CustomResponseEntity updateCardStatus(Long id, Long customerID, Boolean status);
+
+}

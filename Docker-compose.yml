@@ -1,0 +1,50 @@
+version: '3'
+services:
+  user-service:
+    image: user-service.jar
+    ports:
+        - "8088:8088"
+    networks:
+      - my_network
+    depends_on:
+      - service-registry
+    environment:
+      - SPRING_APPLICATION_NAME=user-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8772/eureka/
+      
+  otp-service:
+    image: otp-service.jar
+    ports:
+        - "9000:9000"
+    networks:
+      - my_network
+    depends_on:
+      - service-registry
+    environment:
+      - SPRING_APPLICATION_NAME=otp-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8772/eureka/
+
+  api-gateway:
+    image: api-gateway.jar
+    ports:
+      - "8080:8080"
+    networks:
+      - my_network
+    depends_on:
+      - service-registry
+    environment:
+      - SPRING_APPLICATION_NAME=api-gateway
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8772/eureka/
+
+  service-registry:
+    image: service-registry.jar
+    ports:
+      - "8772:8772"
+    networks:
+      - my_network
+    environment:
+      - SPRING_APPLICATION_NAME=service-registry
+
+networks:
+  my_network:
+    driver: bridge
