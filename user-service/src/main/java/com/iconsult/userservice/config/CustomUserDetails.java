@@ -17,7 +17,6 @@ public class CustomUserDetails implements UserDetails {
         this.username = customer.getUserName();
         this.password = customer.getPassword();
         this.accountNumber = customer.getAccountNumber();
-        this.pinHash = customer.getDevice().getPinHash();
     }
 
     @Override
