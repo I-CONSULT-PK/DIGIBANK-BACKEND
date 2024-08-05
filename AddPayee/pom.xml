@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>AddPayeee</artifactId>
+	<artifactId>add-payeee</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>AddPayeee</name>
+	<name>add-payeee</name>
 	<description>This a AddPayeee Service </description>
 	<properties>
 		<java.version>17</java.version>
@@ -115,6 +115,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>add-payeee</finalName>
 	</build>
 
 </project>

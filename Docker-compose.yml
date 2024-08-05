@@ -24,6 +24,18 @@ services:
       - SPRING_APPLICATION_NAME=otp-service
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8772/eureka/
 
+  add-payeee:
+    image: add-payeee.jar
+    ports:
+      - "8090:8090"
+    networks:
+      - my_network
+    depends_on:
+      - service-registry
+    environment:
+      - SPRING_APPLICATION_NAME=ADD-PAYEE
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8772/eureka/
+
   api-gateway:
     image: api-gateway.jar
     ports:
