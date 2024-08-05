@@ -29,7 +29,7 @@ public class CardServiceImpl implements CardService {
     @Autowired
     private RestTemplate restTemplate;
 
-    private final String URL = "http://localhost:8081/cards/verifyCard";
+    private final String URL = "http://192.168.0.196:8081/cards/verifyCard";
 
     @Autowired
     private GenericDao<Customer> customerGenericDao;

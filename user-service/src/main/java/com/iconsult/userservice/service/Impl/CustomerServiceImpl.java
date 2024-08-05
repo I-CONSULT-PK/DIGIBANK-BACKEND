@@ -59,9 +59,9 @@ public class CustomerServiceImpl implements CustomerService
     //  private final String URL = "http://localhost:8081/customer/getDetails?cnicNumber=%s&mobileNumber=%s&accountNumber=%s";
     //  private final String URL =   "http://localhost:8082/customer/get/cnic/mobileNumber/accountNumber?cnicNumber=%s&mobileNumber=%s&accountNumber=%s";
 
-    private final String URL = "http://localhost:8081/customer/get/cnic/mobileNumber/accountNumber";
-    private final String dashBoardCBSURL = "http://192.168.0.153:8081/account/dashboard";
-    private final String setdefaultaccountCBSURL = "http://192.168.0.153:8081/customer/setdefaultaccount";
+    private final String URL = "http://192.168.0.196:8081/customer/get/cnic/mobileNumber/accountNumber";
+    private final String dashBoardCBSURL = "http://192.168.0.196:8081/account/dashboard";
+    private final String setdefaultaccountCBSURL = "http://192.168.0.196:8081/customer/setdefaultaccount";
 
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;

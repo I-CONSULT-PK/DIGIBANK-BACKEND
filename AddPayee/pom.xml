@@ -67,7 +67,7 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<scope>42.2.18</scope>
+			<version>42.7.3</version>
 		</dependency>
 		<dependency> <groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
