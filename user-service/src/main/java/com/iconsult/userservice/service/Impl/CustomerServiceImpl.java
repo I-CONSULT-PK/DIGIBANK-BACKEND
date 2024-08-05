@@ -1,6 +1,5 @@
 package com.iconsult.userservice.service.Impl;
 
-import com.iconsult.userservice.Util.EncryptionUtil;
 import com.iconsult.userservice.Util.Util;
 import com.iconsult.userservice.domain.OTP;
 import com.iconsult.userservice.dto.EmailDto;
@@ -15,7 +14,9 @@ import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AppConfiguration;
 import com.iconsult.userservice.model.entity.Customer;
+//import com.iconsult.userservice.model.mapper.CustomerMapperImpl;
 import com.iconsult.userservice.model.entity.ImageVerification;
+import com.iconsult.userservice.model.mapper.CustomerMapperImpl;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.ImageVerificationRepository;
@@ -42,6 +43,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.*;
 import java.net.URI;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -56,10 +58,10 @@ public class CustomerServiceImpl implements CustomerService
 
     //private final String URL = "http://192.168.0.196:8085/account/getAccounts?cnicNumber=%s";
 //    private final String URL = "http://localhost:8081/customer/getDetails?cnicNumber=%s&";
-  //  private final String URL = "http://localhost:8081/customer/getDetails?cnicNumber=%s&mobileNumber=%s&accountNumber=%s";
-  //  private final String URL =   "http://localhost:8082/customer/get/cnic/mobileNumber/accountNumber?cnicNumber=%s&mobileNumber=%s&accountNumber=%s";
+    //  private final String URL = "http://localhost:8081/customer/getDetails?cnicNumber=%s&mobileNumber=%s&accountNumber=%s";
+    //  private final String URL =   "http://localhost:8082/customer/get/cnic/mobileNumber/accountNumber?cnicNumber=%s&mobileNumber=%s&accountNumber=%s";
 
-    private final String URL = "http://192.168.0.157:8081/customer/get/cnic/mobileNumber/accountNumber";
+    private final String URL = "http://localhost:8081/customer/get/cnic/mobileNumber/accountNumber";
     private final String dashBoardCBSURL = "http://192.168.0.153:8081/account/dashboard";
     private final String setdefaultaccountCBSURL = "http://192.168.0.153:8081/customer/setdefaultaccount";
 
@@ -80,7 +82,7 @@ public class CustomerServiceImpl implements CustomerService
 //    @Autowired
 //    private CustomerMapperImpl customerMapperImpl;
 
-//    @Autowired
+    //    @Autowired
 //    private final PasswordEncoder passwordEncoder;
     @Autowired
     private RestTemplate restTemplate;
@@ -279,7 +281,7 @@ public class CustomerServiceImpl implements CustomerService
 
         LOGGER.info("OTP sent Successfully");
 
-        return new CustomResponseEntity(existingCustomer,"Response Sent");
+        return new CustomResponseEntity(existingCustomer, "Response Sent");
     }
 
     @Override
@@ -317,7 +319,7 @@ public class CustomerServiceImpl implements CustomerService
             }
             ImageVerification imageVerification = imageVerificationRepository.findById(signUpDto.getSecurityPictureId()).orElse(null);
 
-            if(Objects.isNull(imageVerification)){
+            if (Objects.isNull(imageVerification)) {
                 throw new ServiceException("Image does not exist");
 
             }
@@ -363,29 +365,25 @@ public class CustomerServiceImpl implements CustomerService
 
 
     @Override
-    public CustomResponseEntity login(LoginDto loginDto)
-    {
-        ImageVerification imageVerification = imageVerificationRepository.findById(loginDto.getImageVerificationId()).orElse(null);
-        Customer customer = customerRepository.findByEmailOrUserNameAndSecurityPicture(loginDto.getEmailorUsername(),imageVerification.getName());
-
-        if(customer != null) {
-            String reqDecryptPassword;
-            String dbDecryptedPassword;
-            try {
-                String masterKey = "t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=";
-                reqDecryptPassword = EncryptionUtil.decrypt(loginDto.getPassword(), masterKey);
-                dbDecryptedPassword = EncryptionUtil.decrypt(customer.getPassword(), masterKey);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
+    public CustomResponseEntity login(LoginDto loginDto) {
+        ImageVerification imageVerification = null;
+        if(loginDto.getImageVerificationId() != null) {
+            imageVerification = imageVerificationRepository.findById(loginDto.getImageVerificationId()).orElse(null);
+        }
+        Customer customer;
+        if(imageVerification == null) {
+            customer = customerRepository.findByEmailOrUserName(loginDto.getEmailorUsername());
+        }else {
+            customer = customerRepository.findByEmailOrUserNameAndSecurityPicture(loginDto.getEmailorUsername(),imageVerification.getName());
+        }
+        if (customer != null) {
             if (!customer.getStatus().equals(CustomerStatus.ACTIVE.getCode())) // customer not active
             {
                 response = new CustomResponseEntity<>(ResponseCodes.CUSTOMER_INACTIVE.getCode(), ResponseCodes.CUSTOMER_INACTIVE.getValue());
                 return response;
             }
 
-            if (reqDecryptPassword.equals(dbDecryptedPassword) &&
+            if (customer.getPassword().equals(loginDto.getPassword()) &&
                     (loginDto.getSecurityImage() == null || customer.getSecurityPicture().equals(loginDto.getSecurityImage()))) {
                 // JWT Implementation Starts
                 Authentication authentication =
@@ -396,7 +394,7 @@ public class CustomerServiceImpl implements CustomerService
                 LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
                 // JWT Implementation Ends
 
-                Map<String,Object> data = new HashMap<>();
+                Map<String, Object> data = new HashMap<>();
                 data.put("customerId", customer.getId());
                 data.put("token", token);
                 data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
@@ -408,9 +406,7 @@ public class CustomerServiceImpl implements CustomerService
                 customer.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
                 updateCustomer(customer);
                 return response;
-            }
-            else
-            {
+            } else {
                 throw new ServiceException("Invalid Password or Security Image");
             }
         }
@@ -419,14 +415,12 @@ public class CustomerServiceImpl implements CustomerService
     }
 
     @Override
-    public CustomResponseEntity verifyCNIC(String cnic , String mobileNumber , String accountNumber)
-    {
+    public CustomResponseEntity verifyCNIC(String cnic, String mobileNumber, String accountNumber) {
         LOGGER.info("Verify CNIC request received");
 
         SignUpResponse existingCustomer = accountExist(cnic, mobileNumber, accountNumber);
 
-        if(existingCustomer != null)
-        {
+        if (existingCustomer != null) {
             LOGGER.error("Customer account does not exist [" + cnic + "], cannot allow signup, rejecting...");
             throw new ServiceException(String.format("Customer account does not exists", cnic));
         }
@@ -440,8 +434,7 @@ public class CustomerServiceImpl implements CustomerService
 
 
     @Override
-    public Customer addUser(Customer customer)
-    {
+    public Customer addUser(Customer customer) {
         return save(customer);
     }
 
@@ -456,8 +449,7 @@ public class CustomerServiceImpl implements CustomerService
     }
 
     @Override
-    public Customer save(Customer customer)
-    {
+    public Customer save(Customer customer) {
         return customerRepository.save(customer);
     }
 
@@ -485,19 +477,19 @@ public class CustomerServiceImpl implements CustomerService
 //        if (account == null) {
 //            return new CustomResponseEntity("Invalid account number or cnic");
 //        } else {
-            if (customer == null) {
-                throw new ServiceException("Customer Not Found");
-            } else {
-                sendUserEmail(customer);
-                LOGGER.info("Customer found with Account number [{}], sending username on email...", customer.getEmail());
+        if (customer == null) {
+            throw new ServiceException("Customer Not Found");
+        } else {
+            sendUserEmail(customer);
+            LOGGER.info("Customer found with Account number [{}], sending username on email...", customer.getEmail());
 
-                LOGGER.info("Email sent [{}]", customer.getEmail());
-                response = new CustomResponseEntity<>("user name sent successfully");
-                response.setData(forgetUserAndPasswordResponse);
-                return response;
-            }
-
+            LOGGER.info("Email sent [{}]", customer.getEmail());
+            response = new CustomResponseEntity<>("user name sent successfully");
+            response.setData(forgetUserAndPasswordResponse);
+            return response;
         }
+
+    }
 
     @Override
     public CustomResponseEntity forgetUserEmail(ForgetUsernameDto forgetUsernameDto) {
@@ -512,15 +504,15 @@ public class CustomerServiceImpl implements CustomerService
 //        if (account == null) {
 //            return new CustomResponseEntity("Invalid account number or cnic");
 //        } else {
-            if (customer == null) {
-                throw new ServiceException("Customer Not Found");
-            }else{
-                LOGGER.info("Customer", customer);
-                response = new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Customer Detail");
-                return response;
-            }
-
+        if (customer == null) {
+            throw new ServiceException("Customer Not Found");
+        }else{
+            LOGGER.info("Customer", customer);
+            response = new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Customer Detail");
+            return response;
         }
+
+    }
 //        Customer customer = findByEmailAddress(forgetUsernameDto.getAccountNumber());
 //
 //        if(customer != null)
@@ -1084,7 +1076,7 @@ public class CustomerServiceImpl implements CustomerService
         try {
             // Create a trust manager that does not validate certificate chains
             TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                public X509Certificate[] getAcceptedIssuers() {
                     return null;
                 }
 
@@ -1096,7 +1088,7 @@ public class CustomerServiceImpl implements CustomerService
             }};
 
             SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            sc.init(null, trustAllCerts, new SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 
             // Create all-trusting host name verifier

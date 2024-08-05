@@ -1,11 +1,8 @@
 package com.iconsult.userservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.iconsult.userservice.model.entity.Account;
-import com.iconsult.userservice.model.entity.Device;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,7 +23,7 @@ public class Customer implements Serializable {
     private Long id;
 
     @NotNull(message = "Mobile number cannot be null")
-    @Pattern(regexp = "^\\+923[0-9]{9}$", message = "Mobile number must be in the format +923XXXXXXXXX")
+    //@Pattern(regexp = "^\\+923[0-9]{9}$", message = "Mobile number must be in the format +923XXXXXXXXX")
     private String mobileNumber;
     private String firstName;
     private String lastName;
@@ -42,7 +39,7 @@ public class Customer implements Serializable {
     private Long sessionTokenExpireTime;
     private String accountNumber;
 
-//    @OneToOne (mappedBy = "customer", cascade = CascadeType.ALL)
+    //    @OneToOne (mappedBy = "customer", cascade = CascadeType.ALL)
 //    @JoinColumn(name = "device_id", referencedColumnName = "id")
     @JsonManagedReference
     @OneToOne
