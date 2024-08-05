@@ -15,7 +15,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class EmailOTPSendDto {
     @NotEmpty(message = "Mobile Number is mandatory")
-    @Pattern(regexp =  "^\\+92\\d{10}$", message = "Invalid Mobile number")
+    //@Pattern(regexp =  "^\\+92\\d{10}$", message = "Invalid Mobile number")
     private String mobileNumber;
     @Email
     @NotEmpty
