@@ -29,6 +29,12 @@ spring:
             - Path=/api/devices/**
           filters:
             - name: AuthenticationFilter
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/v1/customer/fund/**
+          filters:
+            - name: AuthenticationFilter
         - id: otp-service
           uri: lb://otp-service
           predicates:
