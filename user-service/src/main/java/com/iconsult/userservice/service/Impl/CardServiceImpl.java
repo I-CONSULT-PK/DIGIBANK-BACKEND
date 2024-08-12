@@ -264,7 +264,7 @@ public class CardServiceImpl implements CardService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             //setCard approval request for http POST request
 
-            int size = 10; // Example size
+            int size = 16; // Example size
             String cardNumber = generateRandomNumber(size);
 
             int cvvSize = 4; // Example size
