@@ -2,13 +2,21 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.model.dto.request.CardDto;
+import com.iconsult.userservice.model.dto.request.CardRequestDto;
+import com.iconsult.userservice.model.dto.response.CardApprovalResDto;
 import com.iconsult.userservice.model.dto.response.CardResponseDto;
 import com.iconsult.userservice.model.entity.Card;
+import com.iconsult.userservice.model.entity.CardRequest;
 import com.iconsult.userservice.model.entity.Customer;
+import com.iconsult.userservice.model.mapper.CardMapper;
+import com.iconsult.userservice.model.mapper.CardRequestMapper;
+import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CardRepository;
+import com.iconsult.userservice.repository.CardRequestRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.service.CardService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +28,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.net.ssl.*;
 import java.net.URI;
 import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -30,6 +40,7 @@ public class CardServiceImpl implements CardService {
     private RestTemplate restTemplate;
 
     private final String URL = "http://localhost:8081/cards/verifyCard";
+    private final String addCardURL = "http://localhost:8081/cards/addCard";
 
     @Autowired
     private GenericDao<Customer> customerGenericDao;
@@ -42,7 +53,14 @@ public class CardServiceImpl implements CardService {
 
     @Autowired
     private CardRepository cardRepository;
-
+    @Autowired
+    private CardRequestMapper cardRequestMapper;
+    @Autowired
+    private CardRequestRepository requestRepository;
+    @Autowired
+    private AccountRepository accountRepository;
+    @Autowired
+    private CardMapper cardMapper;
     public CustomResponseEntity cardExist(CardDto cardDto) {
         try {
             // Create a trust manager that does not validate certificate chains
@@ -206,5 +224,135 @@ public class CardServiceImpl implements CardService {
         }
 
         return CustomResponseEntity.error("Unable to Update Card Status!");
+    }
+
+    @Override
+    public CustomResponseEntity createCardRequest(CardRequestDto cardRequestDto) {
+        try {
+            // Create a trust manager that does not validate certificate chains
+            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }};
+
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = (hostname, session) -> true;
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+
+            // Build URL with path variables
+            URI uri = UriComponentsBuilder.fromHttpUrl(addCardURL)
+                    .build()
+                    .toUri();
+
+            // Log the full request URL
+            LOGGER.info("Request URL: " + uri.toString());
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            //setCard approval request for http POST request
+
+            int size = 10; // Example size
+            String cardNumber = generateRandomNumber(size);
+
+            int cvvSize = 4; // Example size
+            String cvv = generateRandomNumber(cvvSize);
+
+            CardApprovalResDto creditCardRequest = new CardApprovalResDto();
+            creditCardRequest.setCardHolderName(cardRequestDto.getCardHolderName());
+            creditCardRequest.setCardNumber(cardNumber);
+            creditCardRequest.setCardType("1");
+            creditCardRequest.setCvv(cvv);
+            creditCardRequest.setExpiryDate(cardRequestDto.getExpireDate());
+            creditCardRequest.setAccountNumber(cardRequestDto.getAccountNumber());
+            // Create HttpEntity with headers
+            HttpEntity<CardApprovalResDto> entity = new HttpEntity<>(creditCardRequest ,headers);
+
+            // Make HTTP GET request
+            ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.POST,
+                    entity,
+                    CustomResponseEntity.class
+            );
+
+            // Handle response
+            if (response.getStatusCode() == HttpStatus.OK) { // 200 status code
+                CustomResponseEntity<Card> responseDto = response.getBody();
+                if (responseDto != null) {
+                    // Print or log responseDto to verify its content
+                    LOGGER.info("Received CustomerDto: " + responseDto.getMessage());
+                    if (responseDto.isSuccess()){//card request work
+                        //AddCard
+                        Card card = addCreditCard(creditCardRequest);
+                        if(card == null){
+                            return CustomResponseEntity.error("Customer does not exist!");
+                        }
+                        //request
+                        CardRequest cardRequest = cardRequestMapper.dtoToEntity(cardRequestDto);
+                        cardRequest.setRequestStatus("Approved");
+                        cardRequest = requestRepository.save(cardRequest);
+
+                        CustomResponseEntity customResponseEntity = new CustomResponseEntity();
+                        customResponseEntity.setData(responseDto);
+                        customResponseEntity.setMessage("Card has been generated");
+                        return customResponseEntity;
+                    }
+                } else {
+                    // No customer found
+                    return CustomResponseEntity.error("Unable to Process!");
+                }
+            } else {
+                // Handle error response or non-200 status
+                LOGGER.error("Unexpected response status: " + response.getStatusCode());
+                return CustomResponseEntity.error("Unable to Process!");
+            }
+
+        } catch (Exception e) {
+            // Handle exceptions
+            LOGGER.error("Exception occurred: ", e);
+            return CustomResponseEntity.error("Unable to Process!");
+        }
+        return null;
+    }
+
+    public static String generateRandomNumber(int length) {
+        return RandomStringUtils.randomNumeric(length);
+    }
+
+    public Card addCreditCard(CardApprovalResDto card){
+        Card cardDetail = cardMapper.dtoJpe(card);
+        long customerId = accountRepository.findCustomerByAccountNumber(card.getAccountNumber());
+        if(customerId == 0){
+            return null;
+        }
+
+        Customer customer = new Customer();
+        customer.setId(customerId);
+        cardDetail.setCustomer(customer);
+        cardDetail.setActive(true);
+        cardDetail.setCreatedAt(new Date());
+
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy");
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        LocalDateTime dateTime = LocalDateTime.parse(card.getExpiryDate().toString(), inputFormatter);
+
+        String outputDate = dateTime.format(outputFormatter);
+        cardDetail.setExpiryDate(outputDate);
+        cardDetail = cardRepository.save(cardDetail);
+        return cardDetail;
     }
 }

@@ -13,7 +13,8 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CardRequestDto {
-    private Customer customer;
+    private long accountNumber;
+    private String cardHolderName;
     private Long id;
     private String ibanCode;
     private long bankId;
@@ -23,14 +24,7 @@ public class CardRequestDto {
     private String cnic;
     private String requestStatus;
     private Date requestApprovalDate;
-
-    public Customer getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
-    }
+    private Date expireDate;
 
     public Long getId() {
         return id;
@@ -102,5 +96,29 @@ public class CardRequestDto {
 
     public void setRequestStatus(String requestStatus) {
         this.requestStatus = requestStatus;
+    }
+
+    public Date getExpireDate() {
+        return expireDate;
+    }
+
+    public void setExpireDate(Date expireDate) {
+        this.expireDate = expireDate;
+    }
+
+    public long getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(long accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
+    public String getCardHolderName() {
+        return cardHolderName;
+    }
+
+    public void setCardHolderName(String cardHolderName) {
+        this.cardHolderName = cardHolderName;
     }
 }

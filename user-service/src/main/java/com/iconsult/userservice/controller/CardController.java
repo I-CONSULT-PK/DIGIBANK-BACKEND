@@ -1,6 +1,7 @@
 package com.iconsult.userservice.controller;
 
 import com.iconsult.userservice.model.dto.request.CardDto;
+import com.iconsult.userservice.model.dto.request.CardRequestDto;
 import com.iconsult.userservice.service.CardService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
@@ -31,4 +32,8 @@ public class CardController {
         return this.cardService.updateCardStatus(cardNumber, customerID, status);
     }
 
+    @PostMapping("/cardApprovalRequest")
+    public CustomResponseEntity requestApproval(@Valid @RequestBody CardRequestDto cardRequest){
+        return this.cardService.createCardRequest(cardRequest);
+    }
 }

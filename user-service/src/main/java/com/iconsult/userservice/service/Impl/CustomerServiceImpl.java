@@ -350,6 +350,9 @@ public class CustomerServiceImpl implements CustomerService
             // Save the customer entity
             customerRepository.save(customer);
 
+            // Save the account entity
+            accountService.createAccount(signUpDto.getAccountDto());
+
             return new CustomResponseEntity<>("Customer Registered successfully");
         } catch (ServiceException e) {
             throw new RuntimeException(e);
