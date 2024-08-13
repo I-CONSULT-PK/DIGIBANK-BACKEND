@@ -43,6 +43,7 @@ import javax.net.ssl.*;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -315,21 +316,19 @@ public class CustomerServiceImpl implements CustomerService
             if (mobileNumberExists) {
                 throw new ServiceException("An account with this mobile number already exists");
             }
-            ImageVerification imageVerification = imageVerificationRepository.findById(signUpDto.getSecurityPictureId()).orElse(null);
 
-            if (Objects.isNull(imageVerification)) {
-                throw new ServiceException("Image does not exist");
+            // Validate the security picture ID
+            ImageVerification imageVerification = imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
+                    .orElseThrow(() -> new ServiceException("Image does not exist"));
 
+            // Validate the account information in signUpDto
+            AccountDto accountDto = signUpDto.getAccountDto();
+            if (accountDto == null || accountDto.getAccountNumber() == null || accountDto.getAccountNumber().isBlank()) {
+                throw new ServiceException("Account number should not be null or empty");
             }
-            if (Objects.isNull(signUpDto.getAccountDto().getAccountNumber()) || signUpDto.getAccountDto().getAccountNumber().isBlank()) {
-                throw new ServiceException("Account number should not be null");
-
-            }
-//            Account account = accountService.createAccount(signUpDto.getAccountDto());
 
             // Create a customer entity from the DTO
             Customer customer = new Customer();
-            Account account = new Account();
             customer.setMobileNumber(signUpDto.getMobileNumber());
             customer.setFirstName(signUpDto.getFirstName());
             customer.setLastName(signUpDto.getLastName());
@@ -339,21 +338,45 @@ public class CustomerServiceImpl implements CustomerService
             customer.setPassword(signUpDto.getPassword());
             customer.setSecurityPicture(imageVerification.getName());
             customer.setStatus("00");
-//            customer.setSecurityPicture(signUpDto.getSecurityPicture());
             customer.setStatus(signUpDto.getStatus());
             customer.setResetToken(signUpDto.getResetToken());
             customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
-//            customer.setImageVerification(imageVerification);
-            customer.setAccountNumber(signUpDto.getAccountDto().getAccountNumber());
-//            account.setAccountNumber(signUpDto.getAccountNumber());
 
-            // Save the customer entity
+            // Initialize the account list if null
+            if (customer.getAccountList() == null) {
+                customer.setAccountList(new ArrayList<>());
+            }
+
+            // Check for duplicate accounts before adding
+            for (Account existingAccount : customer.getAccountList()) {
+                if (existingAccount.getAccountNumber().equals(accountDto.getAccountNumber())) {
+                    throw new ServiceException("Duplicate account number detected. The customer already has an account with this number.");
+                }
+            }
+
+            // Create the account entity and set its properties
+            Account account = new Account();
+            account.setAccountNumber(accountDto.getAccountNumber());
+            account.setAccountBalance(0.0);
+            account.setAccountType(accountDto.getAccountType());
+            account.setAccountDescription(accountDto.getAccountDescription());
+            account.setAccountStatus(accountDto.getAccountStatus());
+            account.setIbanCode(accountDto.getIbanCode());
+            account.setAccountOpenDate(new Date());
+            account.setProofOfIncome(accountDto.getProofOfIncome());
+            account.setCustomer(customer); // Set the customer reference in the account
+
+            // Add the account to the customer's account list
+            customer.getAccountList().add(account);
+
+            // Save the customer entity, which will cascade and save the account
             customerRepository.save(customer);
 
             // Save the account entity
             accountService.createAccount(signUpDto.getAccountDto());
 
             return new CustomResponseEntity<>("Customer Registered successfully");
+
         } catch (ServiceException e) {
             throw new RuntimeException(e);
         }
