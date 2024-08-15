@@ -13,7 +13,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CardRequestDto {
-    private long accountNumber;
+    private String accountNumber;
     private String cardHolderName;
     private Long id;
     private String ibanCode;
@@ -106,11 +106,11 @@ public class CardRequestDto {
         this.expireDate = expireDate;
     }
 
-    public long getAccountNumber() {
+    public String getAccountNumber() {
         return accountNumber;
     }
 
-    public void setAccountNumber(long accountNumber) {
+    public void setAccountNumber(String accountNumber) {
         this.accountNumber = accountNumber;
     }
 

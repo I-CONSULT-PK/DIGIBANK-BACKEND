@@ -348,13 +348,12 @@ public class CardServiceImpl implements CardService {
         if(customerId == 0){
             return null;
         }
-
+        Account account = accountRepository.findByAccountNumber(card.getAccountNumber());
         Customer customer = new Customer();
         customer.setId(customerId);
-        //cardDetail.setCustomer(customer); commented by Affan
         cardDetail.setActive(true);
         cardDetail.setCreatedAt(new Date());
-
+        cardDetail.setAccount(account);
         DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy");
         DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
