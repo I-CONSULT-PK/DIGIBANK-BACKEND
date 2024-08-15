@@ -28,8 +28,8 @@ public class CardController {
     }
 
     @PatchMapping("updateCardStatus")
-    public CustomResponseEntity updateCardStatus(@RequestParam("cardNumber") Long cardNumber, @RequestParam("customerID") Long customerID, @RequestParam("status") Boolean status) {
-        return this.cardService.updateCardStatus(cardNumber, customerID, status);
+    public CustomResponseEntity updateCardStatus(@RequestParam("cardNumber") Long cardNumber, @RequestParam("accountNumber") Long accountNumber, @RequestParam("status") Boolean status) {
+        return this.cardService.updateCardStatus(cardNumber, accountNumber, status);
     }
 
     @PostMapping("/cardApprovalRequest")

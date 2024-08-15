@@ -158,7 +158,7 @@ public class CardServiceImpl implements CardService {
                     card.setCvv((String) dataMap.get("cvv"));
                     card.setActive((Boolean) dataMap.get("active"));
                     card.setExpiryDate((String) dataMap.get("expiryDate"));
-                    card.setIsCreditCard((Boolean) dataMap.get("isCreditCard"));
+                    card.setIsCreditCard((Boolean) dataMap.get("creditCard"));
 
                     card = cardGenericDao.saveOrUpdate(card);
 
@@ -198,20 +198,20 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public CustomResponseEntity updateCardStatus(Long cardNumber, Long customerID, Boolean status) {
+    public CustomResponseEntity updateCardStatus(Long cardNumber, Long accountNumber, Boolean status) {
 
         if (cardNumber == null) {
             LOGGER.error("Card Number is Null");
             return CustomResponseEntity.error("Card Number is empty");
-        } else if (customerID == null) {
+        } else if (accountNumber == null) {
             LOGGER.error("Customer ID is Null");
             return CustomResponseEntity.error("Customer ID is empty");
         }
 
         try {
-            String jpql = "SELECT c FROM Card c WHERE c.customer.id = :customerID and c.cardNumber = :cardNumber";
+            String jpql = "SELECT c FROM Card c WHERE c.account.accountNumber = :accountNumber and c.cardNumber = :cardNumber";
             Map<String, Object> params = new HashMap<>();
-            params.put("customerID", customerID);
+            params.put("customerID", accountNumber);
             params.put("cardNumber", cardNumber);
 
             Card card = cardGenericDao.findOneWithQuery(jpql, params);

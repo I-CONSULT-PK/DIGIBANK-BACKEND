@@ -14,7 +14,7 @@ public interface CardService {
 
     CustomResponseEntity getAllCardById(Long id);
 
-    CustomResponseEntity updateCardStatus(Long id, Long customerID, Boolean status);
+    CustomResponseEntity updateCardStatus(Long id, Long accountNumber, Boolean status);
     CustomResponseEntity createCardRequest(CardRequestDto cardRequest);
 
 
