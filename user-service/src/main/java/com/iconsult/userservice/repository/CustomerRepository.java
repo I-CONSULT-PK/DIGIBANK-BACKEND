@@ -29,6 +29,10 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>
 
     @Query("SELECT c FROM Customer c WHERE c.cnic = :cnic AND c.accountNumber = :accountNumber")
     Customer findByCnicAndAccountNumber(String cnic , String accountNumber);
+
+    @Query("SELECT c FROM Customer c JOIN c.accountList a WHERE c.cnic = :cnic AND a.accountNumber = :accountNumber")
+    Optional<Customer> findCustomerByCnicAndAccountNumber(@Param("cnic") String cnic, @Param("accountNumber") String accountNumber);
+
     @Query("SELECT c FROM Customer c WHERE c.email = :identifier OR c.userName = :identifier AND c.securityPicture = :securityPicture")
     Customer findByEmailOrUserNameAndSecurityPicture(String identifier, String  securityPicture);
 
