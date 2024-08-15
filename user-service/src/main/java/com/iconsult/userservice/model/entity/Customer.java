@@ -1,5 +1,6 @@
 package com.iconsult.userservice.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -23,7 +24,6 @@ public class Customer implements Serializable {
     private Long id;
 
     @NotNull(message = "Mobile number cannot be null")
-    //@Pattern(regexp = "^\\+923[0-9]{9}$", message = "Mobile number must be in the format +923XXXXXXXXX")
     private String mobileNumber;
     private String firstName;
     private String lastName;
@@ -33,21 +33,17 @@ public class Customer implements Serializable {
     private String password;
     private String securityPicture;
     private String resetToken;
-    private String status; //00-Active ;; 01-Disable ;; 02-Closed
+    private String status; // 00-Active ;; 01-Disable ;; 02-Closed
     private Long resetTokenExpireTime;
     private String sessionToken;
     private Long sessionTokenExpireTime;
     private String accountNumber;
 
-    //    @OneToOne (mappedBy = "customer", cascade = CascadeType.ALL)
-//    @JoinColumn(name = "device_id", referencedColumnName = "id")
     @JsonManagedReference
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Device device;
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Account> accountList;
-
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    private List<Card> cardList;
 }

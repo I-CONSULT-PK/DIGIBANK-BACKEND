@@ -10,6 +10,7 @@ public class CardDto {
 
         private Long cardId;
         private Long cid;
+        private String accountNumber;
 
         private String cardNumber;
 
@@ -78,11 +79,20 @@ public class CardDto {
         isActive = active;
     }
 
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
     @Override
     public String toString() {
         return "CardDto{" +
                 "cardId=" + cardId +
                 ", cid=" + cid +
+                ", accountNumber='" + accountNumber + '\'' +
                 ", cardNumber='" + cardNumber + '\'' +
                 ", cvv='" + cvv + '\'' +
                 ", expiryDate='" + expiryDate + '\'' +

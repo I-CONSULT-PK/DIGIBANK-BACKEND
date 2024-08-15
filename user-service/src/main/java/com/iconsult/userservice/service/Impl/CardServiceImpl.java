@@ -5,6 +5,7 @@ import com.iconsult.userservice.model.dto.request.CardDto;
 import com.iconsult.userservice.model.dto.request.CardRequestDto;
 import com.iconsult.userservice.model.dto.response.CardApprovalResDto;
 import com.iconsult.userservice.model.dto.response.CardResponseDto;
+import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.Card;
 import com.iconsult.userservice.model.entity.CardRequest;
 import com.iconsult.userservice.model.entity.Customer;
@@ -44,6 +45,9 @@ public class CardServiceImpl implements CardService {
 
     @Autowired
     private GenericDao<Customer> customerGenericDao;
+
+    @Autowired
+    private GenericDao<Account> accountGenericDao;
 
     @Autowired
     private GenericDao<Card> cardGenericDao;
@@ -126,8 +130,15 @@ public class CardServiceImpl implements CardService {
 
                     Customer customer = customerGenericDao.findOneWithQuery(jpql, params);
 
+                    if (customer == null) return CustomResponseEntity.error("Customer Does not exist");
                     // Finding the card by cardNumber
-                    Card duplicateCard = customer.getCardList().stream()
+                    Account account = customer.getAccountList().stream()
+                            .filter(c -> cardDto.getAccountNumber().equals(c.getAccountNumber()))
+                            .findFirst()  // Gets the first match or an empty Optional
+                            .orElse(null); // Returns null if no match is found
+
+
+                    Card duplicateCard = account.getCardList().stream()
                             .filter(c -> cardDto.getCardNumber().equals(c.getCardNumber()))
                             .findFirst()  // Gets the first match or an empty Optional
                             .orElse(null); // Returns null if no match is found
@@ -137,11 +148,10 @@ public class CardServiceImpl implements CardService {
                         return CustomResponseEntity.error("Card Already Exists");
                     }
 
-                    if (customer == null) return CustomResponseEntity.error("Customer Does not exist");
 
                     Map<String, Object> dataMap = (Map<String, Object>) responseDto.getData();
                     Card card = new Card();
-                    card.setCustomer(customer);
+                    card.setAccount(account);
                     card.setCardNumber((String) dataMap.get("cardNumber"));
                     card.setCardHolderName((String) dataMap.get("cardHolderName"));
                     card.setCardType((String) dataMap.get("cardType"));
@@ -177,7 +187,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public CustomResponseEntity getAllCardById(Long id) {
-        Optional<Customer> byId = customerRepository.findById(id);
+        Optional<Account> byId = accountRepository.findById(id);
 
         List<Card> listOfCard = byId.get().getCardList();
         CardResponseDto cardResponseDto = new CardResponseDto();
@@ -341,7 +351,7 @@ public class CardServiceImpl implements CardService {
 
         Customer customer = new Customer();
         customer.setId(customerId);
-        cardDetail.setCustomer(customer);
+        //cardDetail.setCustomer(customer); commented by Affan
         cardDetail.setActive(true);
         cardDetail.setCreatedAt(new Date());
 

@@ -13,18 +13,15 @@ public class Card implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cardId;
 
-    @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
+    @JsonIgnore // Prevents the card from referencing the account back, avoiding circular reference
+    private Account account;
 
     private String cardNumber;
     private String cardHolderName;
-
     private String cvv;
-
     private String cardType;
-
     private String expiryDate;
 
     private Boolean isActive;
@@ -49,12 +46,12 @@ public class Card implements Serializable {
         this.cardId = cardId;
     }
 
-    public Customer getCustomer() {
-        return customer;
+    public Account getAccount() {
+        return account;
     }
 
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
+    public void setAccount(Account account) {
+        this.account = account;
     }
 
     public String getCardNumber() {
@@ -63,6 +60,14 @@ public class Card implements Serializable {
 
     public void setCardNumber(String cardNumber) {
         this.cardNumber = cardNumber;
+    }
+
+    public String getCardHolderName() {
+        return cardHolderName;
+    }
+
+    public void setCardHolderName(String cardHolderName) {
+        this.cardHolderName = cardHolderName;
     }
 
     public String getCvv() {
@@ -97,22 +102,6 @@ public class Card implements Serializable {
         isActive = active;
     }
 
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getCardHolderName() {
-        return cardHolderName;
-    }
-
-    public void setCardHolderName(String cardHolderName) {
-        this.cardHolderName = cardHolderName;
-    }
-
     public Boolean getIsCreditCard() {
         return isCreditCard;
     }
@@ -121,11 +110,19 @@ public class Card implements Serializable {
         isCreditCard = creditCard;
     }
 
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
     @Override
     public String toString() {
         return "Card{" +
                 "cardId=" + cardId +
-                ", customer=" + customer +
+                ", customer=" + account +
                 ", cardNumber='" + cardNumber + '\'' +
                 ", cardHolderName='" + cardHolderName + '\'' +
                 ", cvv='" + cvv + '\'' +
