@@ -43,7 +43,7 @@ public class Customer implements Serializable {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Device device;
 
-    @JsonManagedReference
+    //@JsonManagedReference
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Account> accountList;
 }
