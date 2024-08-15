@@ -30,7 +30,8 @@ import java.util.*;
 public class AddPayeeServiceImpl implements AddPayeeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AddPayeeServiceImpl.class);
-    private final String GetAccountTitle = "http://localhost:8081/account/getAccount";
+    private final String GetAccountTitle = "http://192.168.0.153:8081/account/getAccount";
+    private final String GetAccountTitle2 = "http://192.168.0.138:8080/account/getAccount";
 
     private final String GetAllBank = "http://localhost:8081/bank";
 
@@ -68,11 +69,11 @@ public class AddPayeeServiceImpl implements AddPayeeService {
 //            return CustomResponseEntity.error("This Account is already exist");
 //        }
 
-        CbsAccountDto cbsAccountDto = getAccountDetails(addPayeeRequestDto.getAccountNumber());
+//        CbsAccountDto cbsAccountDto = getAccountDetails(addPayeeRequestDto.getAccountNumber());
         AddPayee addPayee = addPayeeMapper.dtoToJpe(addPayeeRequestDto);
-        addPayee.setAccountNumber(cbsAccountDto.getAccountNumber());
-        addPayee.setBeneficiaryName(cbsAccountDto.getAccountTitle());
-        addPayee.setAccountType(cbsAccountDto.getAccountType());
+        addPayee.setAccountNumber(addPayeeRequestDto.getAccountNumber());
+        addPayee.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
+        addPayee.setAccountType(addPayeeRequestDto.getAccountType());
         addPayee.setStatus("00");
 
         String encryptedAccountNumber = encrpytionUtil.encrypt("your_secure_key", addPayee.getAccountNumber());
@@ -89,32 +90,15 @@ public class AddPayeeServiceImpl implements AddPayeeService {
         return null;
     }
 
-    public CbsAccountDto getAccountDetails(String accountNumber) {
+    @Override
+    public CustomResponseEntity getAccountDetails(String accountNumber, String bankName) {
 
         try {
-            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                }
-
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                }
-            }};
-
-            SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-
-            // Create all-trusting host name verifier
-            HostnameVerifier allHostsValid = (hostname, session) -> true;
-            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
             // Build URL with path variables
             URI uri = UriComponentsBuilder.fromHttpUrl(GetAccountTitle)
                     .queryParam("accountNumber", accountNumber)
+                    .queryParam("bankName", bankName)
                     .build()
                     .toUri();
 
@@ -149,8 +133,65 @@ public class AddPayeeServiceImpl implements AddPayeeService {
                 addPayeeResponse.setAccountNumber(fetchAccount.getAccountNumber());
                 addPayeeResponse.setAccountType(fetchAccount.getAccountType());
                 addPayeeResponse.setBeneficiaryName(fetchAccount.getAccountTitle());
-                return fetchAccount;
-            } else {
+                return new CustomResponseEntity<CbsAccountDto>(fetchAccount,"Banks reterived successfully");
+            }
+//            else {
+//                // No customer found
+//                return null;
+//            }
+//            } else {
+//                // Handle error response or non-200 status
+//                LOGGER.error("Unexpected response status: " + response.getStatusCode());
+//                return null;
+//            }
+
+        } catch (Exception e) {
+
+        }
+
+        try {
+
+            // Build URL with path variables
+            URI uri = UriComponentsBuilder.fromHttpUrl(GetAccountTitle2)
+                    .queryParam("accountNumber", accountNumber)
+                    .queryParam("bankName", bankName)
+                    .build()
+                    .toUri();
+
+            // Log the full request URL
+            LOGGER.info("Request URL: " + uri.toString());
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Create HttpEntity with headers
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Make HTTP GET request
+            ResponseEntity<CbsAccountDto> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    CbsAccountDto.class
+            );
+
+            // Handle response
+            //  if (response.getStatusCode() == HttpStatus.OK) { // 200 status code
+            CbsAccountDto fetchAccount = response.getBody();
+            if (fetchAccount != null) {
+                // Print or log responseDto to verify its content
+                LOGGER.info("Received Account Number: " + fetchAccount.toString());
+
+                // Create new AccountDTO and map fields
+                AddPayeeResponseDto addPayeeResponse = new AddPayeeResponseDto();
+                addPayeeResponse.setAccountNumber(fetchAccount.getAccountNumber());
+                addPayeeResponse.setAccountType(fetchAccount.getAccountType());
+                addPayeeResponse.setBeneficiaryName(fetchAccount.getAccountTitle());
+                return new CustomResponseEntity<CbsAccountDto>(fetchAccount,"Banks reterived successfully");
+            }
+            else {
                 // No customer found
                 return null;
             }
@@ -163,10 +204,9 @@ public class AddPayeeServiceImpl implements AddPayeeService {
         } catch (Exception e) {
             // Handle exceptions
             LOGGER.error("Exception occurred: ", e);
-            return null;
+            return new CustomResponseEntity<>(404, "Account does not exist");
         }
-
-        //return  this.addPayeeRepository.save();
+//        return  this.addPayeeRepository.save(add);
     }
 
     public CustomResponseEntity<List<BanksDto>> getAllBanks() {
@@ -203,10 +243,10 @@ public class AddPayeeServiceImpl implements AddPayeeService {
                             + addPayeeRequestDto.getCustomerId()));
 
             // Update the entity with new values from the DTO
-            CbsAccountDto cbsAccountDto = getAccountDetails(addPayeeRequestDto.getAccountNumber());
-            addPayee.setAccountNumber(cbsAccountDto.getAccountNumber());
+//            CbsAccountDto cbsAccountDto = getAccountDetails(addPayeeRequestDto.getAccountNumber());
+            addPayee.setAccountNumber(addPayeeRequestDto.getAccountNumber());
             addPayee.setStatus("00");
-            addPayee.setAccountType(cbsAccountDto.getAccountType());
+            addPayee.setAccountType(addPayeeRequestDto.getAccountType());
             addPayee.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
             addPayee.setBeneficiaryAlias(addPayeeRequestDto.getBeneficiaryAlias());
             addPayee.setBeneficiaryEmailId(addPayeeRequestDto.getBeneficiaryEmailId());

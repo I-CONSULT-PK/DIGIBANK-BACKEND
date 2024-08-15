@@ -10,6 +10,7 @@ import java.io.*;
 
 @Data
 @AllArgsConstructor
+
 public class CbsAccountDto implements Serializable{
 
     private String cnicNo;

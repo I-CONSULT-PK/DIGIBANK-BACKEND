@@ -1,6 +1,7 @@
     package com.example.AddPayeeService.controller;
 
     import com.example.AddPayeeService.model.dto.BanksDto;
+    import com.example.AddPayeeService.model.dto.CbsAccountDto;
     import com.example.AddPayeeService.model.dto.request.AddPayeeRequestDto;
     import com.example.AddPayeeService.model.dto.response.AddPayeeResponseDto;
     import com.example.AddPayeeService.model.entity.AddPayee;
@@ -42,6 +43,12 @@
         @GetMapping("/getBanks")
         public CustomResponseEntity<List<BanksDto>> getBenksList(){
           return addPayeeService.getAllBanks();
+
+        }
+
+        @GetMapping("/getAccount")
+        public CustomResponseEntity<CbsAccountDto> getAccount(@RequestParam String accountNumber, @RequestParam String bankName){
+            return addPayeeService.getAccountDetails(accountNumber, bankName);
 
         }
 

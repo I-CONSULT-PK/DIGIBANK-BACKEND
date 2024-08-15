@@ -19,17 +19,14 @@ public class AddPayeeRequestDto {
     private String accountType;
     @NotBlank(message = "Bank Name is mandatory")
     private String beneficiaryBankName;
-    private String beneficiaryAddress1;
-    private String beneficiaryAddress2;
-    private String beneficiaryBankAddress;
     private String mobileNumber;
     private String beneficiaryEmailId;
     private String status;
-    private int shelfId;
     private String categoryType;
     private int categoryId;
     @NotBlank(message = "Customer Id is mandatory")
     private int customerId;
+    private String bankUrl;
 
     // Getters and Setters
 
@@ -74,29 +71,7 @@ public class AddPayeeRequestDto {
         this.beneficiaryBankName = beneficiaryBankName;
     }
 
-    public String getBeneficiaryAddress1() {
-        return beneficiaryAddress1;
-    }
 
-    public void setBeneficiaryAddress1(String beneficiaryAddress1) {
-        this.beneficiaryAddress1 = beneficiaryAddress1;
-    }
-
-    public String getBeneficiaryAddress2() {
-        return beneficiaryAddress2;
-    }
-
-    public void setBeneficiaryAddress2(String beneficiaryAddress2) {
-        this.beneficiaryAddress2 = beneficiaryAddress2;
-    }
-
-    public String getBeneficiaryBankAddress() {
-        return beneficiaryBankAddress;
-    }
-
-    public void setBeneficiaryBankAddress(String beneficiaryBankAddress) {
-        this.beneficiaryBankAddress = beneficiaryBankAddress;
-    }
 
     public String getMobileNumber() {
         return mobileNumber;
@@ -122,13 +97,6 @@ public class AddPayeeRequestDto {
         this.status = status;
     }
 
-    public int getShelfId() {
-        return shelfId;
-    }
-
-    public void setShelfId(int shelfId) {
-        this.shelfId = shelfId;
-    }
 
     public String getCategoryType() {
         return categoryType;
@@ -160,6 +128,14 @@ public class AddPayeeRequestDto {
 
     public void setCustomerId(int customerId) {
         this.customerId = customerId;
+    }
+
+    public String getBankUrl() {
+        return bankUrl;
+    }
+
+    public void setBankUrl(String bankUrl) {
+        this.bankUrl = bankUrl;
     }
 }
 
