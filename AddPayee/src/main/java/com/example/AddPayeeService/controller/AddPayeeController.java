@@ -83,5 +83,10 @@
 //
 //        }
 
+        @GetMapping("/getLocalAccountTitle")
+        public CustomResponseEntity getLocalAccountTitle(@RequestParam("senderAccountNumber") String senderAccountNumber) {
+            return this.addPayeeService.getLocalAccountTitle(senderAccountNumber);
+        }
+
 
     }

@@ -29,4 +29,6 @@ public interface AddPayeeService {
 
     CustomResponseEntity updateBene(AddPayeeRequestDto addPayeeRequestDto);
     public CustomResponseEntity getAccountDetails(String accountNumber, String bankName);
+
+    CustomResponseEntity getLocalAccountTitle(String senderAccountNumber);
 }
