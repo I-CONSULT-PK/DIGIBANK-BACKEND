@@ -5,12 +5,12 @@ import com.example.AddPayeeService.model.dto.BanksDto;
 import com.example.AddPayeeService.model.dto.CbsAccountDto;
 import com.example.AddPayeeService.model.dto.request.AddPayeeRequestDto;
 import com.example.AddPayeeService.model.dto.response.AddPayeeResponseDto;
+import com.example.AddPayeeService.model.dto.response.FetchAccountDto;
 import com.example.AddPayeeService.model.entity.AddPayee;
 import com.example.AddPayeeService.model.mapper.AddPayeeMapper;
 import com.example.AddPayeeService.repository.AddPayeeRepository;
 import com.example.AddPayeeService.service.AddPayeeService;
 
-import com.iconsult.userservice.model.dto.response.FetchAccountDto;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.bouncycastle.openssl.EncryptionException;
 import org.slf4j.Logger;
