@@ -127,8 +127,8 @@ public class OTPServiceImpl implements OTPService {
         long expirationTime = System.currentTimeMillis() + 300000;
 
         // String otpCode = Util.generateOTP(5); // Generating OTP of length 5
-        String emailOtp = Util.generateOTP(5); //when deliveryPreference is set to both
-        String smsOtp = Util.generateOTP(5); //when deliveryPreference is set to both
+        String emailOtp = Util.generateOTP(4); //when deliveryPreference is set to both
+        String smsOtp = Util.generateOTP(4); //when deliveryPreference is set to both
         LOGGER.info("OTP Generated...");
 
         OTP otp = new OTP();

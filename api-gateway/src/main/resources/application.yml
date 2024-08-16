@@ -44,7 +44,7 @@ spring:
         - id: add-payee
           uri: lb://add-payee
           predicates:
-            - Path=/beneficiary/**
+            - Path=/v1/beneficiary/**
           filters:
             - name: AuthenticationFilter
 

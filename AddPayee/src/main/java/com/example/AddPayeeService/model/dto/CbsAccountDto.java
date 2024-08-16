@@ -32,7 +32,13 @@ public class CbsAccountDto implements Serializable{
 
     }
 
+    public String getAccountTitle() {
+        return accountTitle;
+    }
 
+    public void setAccountTitle(String accountTitle) {
+        this.accountTitle = accountTitle;
+    }
 
     public Long getId() {
         return id;

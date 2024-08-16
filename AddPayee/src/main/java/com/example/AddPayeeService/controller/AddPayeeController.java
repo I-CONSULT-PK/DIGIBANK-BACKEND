@@ -18,7 +18,7 @@
 
 
     @RestController
-    @RequestMapping("/beneficiary")
+    @RequestMapping("/v1/beneficiary")
 
     public class AddPayeeController  {
 

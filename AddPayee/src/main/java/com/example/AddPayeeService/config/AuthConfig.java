@@ -22,7 +22,7 @@ public class AuthConfig {
         return http.csrf(AbstractHttpConfigurer::disable)  // Disable CSRF protection
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/beneficiary/**").permitAll()
+                                .requestMatchers("/v1/beneficiary/**").permitAll()
                 ).build();
     }
 }
