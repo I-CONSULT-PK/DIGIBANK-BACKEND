@@ -1,6 +1,7 @@
 package com.example.AddPayeeService.service;
 
 import com.example.AddPayeeService.model.dto.BanksDto;
+import com.example.AddPayeeService.model.dto.CbsAccountDto;
 import com.example.AddPayeeService.model.dto.request.AddPayeeRequestDto;
 import com.example.AddPayeeService.model.dto.response.AddPayeeResponseDto;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -27,4 +28,5 @@ public interface AddPayeeService {
     CustomResponseEntity deleteBene(Long beneId);
 
     CustomResponseEntity updateBene(AddPayeeRequestDto addPayeeRequestDto);
+    public CustomResponseEntity getAccountDetails(String accountNumber, String bankName);
 }

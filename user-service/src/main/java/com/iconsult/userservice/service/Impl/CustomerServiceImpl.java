@@ -489,53 +489,54 @@ public class CustomerServiceImpl implements CustomerService
     @Override
     public CustomResponseEntity forgetUserName(ForgetUsernameDto forgetUsernameDto) {
         LOGGER.info("ForgetUsername Request Received...");
-//        Account account = accountRepository.findByAccountNumberAndCustomerCnic(forgetUsernameDto.getAccountNumber(), forgetUsernameDto.getCnic());
-//        ImageVerification imageVerification = imageVerificationRepository.findById(forgetUsernameDto.getSecurityPictureId())
-//                .orElse(null);
-//        Customer customer = customerRepository.findByAccountNumberAndSecurityPicture(forgetUsernameDto.getAccountNumber(), imageVerification.getName());
-        Customer customer = customerRepository.findByCnicAndAccountNumber(forgetUsernameDto.getCnic(),forgetUsernameDto.getAccountNumber());
+
+        Optional<Customer> optionalCustomer = customerRepository.findCustomerByCnicAndAccountNumber(
+                forgetUsernameDto.getCnic(), forgetUsernameDto.getAccountNumber());
+
+        if (!optionalCustomer.isPresent()) {
+            throw new ServiceException("Customer Not Found");
+        }
+
+        Customer customer = optionalCustomer.get();
+
         ForgetUserAndPasswordResponse forgetUserAndPasswordResponse = new ForgetUserAndPasswordResponse();
         forgetUserAndPasswordResponse.setEmail(customer.getEmail());
         forgetUserAndPasswordResponse.setMobileNumber(customer.getMobileNumber());
 
-//        if (account == null) {
-//            return new CustomResponseEntity("Invalid account number or cnic");
-//        } else {
-        if (customer == null) {
-            throw new ServiceException("Customer Not Found");
-        } else {
-            sendUserEmail(customer);
-            LOGGER.info("Customer found with Account number [{}], sending username on email...", customer.getEmail());
+        // Sending the email with username
+        sendUserEmail(customer);
 
-            LOGGER.info("Email sent [{}]", customer.getEmail());
-            response = new CustomResponseEntity<>("user name sent successfully");
-            response.setData(forgetUserAndPasswordResponse);
-            return response;
-        }
+        LOGGER.info("Customer found with Account number [{}], sending username on email...", customer.getEmail());
+
+        LOGGER.info("Email sent to [{}]", customer.getEmail());
+
+        // Creating and returning the response
+        CustomResponseEntity<ForgetUserAndPasswordResponse> response = new CustomResponseEntity<>("Username sent successfully");
+        response.setData(forgetUserAndPasswordResponse);
+        return response;
 
     }
 
     @Override
     public CustomResponseEntity forgetUserEmail(ForgetUsernameDto forgetUsernameDto) {
         LOGGER.info("ForgetUsername Request Received...");
-//        Account account = accountRepository.findByAccountNumberAndCustomerCnic(forgetUsernameDto.getAccountNumber(), forgetUsernameDto.getCnic());
-        Customer customer = customerRepository.findByCnicAndAccountNumber(forgetUsernameDto.getCnic(),forgetUsernameDto.getAccountNumber());
+
+        Optional<Customer> optionalCustomer = customerRepository.findCustomerByCnicAndAccountNumber(
+                forgetUsernameDto.getCnic(), forgetUsernameDto.getAccountNumber());
+
+        if (!optionalCustomer.isPresent()) {
+            throw new ServiceException("Customer Not Found");
+        }
+
+        Customer customer = optionalCustomer.get();
+
+        LOGGER.info("Customer details: {}", customer);
+
         ForgetUserAndPasswordResponse forgetUserAndPasswordResponse = new ForgetUserAndPasswordResponse();
         forgetUserAndPasswordResponse.setEmail(customer.getEmail());
         forgetUserAndPasswordResponse.setMobileNumber(customer.getMobileNumber());
-//        Customer customer = findByCnic(forgetUsernameDto.getCnic());
 
-//        if (account == null) {
-//            return new CustomResponseEntity("Invalid account number or cnic");
-//        } else {
-        if (customer == null) {
-            throw new ServiceException("Customer Not Found");
-        }else{
-            LOGGER.info("Customer", customer);
-            response = new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Customer Detail");
-            return response;
-        }
-
+        return new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Customer Detail");
     }
 //        Customer customer = findByEmailAddress(forgetUsernameDto.getAccountNumber());
 //
@@ -685,79 +686,37 @@ public class CustomerServiceImpl implements CustomerService
 */
 
     @Override
-    public CustomResponseEntity forgetPassword(ForgetPasswordRequestDto forgetPasswordRequestDto/*, HttpSession session*/) {
-//        // Verify account number and CNIC
-//        Customer customer = customerRepository.findByCnic(forgetPasswordRequestDto.getCnic());
-//        if (customer == null || !customer.getAccountList().stream().anyMatch(account -> account.getAccountNumber().equals(forgetPasswordRequestDto.getAccountNumber()))) {
-//            return CustomResponseEntity.error("Invalid account number or CNIC.");
+    public CustomResponseEntity forgetPassword(ForgetPasswordRequestDto forgetPasswordRequestDto) {
+        Optional<Customer> optionalCustomer = customerRepository.findCustomerByCnicAndAccountNumber(forgetPasswordRequestDto.getCnic(), forgetPasswordRequestDto.getAccountNumber());
 
-//        // Generate one-time login password (reset token)
-//        String resetToken = UUID.randomUUID().toString();
-//        customer.setResetToken(resetToken);
-//        customer.setResetTokenExpireTime(System.currentTimeMillis() + 3600000); // Token expires in 1 hour
-//        customerRepository.save(customer);
-//
-//        // Send email
-//        emailService.sendResetTokenEmail(customer.getEmail(), resetToken);
-//
-//        return new CustomResponseEntity<>("Reset token sent to registered email.");
+        if (!optionalCustomer.isPresent()) {
+            throw new ServiceException("Customer Not Found");
+        }
 
-        // Verify account number and CNIC
+        Customer customer = optionalCustomer.get();
 
-//        Account account = accountRepository.findByAccountNumberAndCustomerCnic(forgetPasswordRequestDto.getAccountNumber(), forgetPasswordRequestDto.getCnic());
-        Customer customer = customerRepository.findByCnicAndAccountNumber(forgetPasswordRequestDto.getCnic(),forgetPasswordRequestDto.getAccountNumber());
+        // Check if the new password is null
+        if (forgetPasswordRequestDto.getPassword() == null || forgetPasswordRequestDto.getPassword().isEmpty()) {
+            return CustomResponseEntity.error("Password cannot be null or empty.");
+        }
+
+        if (forgetPasswordRequestDto.getPassword().equals(customer.getPassword())) {
+            return CustomResponseEntity.error("Password cannot be the same as the old password.");
+        }
+
+        customer.setPassword(forgetPasswordRequestDto.getPassword()); // Hash the new password
+
+        customerRepository.save(customer);
+
+        // Created response object
         ForgetUserAndPasswordResponse forgetUserAndPasswordResponse = new ForgetUserAndPasswordResponse();
         forgetUserAndPasswordResponse.setEmail(customer.getEmail());
         forgetUserAndPasswordResponse.setMobileNumber(customer.getMobileNumber());
-//        if (account == null) {
-//            return CustomResponseEntity.error("Invalid account number or CNIC.");
-//        }
-/*        ImageVerification imageVerification = imageVerificationRepository.findById(forgetPasswordRequestDto.getSecurityPictureId())
-                .orElse(null);
 
-        if (imageVerification == null){
-            return CustomResponseEntity.error("Invalid image id");
-        }*/
+        emailService.sendPasswordResetNotification(customer.getEmail());
 
-   /*     Customer customer = customerRepository.findByAccountNumberAndSecurityPicture(forgetPasswordRequestDto.getAccountNumber(), imageVerification.getName());
-
-
-        if(customer == null){
-            throw new ServiceException("Customer Not Found");
-        }*/
-
-//        Customer customer = account.getCustomer();
-
-        // Generate one-time login password (reset token)
-//        String resetToken = UUID.randomUUID().toString();
-//        customer.setResetToken(resetToken);
-//        customer.setResetTokenExpireTime(System.currentTimeMillis() + 3600000); // Token expires in 1 hour
-//        customerRepository.save(customer);
-
-        // Store the token in the session
-//        session.setAttribute("resetToken", resetToken);
-//        System.out.println("Reset token set in session: " + resetToken);
-
-        // Send email
-//        emailService.sendResetTokenEmail(customer.getEmail(), resetToken);
-
-        if(customer == null){
-            throw new ServiceException("Customer Not Found");
-        }else {
-            if (forgetPasswordRequestDto.getPassword().equals(customer.getPassword())) {
-                return CustomResponseEntity.error("Password cannot be the same as the old password.");
-            }
-            customer.setPassword(forgetPasswordRequestDto.getPassword()); // Hash the password before saving it
-//        customer.setResetToken(null);
-//        customer.setResetTokenExpireTime(null);
-            customerRepository.save(customer);
-
-            emailService.sendPasswordResetNotification(customer.getEmail());
-
-//        return new CustomResponseEntity<>("Reset token sent to registered email.");
-            return new CustomResponseEntity<>(forgetUserAndPasswordResponse,"Password reset successfully");
-        }
-
+        // Return a successful response
+        return new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Password reset successfully");
     }
 
     @Override

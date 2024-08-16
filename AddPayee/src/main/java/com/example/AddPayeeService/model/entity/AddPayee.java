@@ -31,14 +31,7 @@ public class AddPayee {
     @Column(name = "Beneficiary Bank Name")
     private String beneficiaryBankName;
 
-    @Column(name = "Beneficiary Address1")
-    private String beneficiaryAddress1;
 
-    @Column(name = "Beneficiary Address2")
-    private String beneficiaryAddress2;
-
-    @Column(name = "Beneficiary Bank Address")
-    private String beneficiaryBankAddress;
 
     @Column(name = "Mobile Number")
     private String mobileNumber;
@@ -49,8 +42,7 @@ public class AddPayee {
     @Column(name = "Status")
     private String status;
 
-    @Column(name = "Self Id")
-    private int shelfId;
+
 
     @Column(name = "Category")
     private String categoryType;
@@ -60,6 +52,7 @@ public class AddPayee {
 
     @Column(name = "Customer Id")
     private int customerId;
+    private String bankUrl;
 
     public String getStatus() {
         return status;
@@ -117,29 +110,6 @@ public class AddPayee {
         this.beneficiaryBankName = beneficiaryBankName;
     }
 
-    public String getBeneficiaryAddress1() {
-        return beneficiaryAddress1;
-    }
-
-    public void setBeneficiaryAddress1(String beneficiaryAddress1) {
-        this.beneficiaryAddress1 = beneficiaryAddress1;
-    }
-
-    public String getBeneficiaryAddress2() {
-        return beneficiaryAddress2;
-    }
-
-    public void setBeneficiaryAddress2(String beneficiaryAddress2) {
-        this.beneficiaryAddress2 = beneficiaryAddress2;
-    }
-
-    public String getBeneficiaryBankAddress() {
-        return beneficiaryBankAddress;
-    }
-
-    public void setBeneficiaryBankAddress(String beneficiaryBankAddress) {
-        this.beneficiaryBankAddress = beneficiaryBankAddress;
-    }
 
     public String getMobileNumber() {
         return mobileNumber;
@@ -155,13 +125,6 @@ public class AddPayee {
 
     public void setBeneficiaryEmailId(String beneficiaryEmailId) {
         this.beneficiaryEmailId = beneficiaryEmailId;
-    }
-    public int getShelfId() {
-        return shelfId;
-    }
-
-    public void setShelfId(int shelfId) {
-        this.shelfId = shelfId;
     }
 
     public String getCategoryType() {
@@ -186,5 +149,13 @@ public class AddPayee {
 
     public void setCustomerId(int customerId) {
         this.customerId = customerId;
+    }
+
+    public String getBankUrl() {
+        return bankUrl;
+    }
+
+    public void setBankUrl(String bankUrl) {
+        this.bankUrl = bankUrl;
     }
 }

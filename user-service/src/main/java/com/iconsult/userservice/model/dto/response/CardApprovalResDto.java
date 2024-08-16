@@ -3,7 +3,7 @@ package com.iconsult.userservice.model.dto.response;
 import java.util.Date;
 
 public class CardApprovalResDto {
-    private long accountNumber;
+    private String accountNumber;
     private String cardNumber;
     private String cardType;
     private Date expiryDate;
@@ -13,11 +13,11 @@ public class CardApprovalResDto {
     public CardApprovalResDto() {
     }
 
-    public long getAccountNumber() {
+    public String getAccountNumber() {
         return accountNumber;
     }
 
-    public void setAccountNumber(long accountNumber) {
+    public void setAccountNumber(String accountNumber) {
         this.accountNumber = accountNumber;
     }
 

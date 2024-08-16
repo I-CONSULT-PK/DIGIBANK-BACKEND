@@ -1,51 +1,49 @@
 package com.iconsult.userservice.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 @Entity
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @Table(name = "Account")
-public class Account {
+@JsonIgnoreProperties({"customer", "cardList"})
+public class Account implements Serializable {
 
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
-//    @JsonBackReference
-    @JsonIgnore
-    Customer customer;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "Customer_Number", referencedColumnName = "id") // Defines the foreign key column
-////    @JsonIgnore // Prevents infinite recursion in JSON serialization
-//    private Customer customer;
-    //Cbs9
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    @JsonIgnoreProperties("accountList") // Avoid infinite recursion
+    private Customer customer;
+
     @Column(name = "Account_Number")
     private String accountNumber;
     private String accountStatus;
     private String accountType;
     private String accountDescription;
-
-
     private Date accountOpenDate;
-
-
     private Double accountBalance;
-
-
     private String ibanCode;
-
     private Date accountClosedDate;
     private String accountClosedReason;
     private String proofOfIncome;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Card> cardList;
 //    @ManyToOne
 //    @JoinColumn(name = "cbs_Branch")
 //    @JsonBackReference
@@ -59,5 +57,21 @@ public class Account {
 
     public void setAccountNumber(String accountNumber) {
         this.accountNumber = accountNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "id=" + id +
+                ", accountNumber='" + accountNumber + '\'' +
+                ", accountStatus='" + accountStatus + '\'' +
+                ", accountType='" + accountType + '\'' +
+                ", accountDescription='" + accountDescription + '\'' +
+                ", accountOpenDate=" + accountOpenDate +
+                ", accountBalance=" + accountBalance +
+                ", ibanCode='" + ibanCode + '\'' +
+                ", accountClosedDate=" + accountClosedDate +
+                ", accountClosedReason='" + accountClosedReason + '\'' +
+                '}';
     }
 }
