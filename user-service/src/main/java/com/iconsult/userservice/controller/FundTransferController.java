@@ -21,7 +21,7 @@ public class FundTransferController {
     }
 
     @GetMapping("/getAccountTitle")
-    public CustomResponseEntity getAllBanks(@RequestParam("senderAccountNumber") String senderAccountNumber) {
+    public CustomResponseEntity getAccountTitle(@RequestParam("senderAccountNumber") String senderAccountNumber) {
         return this.fundTransferService.getAccountTitle(senderAccountNumber);
     }
 

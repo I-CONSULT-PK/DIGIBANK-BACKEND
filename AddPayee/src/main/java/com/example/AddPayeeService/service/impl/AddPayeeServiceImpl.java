@@ -352,7 +352,7 @@ public class AddPayeeServiceImpl implements AddPayeeService {
                 CustomResponseEntity<FetchAccountDto> responseDto = response.getBody();
                 if (responseDto != null) {
                     // Print or log responseDto to verify its content
-                    LOGGER.info("Received CustomerDto: " + responseDto.getMessage());
+                    LOGGER.info("Received FetchAccountDto: " + responseDto.getMessage());
                     if (!responseDto.isSuccess()) return responseDto;
 
                     return responseDto;
