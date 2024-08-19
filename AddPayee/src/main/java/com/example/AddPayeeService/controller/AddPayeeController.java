@@ -18,7 +18,7 @@
 
 
     @RestController
-    @RequestMapping("/beneficiary")
+    @RequestMapping("/v1/beneficiary")
 
     public class AddPayeeController  {
 
@@ -82,6 +82,11 @@
 //            return ResponseEntity.ok(allBeneficiary);
 //
 //        }
+
+        @GetMapping("/getLocalAccountTitle")
+        public CustomResponseEntity getLocalAccountTitle(@RequestParam("senderAccountNumber") String senderAccountNumber) {
+            return this.addPayeeService.getLocalAccountTitle(senderAccountNumber);
+        }
 
 
     }

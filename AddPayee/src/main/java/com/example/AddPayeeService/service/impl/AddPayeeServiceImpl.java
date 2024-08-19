@@ -5,6 +5,7 @@ import com.example.AddPayeeService.model.dto.BanksDto;
 import com.example.AddPayeeService.model.dto.CbsAccountDto;
 import com.example.AddPayeeService.model.dto.request.AddPayeeRequestDto;
 import com.example.AddPayeeService.model.dto.response.AddPayeeResponseDto;
+import com.example.AddPayeeService.model.dto.response.FetchAccountDto;
 import com.example.AddPayeeService.model.entity.AddPayee;
 import com.example.AddPayeeService.model.mapper.AddPayeeMapper;
 import com.example.AddPayeeService.repository.AddPayeeRepository;
@@ -32,6 +33,7 @@ public class AddPayeeServiceImpl implements AddPayeeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AddPayeeServiceImpl.class);
     private final String GetAccountTitle = "http://192.168.0.153:8081/account/getAccount";
     private final String GetAccountTitle2 = "http://192.168.0.138:8080/account/getAccount";
+    private final String getLocalAccountTitleURL = "http://localhost:8081/transaction/fetchAccountTitle";
 
     private final String GetAllBank = "http://localhost:8081/bank";
 
@@ -317,4 +319,57 @@ public class AddPayeeServiceImpl implements AddPayeeService {
 
     }
 
+    @Override
+    public CustomResponseEntity getLocalAccountTitle(String senderAccountNumber) {
+        try {
+            // Build URL with path variables
+            URI uri = UriComponentsBuilder.fromHttpUrl(getLocalAccountTitleURL)
+                    .queryParam("accountNumber", senderAccountNumber)
+                    .build()
+                    .toUri();
+
+            // Log the full request URL
+            LOGGER.info("Request URL: " + uri);
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Create HttpEntity with headers
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Make HTTP GET request
+            ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    CustomResponseEntity.class
+            );
+
+            // Handle response
+            if (response.getStatusCode() == HttpStatus.OK) { // 200 status code
+                CustomResponseEntity<FetchAccountDto> responseDto = response.getBody();
+                if (responseDto != null) {
+                    // Print or log responseDto to verify its content
+                    LOGGER.info("Received FetchAccountDto: " + responseDto.getMessage());
+                    if (!responseDto.isSuccess()) return responseDto;
+
+                    return responseDto;
+                } else {
+                    // No customer found
+                    return CustomResponseEntity.error("Unable to Process!");
+                }
+            } else {
+                // Handle error response or non-200 status
+                LOGGER.error("Unexpected response status: " + response.getStatusCode());
+                return CustomResponseEntity.error("Unable to Process!");
+            }
+
+        } catch (Exception e) {
+            // Handle exceptions
+            LOGGER.error("Exception occurred: ", e);
+            return CustomResponseEntity.error("Unable to Process!");
+        }
+    }
 }

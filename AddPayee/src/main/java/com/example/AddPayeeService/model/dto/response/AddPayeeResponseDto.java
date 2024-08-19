@@ -29,6 +29,7 @@ public class AddPayeeResponseDto  {
     private int shelfId;
     private String categoryType;
     private int categoryId;
+    private String bankUrl;
 
     public Long getId() {
         return id;
@@ -148,5 +149,13 @@ public class AddPayeeResponseDto  {
 
     public void setCategoryId(int categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public String getBankUrl() {
+        return bankUrl;
+    }
+
+    public void setBankUrl(String bankUrl) {
+        this.bankUrl = bankUrl;
     }
 }
