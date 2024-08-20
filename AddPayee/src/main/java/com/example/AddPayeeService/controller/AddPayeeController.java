@@ -4,17 +4,12 @@
     import com.example.AddPayeeService.model.dto.CbsAccountDto;
     import com.example.AddPayeeService.model.dto.request.AddPayeeRequestDto;
     import com.example.AddPayeeService.model.dto.response.AddPayeeResponseDto;
-    import com.example.AddPayeeService.model.entity.AddPayee;
     import com.example.AddPayeeService.service.AddPayeeService;
     import com.zanbeel.customUtility.model.CustomResponseEntity;
     import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.http.HttpStatus;
     import org.springframework.web.bind.annotation.*;
-    import org.springframework.http.ResponseEntity;
 
-    import java.util.HashMap;
     import java.util.List;
-    import java.util.Map;
 
 
     @RestController
@@ -52,10 +47,10 @@
 
         }
 
-        @GetMapping("/getAllBeneficiary/{customerId}")
-        public List<CustomResponseEntity<AddPayeeResponseDto>> getAllBeneficiary(@PathVariable Long customerId) throws Exception {
-            List<CustomResponseEntity<AddPayeeResponseDto>> payees = addPayeeService.getAllBeneficiaries(customerId);
-            return payees;
+        @GetMapping("/getAllBeneficiary")
+        public CustomResponseEntity getAllBeneficiary(@RequestParam Long customerId, @RequestParam Boolean flag) throws Exception {
+            return addPayeeService.getAllBeneficiaries(customerId ,flag);
+
         }
 
         @GetMapping("/getBeneficiary/{beneId}")
@@ -86,6 +81,11 @@
         @GetMapping("/getLocalAccountTitle")
         public CustomResponseEntity getLocalAccountTitle(@RequestParam("senderAccountNumber") String senderAccountNumber) {
             return this.addPayeeService.getLocalAccountTitle(senderAccountNumber);
+        }
+
+        @PostMapping("/addToFavourite")
+        public CustomResponseEntity addToFavouriteBene (@RequestParam  Long beneId , @RequestParam boolean flag , @RequestParam Long customerId){
+            return addPayeeService.addToFavourite(beneId, flag , customerId);
         }
 
 

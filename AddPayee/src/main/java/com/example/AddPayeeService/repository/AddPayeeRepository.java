@@ -20,4 +20,11 @@ public interface AddPayeeRepository extends JpaRepository<AddPayee, Long > {
     Optional<List<AddPayee>> findAllByCustomerIdAndStatus(Long customerId, String status);
 
     Optional<AddPayee> findByCustomerIdAndId(Long customerId , Long Id);
+
+    @Query("SELECT a FROM AddPayee a WHERE a.customerId = :customerId AND a.status = :status AND a.flag = :flag")
+    Optional<List<AddPayee>> findAllByCustomerIdAndStatusAndFlag(Long customerId, String status , boolean flag);
+
+    List<AddPayee> findAllByCustomerIdAndFlag(Long customerId , Boolean flag);
+
+
 }

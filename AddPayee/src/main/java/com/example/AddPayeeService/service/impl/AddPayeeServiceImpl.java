@@ -60,25 +60,35 @@ public class AddPayeeServiceImpl implements AddPayeeService {
         EncrpytionUtil encrpytionUtil = new EncrpytionUtil();
         List<AddPayee> payees = addPayeeRepository.findAllByCustomerId((long) addPayeeRequestDto.getCustomerId());
         for (AddPayee payee : payees) {
-            String decryptedAccountNumber = encrpytionUtil.decrypt(payee.getAccountNumber(), "your_secure_key");
-            if (decryptedAccountNumber.equals(addPayeeRequestDto.getAccountNumber())) {
+            String decryptedAccountNumber = encrpytionUtil.decrypt(payee.getAccountNumber(), "t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
+            if (decryptedAccountNumber.equals(addPayeeRequestDto.getAccountNumber()) && payee.getStatus().equals("00")) {
                 return CustomResponseEntity.error("This Account already exists");
+            } else if (decryptedAccountNumber.equals(addPayeeRequestDto.getAccountNumber()) && payee.getStatus().equals("11")) {
+             AddPayee addPayeeExist = addPayeeRepository.findByAccountNumberAndCustomerId(payee.getAccountNumber(),payee.getCustomerId());
+                addPayeeExist.setAccountNumber(addPayeeRequestDto.getAccountNumber());
+                addPayeeExist.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
+                addPayeeExist.setAccountType(addPayeeRequestDto.getAccountType());
+                addPayeeExist.setStatus("00");
+                addPayeeExist.setFlag(addPayeeRequestDto.getFlag());
+
+                String encryptedAccountNumber = encrpytionUtil.encrypt("t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=", payee.getAccountNumber());
+                addPayeeExist.setAccountNumber(encryptedAccountNumber);
+                addPayeeRepository.save(payee);
+
+                Map<String, Object> data = new HashMap<>();
+                response = new CustomResponseEntity<>(addPayeeMapper.jpeToDto(payee), "Beneficiary added successfully");
+                return response;
             }
         }
-//        AddPayee accountNumberExists = addPayeeRepository.findByAccountNumberAndCustomerId(addPayeeRequestDto.getAccountNumber(), addPayeeRequestDto.getCustomerId());
-//        if(accountNumberExists != null){
-//
-//            return CustomResponseEntity.error("This Account is already exist");
-//        }
-
-//        CbsAccountDto cbsAccountDto = getAccountDetails(addPayeeRequestDto.getAccountNumber());
         AddPayee addPayee = addPayeeMapper.dtoToJpe(addPayeeRequestDto);
         addPayee.setAccountNumber(addPayeeRequestDto.getAccountNumber());
         addPayee.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
         addPayee.setAccountType(addPayeeRequestDto.getAccountType());
+        addPayee.setFlag(addPayeeRequestDto.getFlag());
+
         addPayee.setStatus("00");
 
-        String encryptedAccountNumber = encrpytionUtil.encrypt("your_secure_key", addPayee.getAccountNumber());
+        String encryptedAccountNumber = encrpytionUtil.encrypt("t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=", addPayee.getAccountNumber());
         addPayee.setAccountNumber(encryptedAccountNumber);
         addPayeeRepository.save(addPayee);
 
@@ -255,6 +265,7 @@ public class AddPayeeServiceImpl implements AddPayeeService {
             addPayee.setCategoryId(addPayeeRequestDto.getCategoryId());
             addPayee.setCustomerId(addPayeeRequestDto.getCustomerId());
             addPayee.setMobileNumber(addPayeeRequestDto.getMobileNumber());
+            addPayee.setFlag(addPayeeRequestDto.getFlag());
 
             // Save the updated entity back to the repository
             addPayeeRepository.save(addPayee);
@@ -286,29 +297,24 @@ public class AddPayeeServiceImpl implements AddPayeeService {
 
 
     @Override
-    public List<CustomResponseEntity<AddPayeeResponseDto>> getAllBeneficiaries(Long customerId) throws Exception {
+    public CustomResponseEntity getAllBeneficiaries(Long customerId , Boolean flag) throws Exception {
 
         List<CustomResponseEntity<AddPayeeResponseDto>> responses = new ArrayList<>();
         try {
-            List<AddPayee> addPayees = this.addPayeeRepository.findAllByCustomerIdAndStatus(customerId,"00").orElseThrow(() -> new RuntimeException("Beneficiary not found with given CustomerId: "
-                    +customerId ));
-            EncrpytionUtil encrpytionUtil = new EncrpytionUtil();
-            List<AddPayeeResponseDto> addPayeeResponseDtos = addPayeeMapper.jpeToDtoList(addPayees);
-            for (AddPayeeResponseDto addPayee : addPayeeResponseDtos) {
-                try {
-                    String decryptedAccountNumber = encrpytionUtil.decrypt(addPayee.getAccountNumber(), "your_secure_key");
-                    addPayee.setAccountNumber(decryptedAccountNumber);
-                    CustomResponseEntity<AddPayeeResponseDto> response = new CustomResponseEntity<>(addPayee, "Beneficiary retrieved successfully");
-                    responses.add(response);
-                } catch (EncryptionException e) {
-                    responses.add(new CustomResponseEntity<>(null, "Error decrypting account number"));
-                }
+            if(flag == true){
+                List<AddPayee> addPayees = this.addPayeeRepository.findAllByCustomerIdAndStatusAndFlag(customerId,"00",true).orElseThrow(() -> new RuntimeException("Beneficiary not found with given CustomerId: "
+                        +customerId ));
+                response = new CustomResponseEntity<>(addPayeeMapper.jpeToDtoList(addPayees), "Beneficiary retrieved successfully");
+            } else if (flag == false) {
+                List<AddPayee> addPayees = this.addPayeeRepository.findAllByCustomerIdAndStatus(customerId,"00").orElseThrow(() -> new RuntimeException("Beneficiary not found with given CustomerId: "
+                        +customerId ));
+                response = new CustomResponseEntity<>(addPayeeMapper.jpeToDtoList(addPayees), "Beneficiary retrieved successfully");
             }
     } catch (Exception e) {
             responses.add(new CustomResponseEntity<>(null, "Error retrieving beneficiaries" + e.getMessage()));
 
         }
-        return responses;
+        return response;
     }
 
     @Override
@@ -372,4 +378,38 @@ public class AddPayeeServiceImpl implements AddPayeeService {
             return CustomResponseEntity.error("Unable to Process!");
         }
     }
+
+    @Override
+    public CustomResponseEntity addToFavourite(Long beneId , boolean flag, Long customerId) {
+
+
+       try {
+           AddPayee addPayee = addPayeeRepository.findByCustomerIdAndId(customerId, beneId).orElse(null);
+           if(Objects.isNull(addPayee)){
+               return CustomResponseEntity.error("Beneficiary Does not Exist");
+           }
+           if(addPayee.getFlag() == true){
+               addPayee.setFlag(false);
+               addPayeeRepository.save(addPayee);
+               response = new CustomResponseEntity<>(addPayeeMapper.jpeToDto(addPayee), "Beneficiary removed from favourite  successfully");
+
+           } else if (addPayee.getFlag() == null) {
+               addPayee.setFlag(flag);
+               addPayeeRepository.save(addPayee);
+               response = new CustomResponseEntity<>(addPayeeMapper.jpeToDto(addPayee), "Beneficiary added to favourite  successfully");
+           } else {
+               addPayee.setFlag(true);
+               addPayeeRepository.save(addPayee);
+               response = new CustomResponseEntity<>(addPayeeMapper.jpeToDto(addPayee), "Beneficiary added to favourite successfully");
+
+           }
+
+       }
+       catch (Exception e){
+           LOGGER.error("Exception occurred: ", e);
+           return CustomResponseEntity.error("Unable to Process!");
+       }
+        return response;
+    }
+
 }

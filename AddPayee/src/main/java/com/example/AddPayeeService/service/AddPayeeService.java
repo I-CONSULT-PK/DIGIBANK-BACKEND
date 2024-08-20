@@ -18,7 +18,7 @@ public interface AddPayeeService {
     CustomResponseEntity getBeneficiary(AddPayeeRequestDto addPayeeRequestDto) throws Exception;
 
     //get all added Beneficiaries
-    List<CustomResponseEntity<AddPayeeResponseDto>> getAllBeneficiaries(Long customerId) throws Exception;
+    CustomResponseEntity getAllBeneficiaries(Long customerId, Boolean flag) throws Exception;
 
     //get Single Beneficiary
     CustomResponseEntity getAddPayee(Long BeneId);
@@ -31,4 +31,6 @@ public interface AddPayeeService {
     public CustomResponseEntity getAccountDetails(String accountNumber, String bankName);
 
     CustomResponseEntity getLocalAccountTitle(String senderAccountNumber);
+
+    CustomResponseEntity  addToFavourite(Long beneId , boolean flag , Long customerId);
 }

@@ -31,6 +31,16 @@ public class AddPayeeResponseDto  {
     private int categoryId;
     private String bankUrl;
 
+    private Boolean flag;
+
+    public Boolean getFlag() {
+        return flag;
+    }
+
+    public void setFlag(Boolean flag) {
+        this.flag = flag;
+    }
+
     public Long getId() {
         return id;
     }

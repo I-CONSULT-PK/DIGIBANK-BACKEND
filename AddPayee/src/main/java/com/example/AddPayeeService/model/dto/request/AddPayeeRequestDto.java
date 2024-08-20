@@ -27,8 +27,16 @@ public class AddPayeeRequestDto {
     @NotBlank(message = "Customer Id is mandatory")
     private int customerId;
     private String bankUrl;
+    private Boolean flag;
 
-    // Getters and Setters
+    public Boolean getFlag() {
+        return flag;
+    }
+
+    public void setFlag(Boolean flag) {
+        this.flag = flag;
+    }
+// Getters and Setters
 
 
     public Long getBeneId() {

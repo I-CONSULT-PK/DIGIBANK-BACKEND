@@ -32,6 +32,10 @@ public class AddPayee {
     private String beneficiaryBankName;
 
 
+    @Column(name = "favourite bene")
+    private Boolean flag ;
+
+
 
     @Column(name = "Mobile Number")
     private String mobileNumber;
@@ -53,6 +57,14 @@ public class AddPayee {
     @Column(name = "Customer Id")
     private int customerId;
     private String bankUrl;
+
+    public Boolean getFlag() {
+        return flag;
+    }
+
+    public void setFlag(Boolean flag) {
+        this.flag = flag;
+    }
 
     public String getStatus() {
         return status;
