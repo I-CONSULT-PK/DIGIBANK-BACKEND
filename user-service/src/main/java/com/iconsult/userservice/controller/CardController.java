@@ -23,12 +23,12 @@ public class CardController {
     }
 
     @GetMapping("/fetchCardById/{customerId}")
-    public CustomResponseEntity fetCardsByCustomerId(@PathVariable("customerId") Long customerId) {
+    public CustomResponseEntity fetCardsByCustomerId(@PathVariable("customerId") String customerId) {
         return this.cardService.getAllCardById(customerId);
     }
 
-    @PatchMapping("updateCardStatus")
-    public CustomResponseEntity updateCardStatus(@RequestParam("cardNumber") Long cardNumber, @RequestParam("accountNumber") Long accountNumber, @RequestParam("status") Boolean status) {
+    @PatchMapping("/updateCardStatus")
+    public CustomResponseEntity updateCardStatus(@RequestParam("cardNumber") Long cardNumber, @RequestParam("accountNumber") String accountNumber, @RequestParam("status") Boolean status) {
         return this.cardService.updateCardStatus(cardNumber, accountNumber, status);
     }
 

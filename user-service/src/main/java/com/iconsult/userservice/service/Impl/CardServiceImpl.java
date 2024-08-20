@@ -186,19 +186,18 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public CustomResponseEntity getAllCardById(Long id) {
-        Optional<Account> byId = accountRepository.findById(id);
+    public CustomResponseEntity getAllCardById(String accountNumber) {
+        Account account = accountRepository.findByAccountNumber(accountNumber);
 
-        List<Card> listOfCard = byId.get().getCardList();
-        CardResponseDto cardResponseDto = new CardResponseDto();
-        cardResponseDto.setId(byId.get().getId());
-        cardResponseDto.setCards(listOfCard);
+        if(account == null) return CustomResponseEntity.error("No Cards Exist");
 
-        return new CustomResponseEntity<>(cardResponseDto, "Card List");
+        List<Card> listOfCard = account.getCardList();
+
+        return new CustomResponseEntity<>(listOfCard, "Card List");
     }
 
     @Override
-    public CustomResponseEntity updateCardStatus(Long cardNumber, Long accountNumber, Boolean status) {
+    public CustomResponseEntity updateCardStatus(Long cardNumber, String accountNumber, Boolean status) {
 
         if (cardNumber == null) {
             LOGGER.error("Card Number is Null");
@@ -211,7 +210,7 @@ public class CardServiceImpl implements CardService {
         try {
             String jpql = "SELECT c FROM Card c WHERE c.account.accountNumber = :accountNumber and c.cardNumber = :cardNumber";
             Map<String, Object> params = new HashMap<>();
-            params.put("customerID", accountNumber);
+            params.put("accountNumber", accountNumber);
             params.put("cardNumber", cardNumber);
 
             Card card = cardGenericDao.findOneWithQuery(jpql, params);

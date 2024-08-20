@@ -12,9 +12,9 @@ import java.util.List;
 public interface CardService {
     CustomResponseEntity cardExist(CardDto cardDto);
 
-    CustomResponseEntity getAllCardById(Long id);
+    CustomResponseEntity getAllCardById(String accountNumber);
 
-    CustomResponseEntity updateCardStatus(Long id, Long accountNumber, Boolean status);
+    CustomResponseEntity updateCardStatus(Long cardNumber, String accountNumber, Boolean status);
     CustomResponseEntity createCardRequest(CardRequestDto cardRequest);
 
 
