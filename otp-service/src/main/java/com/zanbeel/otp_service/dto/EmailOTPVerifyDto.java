@@ -17,13 +17,13 @@ import lombok.Setter;
 public class EmailOTPVerifyDto {
 
     @NotEmpty(message = "Mobile Number is mandatory")
-    @Pattern(regexp =  "^\\+92\\d{10}$", message = "Invalid Mobile number")
+    //@Pattern(regexp =  "^\\+92\\d{10}$", message = "Invalid Mobile number")
     private String mobileNumber;
     @Email
     @NotEmpty
     private String email;
     @NotNull(message = "Email OTP cannot be null")
-    @Pattern(regexp = "\\d{5}", message = "Email OTP must be a 5-digit number")
+    @Pattern(regexp = "\\d{4}", message = "Email OTP must be a 4-digit number")
     private String emailOtp;
     private String smsOtp;
     private String reason;
