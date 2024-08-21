@@ -3,6 +3,7 @@ package com.iconsult.userservice.service.Impl;
 import com.iconsult.userservice.Util.Util;
 import com.iconsult.userservice.domain.OTP;
 import com.iconsult.userservice.dto.EmailDto;
+import com.iconsult.userservice.enums.AccountStatusCode;
 import com.iconsult.userservice.enums.CustomerStatus;
 import com.iconsult.userservice.enums.ResponseCodes;
 import com.iconsult.userservice.exception.ServiceException;
@@ -43,7 +44,6 @@ import javax.net.ssl.*;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -55,14 +55,11 @@ public class CustomerServiceImpl implements CustomerService
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomerServiceImpl.class);
 
-    //private final String URL = "http://192.168.0.196:8085/account/getAccounts?cnicNumber=%s";
-//    private final String URL = "http://localhost:8081/customer/getDetails?cnicNumber=%s&";
-    //  private final String URL = "http://localhost:8081/customer/getDetails?cnicNumber=%s&mobileNumber=%s&accountNumber=%s";
-    //  private final String URL =   "http://localhost:8082/customer/get/cnic/mobileNumber/accountNumber?cnicNumber=%s&mobileNumber=%s&accountNumber=%s";
-
     private final String URL = "http://localhost:8081/customer/get/cnic/mobileNumber/accountNumber";
-    private final String dashBoardCBSURL = "http://192.168.0.153:8081/account/dashboard";
-    private final String setdefaultaccountCBSURL = "http://192.168.0.153:8081/customer/setdefaultaccount";
+    private final String dashBoardCBSURL = "http://localhost:8081/account/dashboard";
+    private final String setdefaultaccountCBSURL = "http://localhost:8081/customer/setdefaultaccount";
+
+    private final String accountURL = "http://localhost:8081/account/getAccount";
 
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
@@ -103,129 +100,7 @@ public class CustomerServiceImpl implements CustomerService
     @Autowired
     AccountServiceImpl accountService;
 
-    //String deliveryPreference = DeliveryPreference.EMAIL.getValue();
-//    @Autowired
-//    public CustomerServiceImpl(PasswordEncoder passwordEncoder) {
-//        this.passwordEncoder = passwordEncoder;
-//    }
-
-//    @Override
-//    public CustomResponseEntity register(CustomerDto customerDto)
-//    {
-//        LOGGER.info("Sign up Request received");
-//
-//        // Duplicate Customer Check mobile number
-//        Customer customerDuplicate = findByMobileNumber(customerDto.getMobileNumber());
-//
-//        if(customerDuplicate != null)
-//        {
-//            LOGGER.error("Customer already exists with mobile [" + customerDto.getMobileNumber() + "], cannot allow signup, rejecting...");
-//            throw new ServiceException(String.format("Customer with Mobile Number %s already exists", customerDto.getMobileNumber()));
-//        }
-//
-//        // Duplicate Customer Check if email is present
-//        if(!customerDto.getEmail().isBlank())
-//        {
-//            customerDuplicate = findByEmailAddress(customerDto.getEmail());
-//            if(customerDuplicate != null)
-//            {
-//                LOGGER.error("Customer already exists with Email [" + customerDto.getEmail() + "], cannot allow signup, rejecting...");
-//                throw new ServiceException(String.format("Customer with Email %s already exists", customerDto.getEmail()));
-//            }
-//        }
-//
-//        // Duplicate Customer Check username
-//        customerDuplicate = findByUserName(customerDto.getUserName());
-//
-//        if(customerDuplicate != null)
-//        {
-//            LOGGER.error("Customer already exists with userName [" + customerDto.getUserName() + "], cannot allow signup, rejecting...");
-//            throw new ServiceException(String.format("Customer with userName %s already exists", customerDto.getUserName()));
-//        }
-//
-//        Customer customer = addUser(customerMapperImpl.dtoToJpe(customerDto));
-//
-//        LOGGER.info("Customer has been saved with Id {}", customer.getId());
-//        Map<String,Object> result = new HashMap<>();
-//        result.put("mobileNumber",customer.getMobileNumber());
-//        result.put("customerId",customer.getId());
-//
-//        return response;
-//    }
-
-//    @Override
-//    public CustomResponseEntity register(CustomerDto customerDto, OTPLogImpl otpLogImpl)
-//    {
-//        LOGGER.info("Sign up Request received");
-//        CustomerDto existingCustomer = accountExist(customerDto.getCnic(), customerDto.getMobileNumber(), customerDto.getAccountNumber());
-//
-//        if(existingCustomer != null)
-//        {
-//            LOGGER.error("Customer account does not exist [" + customerDto.getCnic() + "], cannot allow signup, rejecting...");
-//            throw new ServiceException(String.format("Customer account [%s] does not exist", customerDto.getCnic()));
-//        }
-//
-//        // Duplicate Customer Check mobile number
-//        Customer customerDuplicate = findByMobileNumber(customerDto.getMobileNumber());
-//
-//        if(customerDuplicate != null)
-//        {
-//            LOGGER.error("Customer already exists with mobile [" + customerDto.getMobileNumber() + "], cannot allow signup, rejecting...");
-//            throw new ServiceException(String.format("Customer with Mobile Number %s already exists", customerDto.getMobileNumber()));
-//        }
-//
-//        // Duplicate Customer Check if email is present
-//        if(!customerDto.getEmail().isBlank())
-//        {
-//            customerDuplicate = findByEmailAddress(customerDto.getEmail());
-//            if(customerDuplicate != null)
-//            {
-//                LOGGER.error("Customer already exists with Email [" + customerDto.getEmail() + "], cannot allow signup, rejecting...");
-//                throw new ServiceException(String.format("Customer with Email %s already exists", customerDto.getEmail()));
-//            }
-//        }
-//
-//        // Duplicate Customer Check username
-//        customerDuplicate = findByUserName(customerDto.getUserName());
-//
-//        if(customerDuplicate != null)
-//        {
-//            LOGGER.error("Customer already exists with userName [" + customerDto.getUserName() + "], cannot allow signup, rejecting...");
-//            throw new ServiceException(String.format("Customer with userName %s already exists", customerDto.getUserName()));
-//        }
-//
-////        Customer customer = customerMapperImpl.dtoToJpe(customerDto);
-////        customer.setStatus(CustomerStatus.TEMP_BLOCK.getCode());
-////        addUser(customer);
-//
-//        //LOGGER.info("Customer has been saved with Id {}", customer.getId());
-//
-//        if(!otpLogImpl.createAndSendOTP(new OTPDto(customerDto.getMobileNumber(), customerDto.getEmail(), SMSCategory.VERIFY_MOBILE_DEVICE.getValue()))) // sending OTP after register
-//        {
-//            LOGGER.error("Failed to create & Send OTP for Mobile [" + customerDto.getMobileNumber() + "], rejecting...");
-//            throw new ServiceException("SMS Gateway Down");
-//        }
-//
-////        Map<String,Object> result = new HashMap<>();
-////        result.put("mobileNumber",customer.getMobileNumber());
-////        result.put("customerId",customer.getId());
-//
-//        response = new CustomResponseEntity<>("OTP sent Successfully");
-//
-//        return response;
-//    }
-
-//    @Override
-//    public CustomResponseEntity signup(CustomerDto customerDto, OTPLogImpl otpLogImpl) {
-//        Customer customer = customerMapperImpl.dtoToJpe(customerDto);
-//
-//        if(!otpLogImpl.createAndSendOTP(new OTPDto(customerDto.getEmail()))){
-//            LOGGER.error("Failed to create & Send OTP to email [" + customerDto.getEmail() + "], rejecting...");
-//            throw new ServiceException("SMS Gateway Down");
-//        }
-//        customerRepository.save(customer);
-//        return new CustomResponseEntity<>("customer saved succesfully");
-//    }
+    private AccountStatusCode accountStatusCode;
 
     public CustomResponseEntity register(SignUpResponse customerDto, OTPLogImpl otpLogImpl) {
         LOGGER.info("Sign up Request received");
@@ -246,37 +121,12 @@ public class CustomerServiceImpl implements CustomerService
             throw new ServiceException(String.format("Customer with Mobile Number %s already exists", customerDto.getCustomer().getMobileNumber()));
         }
 
-        // Duplicate Customer Check if email is present
-//        if (!customerDto.getCustomer().getEmail().isBlank()) {
-//            customerDuplicate = findByEmailAddress(customerDto.getCustomer().getEmail());
-//            if (customerDuplicate != null) {
-//                LOGGER.error("Customer already exists with Email [" + customerDto.getCustomer().getEmail() + "], cannot allow signup, rejecting...");
-//                throw new ServiceException(String.format("Customer with Email %s already exists", customerDto.getCustomer().getEmail()));
-//            }
-//        }
-
-        // Duplicate Customer Check username
-//        customerDuplicate = findByCnic(customerDto.getGlobalId().getCnicNumber());
-//
-//        if (customerDuplicate != null) {
-//            LOGGER.error("Customer already exists with userName [" + customerDto.getGlobalId().getCnicNumber() + "], cannot allow signup, rejecting...");
-//            throw new ServiceException(String.format("Customer with cnic %s already exists", customerDto.getGlobalId().getCnicNumber()));
-//        }
-
         Account accountByAccountNumber = accountRepository.getAccountByAccountNumber(customerDto.getAccount().getAccountNumber());
 
         if (accountByAccountNumber != null) {
             LOGGER.error("Customer already exists with userName [" + customerDto.getAccount().getAccountNumber() + "], cannot allow signup, rejecting...");
             throw new ServiceException(String.format("Customer with accountNumber %s already exists", customerDto.getAccount().getAccountNumber()));
         }
-
-
-
-        // Create and send OTP (uncomment this section if needed)
-//    if (!otpLogImpl.createAndSendOTP(new OTPDto(customerDto.getCustomer().getMobileNumber(), customerDto.getCustomer().getEmail(), SMSCategory.VERIFY_MOBILE_DEVICE.getValue()))) {
-//        LOGGER.error("Failed to create & Send OTP for Mobile [" + customerDto.getCustomer().getMobileNumber() + "], rejecting...");
-//        throw new ServiceException("SMS Gateway Down");
-//    }
 
         LOGGER.info("OTP sent Successfully");
 
@@ -292,94 +142,117 @@ public class CustomerServiceImpl implements CustomerService
     @Override
     @Transactional
     public CustomResponseEntity signup(SignUpDto signUpDto, OTPLogImpl otpLogImpl) {
-        // Check if the signUpDto is null
         if (signUpDto == null) {
             throw new ServiceException("SignUp data cannot be null");
         }
 
-        try {
-            // Check if CNIC, email, username, or mobile number already exist
-            boolean cnicExists = customerRepository.existsByCnic(signUpDto.getCnic());
-            boolean emailExists = customerRepository.existsByEmail(signUpDto.getEmail());
-            boolean userNameExists = customerRepository.existsByUserName(signUpDto.getUserName());
-            boolean mobileNumberExists = customerRepository.existsByMobileNumber(signUpDto.getMobileNumber());
+        // Check for existing data
+        checkExistingData(signUpDto);
 
-            if (cnicExists) {
-                throw new ServiceException("An account with this CNIC already exists");
-            }
-            if (emailExists) {
-                throw new ServiceException("An account with this email already exists");
-            }
-            if (userNameExists) {
-                throw new ServiceException("An account with this username already exists");
-            }
-            if (mobileNumberExists) {
-                throw new ServiceException("An account with this mobile number already exists");
-            }
+        // Validate the security picture
+        validateImage(signUpDto.getSecurityPictureId());
 
-            // Validate the security picture ID
-            ImageVerification imageVerification = imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
-                    .orElseThrow(() -> new ServiceException("Image does not exist"));
-
-            // Validate the account information in signUpDto
-            AccountDto accountDto = signUpDto.getAccountDto();
-            if (accountDto == null || accountDto.getAccountNumber() == null || accountDto.getAccountNumber().isBlank()) {
-                throw new ServiceException("Account number should not be null or empty");
-            }
-
-            // Create a customer entity from the DTO
-            Customer customer = new Customer();
-            customer.setMobileNumber(signUpDto.getMobileNumber());
-            customer.setFirstName(signUpDto.getFirstName());
-            customer.setLastName(signUpDto.getLastName());
-            customer.setCnic(signUpDto.getCnic());
-            customer.setEmail(signUpDto.getEmail());
-            customer.setUserName(signUpDto.getUserName());
-            customer.setPassword(signUpDto.getPassword());
-            customer.setSecurityPicture(imageVerification.getName());
-            customer.setStatus("00");
-            customer.setStatus(signUpDto.getStatus());
-            customer.setResetToken(signUpDto.getResetToken());
-            customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
-
-            // Initialize the account list if null
-            if (customer.getAccountList() == null) {
-                customer.setAccountList(new ArrayList<>());
-            }
-
-            // Check for duplicate accounts before adding
-            for (Account existingAccount : customer.getAccountList()) {
-                if (existingAccount.getAccountNumber().equals(accountDto.getAccountNumber())) {
-                    throw new ServiceException("Duplicate account number detected. The customer already has an account with this number.");
-                }
-            }
-
-            // Create the account entity and set its properties
-            Account account = new Account();
-            account.setAccountNumber(accountDto.getAccountNumber());
-            account.setAccountBalance(0.0);
-            account.setAccountType(accountDto.getAccountType());
-            account.setAccountDescription(accountDto.getAccountDescription());
-            account.setAccountStatus(accountDto.getAccountStatus());
-            account.setIbanCode(accountDto.getIbanCode());
-            account.setAccountOpenDate(new Date());
-            account.setProofOfIncome(accountDto.getProofOfIncome());
-            account.setCustomer(customer); // Set the customer reference in the account
-
-            // Add the account to the customer's account list
-            customer.getAccountList().add(account);
-
-            // Save the customer entity, which will cascade and save the account
-            customerRepository.save(customer);
-
-            // Save the account entity
-            accountService.createAccount(signUpDto.getAccountDto());
-
-            return new CustomResponseEntity<>("Customer Registered successfully");
-
-        } catch (ServiceException e) {
-            throw new RuntimeException(e);
+        // Validate account information
+        AccountDto accountDto = signUpDto.getAccountDto();
+        if (accountDto == null || accountDto.getAccountNumber() == null || accountDto.getAccountNumber().isBlank()) {
+            throw new ServiceException("Account number should not be null or empty");
         }
+
+        // Build URL and make the HTTP request
+        ResponseEntity<AccountDto> response = makeAccountRequest(accountDto);
+
+        // Check if account exists in response
+        if (response.getBody() == null) {
+            return CustomResponseEntity.error("Account does not exist in CBS");
+        }
+
+        // Check if account is already registered
+        if (accountRepository.findByAccountNumber(accountDto.getAccountNumber()) != null) {
+            return CustomResponseEntity.error("Account already registered: " + accountDto.getAccountNumber());
+        }
+
+        // Create and save customer with account
+        Customer customer = createCustomer(signUpDto, response.getBody());
+        customerRepository.save(customer); // This will cascade and save the account
+
+        // Return success response
+        return new CustomResponseEntity<>("Customer registered successfully");
+    }
+
+    private void checkExistingData(SignUpDto signUpDto) {
+        if (customerRepository.existsByCnic(signUpDto.getCnic())) {
+            throw new ServiceException("An account with this CNIC already exists");
+        }
+        if (customerRepository.existsByEmail(signUpDto.getEmail())) {
+            throw new ServiceException("An account with this email already exists");
+        }
+        if (customerRepository.existsByUserName(signUpDto.getUserName())) {
+            throw new ServiceException("An account with this username already exists");
+        }
+        if (customerRepository.existsByMobileNumber(signUpDto.getMobileNumber())) {
+            throw new ServiceException("An account with this mobile number already exists");
+        }
+    }
+
+    private void validateImage(Long securityPictureId) {
+        if (!imageVerificationRepository.existsById(securityPictureId)) {
+            throw new ServiceException("Image does not exist");
+        }
+    }
+
+
+    private ResponseEntity<AccountDto> makeAccountRequest(AccountDto accountDto) {
+        URI uri = UriComponentsBuilder.fromHttpUrl(accountURL)
+                .queryParam("accountNumber", accountDto.getAccountNumber())
+                .queryParam("bankName", "HBL")
+                .build()
+                .toUri();
+
+        LOGGER.info("Request URL: " + uri.toString());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        return restTemplate.exchange(uri, HttpMethod.GET, entity, AccountDto.class);
+    }
+
+    private Customer createCustomer(SignUpDto signUpDto, AccountDto responseDto) {
+        Customer customer = new Customer();
+        customer.setMobileNumber(signUpDto.getMobileNumber());
+        customer.setFirstName(signUpDto.getFirstName());
+        customer.setLastName(signUpDto.getLastName());
+        customer.setCnic(signUpDto.getCnic());
+        customer.setEmail(signUpDto.getEmail());
+        customer.setUserName(signUpDto.getUserName());
+        customer.setPassword(signUpDto.getPassword());
+        customer.setSecurityPicture(imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
+                .orElseThrow(() -> new ServiceException("Image does not exist")).getName());
+        customer.setStatus(signUpDto.getStatus());
+        customer.setResetToken(signUpDto.getResetToken());
+        customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
+
+        if (customer.getAccountList() == null) {
+            customer.setAccountList(new ArrayList<>());
+        }
+
+        // Create and add account
+        Account account = new Account();
+        account.setAccountNumber(signUpDto.getAccountDto().getAccountNumber());
+        account.setAccountBalance(responseDto.getAccountBalance());
+        account.setAccountType(signUpDto.getAccountDto().getAccountType());
+        account.setAccountDescription(signUpDto.getAccountDto().getAccountDescription());
+        account.setAccountStatus(AccountStatusCode.ACTIVE.getCode());
+        account.setIbanCode(signUpDto.getAccountDto().getIbanCode());
+        account.setAccountOpenDate(new Date());
+        account.setProofOfIncome(signUpDto.getAccountDto().getProofOfIncome());
+        account.setCustomer(customer);
+
+        customer.getAccountList().add(account);
+
+        return customer;
     }
 
     @Override
@@ -538,152 +411,6 @@ public class CustomerServiceImpl implements CustomerService
 
         return new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Customer Detail");
     }
-//        Customer customer = findByEmailAddress(forgetUsernameDto.getAccountNumber());
-//
-//        if(customer != null)
-//        {
-//            LOGGER.info("Customer found with Email Address [{}], sending username on email...", forgetUsernameDto.getEmail());
-//            //send username to user via email
-//            sendUserEmail(customer);
-//
-//            // Kafka email send here
-////            kafkaMessage = new KafkaMessageDto(forgetUsernameDto.getEmail(), "Forget Username", "Dear Customer, your username is " + customer.getUserName(), true, false);
-////            sendMessage(kafkaMessage, "forgetUserName");
-//
-//            LOGGER.info("Email sent [{}]", forgetUsernameDto.getEmail());
-//            response = new CustomResponseEntity<>("user name sent successfully");
-//            return response;
-//        }
-//
-//        LOGGER.info("Customer Email does not exists, verifying mobile number...");
-//
-//        customer = findByMobileNumber(forgetUsernameDto.getMobileNumber());
-//
-//        if(customer != null)
-//        {
-//            LOGGER.info("Customer found with Mobile Number [{}], sending username on SMS...", forgetUsernameDto.getMobileNumber());
-//            // Kafka SMS send here
-//            kafkaMessage = new KafkaMessageDto(forgetUsernameDto.getMobileNumber(), "UserName", "Dear Customer, your username is " + customer.getUserName(), false, true);
-//            sendMessage(kafkaMessage, "forgetUserName");
-//
-//            LOGGER.info("SMS sent [{}]", forgetUsernameDto.getMobileNumber());
-//            response = new CustomResponseEntity<>("user name sent successfully");
-//            return response;
-//        }
-//
-//        throw new ServiceException("Customer Not Found");
-//    }
-
-//    @Override
-//    public CustomResponseEntity forgetPassword(ForgetUsernameDto forgetUsernameDto)
-//    {
-//        LOGGER.info("ForgetPassword request received");
-//        try
-//        {
-//            // Lookup customer in database by e-mail
-//            Customer customer = findByEmailAddress(forgetUsernameDto.getEmail());
-//
-//            if(customer == null)
-//            {
-//                LOGGER.error("Customer with Email [{}] does not exist", forgetUsernameDto.getEmail());
-//                throw new ServiceException("Customer not found!!");
-//            }
-//
-//            // Generate random 36-character string token for reset password
-//            customer.setResetToken(UUID.randomUUID().toString());
-//            AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
-//
-//            // Generate reset token expire time for reset password
-//            customer.setResetTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
-//
-//            // Save token to database
-//            save(customer);
-//
-//            String resetAppUrl = "http://192.168.0.196:9094/v1/customer/verifyForgetPasswordToken?token=" + customer.getResetToken();
-//
-//            // Email message
-//            kafkaMessage = new KafkaMessageDto(forgetUsernameDto.getEmail(), "Forget Password", "Dear Customer, To reset your password, click the link below:\n" + resetAppUrl, true, false);
-//            sendMessage(kafkaMessage, "forgetUserName");
-//
-//            LOGGER.info("Email sent [{}]", forgetUsernameDto.getEmail());
-//            response = new CustomResponseEntity<>("user name sent successfully");
-//            return response;
-//        }
-//        catch (Exception e)
-//        {
-//            LOGGER.error("Password reset link send failed...");
-//            LOGGER.error(e.getMessage());
-//            throw new ServiceException("Oops! Password reset link send failed...");
-//        }
-//    }
-
-    /*
-    @Override
-    public CustomResponseEntity verifyResetPasswordToken(String token)
-    {
-        LOGGER.info("VerifyResetPasswordToken Request Received...");
-        LOGGER.info("Verifying ResetToken [{}]", token);
-
-        try
-        {
-            Customer customer = findByResetToken(token);
-
-            if(customer != null) // Token found in DB
-            {
-                if(customer.getResetTokenExpireTime() > Long.parseLong(Util.dateFormat.format(new Date())))
-                {
-                    LOGGER.info("Customer ResetPassword token found and valid for customer [{}]...", customer.getMobileNumber());
-                    response = new CustomResponseEntity<>(token,"Token found and valid");
-                    return response;
-                }
-                else
-                {
-                    LOGGER.error("Reset Token [{}] has been expired for customer [{}], replying...", customer.getResetToken(), customer.getMobileNumber());
-                    throw new ServiceException("Oops! This is an invalid password reset link.");
-                }
-            }
-
-            throw new ServiceException("Oops! This is an invalid password reset link.");
-        }
-        catch (Exception e)
-        {
-            LOGGER.error("Password reset failed...");
-            LOGGER.error(e.getMessage());
-            throw new ServiceException(e.getMessage());
-        }
-    }*/
-
-    /*@Override
-    public CustomResponseEntity resetPassword(ResetPasswordDto resetPasswordDto)
-    {
-        LOGGER.info("ResetPassword Request Received...");
-
-        try
-        {
-            Customer resetCustomerPassword = findByResetToken(resetPasswordDto.getToken()); // Find the user associated with the reset token
-
-            if(resetCustomerPassword != null) // This should always be non-null, but we check just in case
-            {
-                resetCustomerPassword.setPassword(resetPasswordDto.getPassword()); // Set new password
-                resetCustomerPassword.setResetToken(null); // Set the reset token to null, so it cannot be used again
-                save(resetCustomerPassword); // Save customer
-
-                LOGGER.info("Password reset successful for customer [{}]", resetCustomerPassword.getMobileNumber());
-                response = new CustomResponseEntity<>("You have successfully reset your password. You may now login.");
-                return response;
-            }
-
-            LOGGER.error("Password reset failed...");
-            throw new ServiceException("Oops! This is an invalid password reset link.");
-        }
-        catch (Exception e)
-        {
-            LOGGER.error("Password reset failed...");
-            LOGGER.error(e.getMessage());
-            throw new ServiceException("Oops! Password reset failed..");
-        }
-    }
-*/
 
     @Override
     public CustomResponseEntity forgetPassword(ForgetPasswordRequestDto forgetPasswordRequestDto) {
@@ -822,238 +549,6 @@ public class CustomerServiceImpl implements CustomerService
 
         return ResponseEntity.ok(updateCustomer).getBody();
     }
-
-//    private Boolean accountExist(String cnic , String mobile , String accountNumber)
-//    {
-//        Client client = Client.create();
-//        client.setConnectTimeout(5 * 1000);
-//        client.setReadTimeout(5 * 1000);
-//        WebResource webResource = null;
-//
-//        try
-//        {
-//            // Create a trust manager that does not validate certificate chains
-//            TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
-//                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-//                    return null;
-//                }
-//                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-//                }
-//                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-//                }
-//            }
-//            };
-//
-//            SSLContext sc = SSLContext.getInstance("SSL");
-//            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-//            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-//
-//            // Create all-trusting host name verifier
-//            HostnameVerifier allHostsValid = (hostname, session) -> true;
-//
-//            // Install the all-trusting host verifier
-//            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-//
-//            String url = String.format(URL, cnic , mobile , accountNumber);
-//            LOGGER.info("Calling URL [" + url + "]");
-//            webResource = client.resource(url);
-//
-//            ClientResponse clientResponse = webResource.type(MediaType.APPLICATION_JSON)
-//                    .accept(MediaType.APPLICATION_JSON)
-//                    .get(ClientResponse.class);
-//
-//            if(clientResponse != null)
-//            {
-//                if(clientResponse.getStatus() != 302)
-//                {
-//                    LOGGER.error("Account Service down, rejecting!!");
-//                    return false;
-//                }
-//                AccountDto accountList = clientResponse.getEntity(new GenericType<AccountDto>() {});
-//
-//                if(accountList != null && !accountList.getAccountList().isEmpty() )
-//                {
-//                    LOGGER.info("Account Service response found For Customer [{}], proceeding...", cnic);
-//                    return true;
-//                }
-//            }
-//            else
-//            {
-//                LOGGER.error("Failed to Get response from Account Service For Customer [{}], rejecting...", cnic);
-//            }
-//            return false;
-//        }
-//        catch (Exception e)
-//        {
-//            LOGGER.error("Failed to Get response from Account Service For Customer [{}], rejecting...", cnic);
-//            LOGGER.error(e.getMessage());
-//            return false;
-//        }
-//    }
-
-//    public CustomerDto accountExist(String cnic, String mobile, String accountNumber) {
-//        try {
-//            // Create a trust manager that does not validate certificate chains
-//            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-//                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-//                    return null;
-//                }
-//
-//                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-//                }
-//
-//                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-//                }
-//            }};
-//
-//            SSLContext sc = SSLContext.getInstance("SSL");
-//            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-//            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-//
-//            // Create all-trusting host name verifier
-//            HostnameVerifier allHostsValid = (hostname, session) -> true;
-//
-//            // Install the all-trusting host verifier
-//            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-//
-//            // Build URL with path variables
-//            String url = URL;
-//            URI uri = UriComponentsBuilder.fromUriString(url)
-//                    .buildAndExpand(cnic, mobile, accountNumber)
-//                    .toUri();
-//
-//            // Set headers
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            // Create HttpEntity with headers
-//            HttpEntity<String> entity = new HttpEntity<>(headers);
-//
-//            // Make HTTP GET request
-//            ResponseEntity<CustomerDto> response = restTemplate.exchange(
-//                    uri,
-//                    HttpMethod.GET,
-//                    entity,
-//                    CustomerDto.class
-//            );
-//
-//            // Handle response
-//            if (response.getStatusCode() == HttpStatus.FOUND) { // 302 status code
-//                CustomerDto customerDto = response.getBody();
-//                if (customerDto != null) {
-//                    // Print or log customerDto to verify its content
-//                    System.out.println("Received CustomerDto: " + customerDto.toString());
-//
-//                    // Check if accountList is populated
-//                    if (customerDto.getAccountList() != null && !customerDto.getAccountList().isEmpty()) {
-//                        // Customer found with accountList
-//                        return customerDto;
-//                    } else {
-//                        // Customer found but accountList is empty or null
-//                        // Handle accordingly
-//                        return customerDto;
-//                    }
-//                } else {
-//                    // No customer found
-//                    return null;
-//                }
-//            } else {
-//                // Handle error response or non-302 status
-//                return null;
-//            }
-//
-//        } catch (Exception e) {
-//            // Handle exceptions
-//            e.printStackTrace(); // Replace with proper logging
-//            return null;
-//        }
-//    }
-
-
-//    public CustomerDto accountExist(String cnic, String mobile, String accountNumber) {
-//        try {
-//            // Create a trust manager that does not validate certificate chains
-//            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-//                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-//                    return null;
-//                }
-//
-//                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-//                }
-//
-//                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-//                }
-//            }};
-//
-//            SSLContext sc = SSLContext.getInstance("SSL");
-//            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-//            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-//
-//            // Create all-trusting host name verifier
-//            HostnameVerifier allHostsValid = (hostname, session) -> true;
-//            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-//
-//            // Build URL with path variables
-//            URI uri = UriComponentsBuilder.fromHttpUrl(URL)
-//                    .queryParam("cnic", cnic)
-//                    .queryParam("mobileNumber", mobile)
-//                    .queryParam("accountNumber", accountNumber)
-//                    .build()
-//                    .toUri();
-//
-//            // Log the full request URL
-//            LOGGER.info("Request URL: " + uri.toString());
-//
-//            // Set headers
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            // Create HttpEntity with headers
-//            HttpEntity<String> entity = new HttpEntity<>(headers);
-//
-//            // Make HTTP GET request
-//            ResponseEntity<CustomerDto> response = restTemplate.exchange(
-//                    uri,
-//                    HttpMethod.GET,
-//                    entity,
-//                    CustomerDto.class
-//            );
-//
-//            // Handle response
-//            if (response.getStatusCode() == HttpStatus.OK) { // 200 status code
-//                CustomerDto customerDto = response.getBody();
-//                if (customerDto != null) {
-//                    // Print or log customerDto to verify its content
-//                    LOGGER.info("Received CustomerDto: " + customerDto.toString());
-//
-//                    // Check if accountList is populated
-//                    if (customerDto.getAccountNumber() != null && !customerDto.getAccountNumber().isEmpty()) {
-//                        // Customer found with accountList
-//                        return customerDto;
-//                    } else {
-//                        // Customer found but accountList is empty or null
-//                        // Handle accordingly
-//                        return customerDto;
-//                    }
-//                } else {
-//                    // No customer found
-//                    return null;
-//                }
-//            } else {
-//                // Handle error response or non-200 status
-//                LOGGER.error("Unexpected response status: " + response.getStatusCode());
-//                return null;
-//            }
-//
-//        } catch (Exception e) {
-//            // Handle exceptions
-//            LOGGER.error("Exception occurred: ", e);
-//            return null;
-//        }
-//    }
-//
 
     public SignUpResponse accountExist(String cnic, String mobile, String accountNumber) {
         try {

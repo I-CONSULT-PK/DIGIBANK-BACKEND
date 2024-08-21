@@ -1,5 +1,6 @@
 package com.iconsult.userservice.controller;
 
+import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
@@ -23,6 +24,11 @@ public class FundTransferController {
     @GetMapping("/getAccountTitle")
     public CustomResponseEntity getAccountTitle(@RequestParam("senderAccountNumber") String senderAccountNumber) {
         return this.fundTransferService.getAccountTitle(senderAccountNumber);
+    }
+
+    @PostMapping("/fundTransfer")
+    public CustomResponseEntity getAllBanks(@RequestBody FundTransferDto fundTransferDto) {
+        return this.fundTransferService.fundTransfer(fundTransferDto);
     }
 
 }
