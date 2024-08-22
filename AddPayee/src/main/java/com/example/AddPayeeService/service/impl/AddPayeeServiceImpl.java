@@ -412,4 +412,25 @@ public class AddPayeeServiceImpl implements AddPayeeService {
         return response;
     }
 
+    @Override
+    public CustomResponseEntity addTransferAmount(String accountNumber, String transferAmount , Long customerId) throws Exception {
+        List<AddPayee> payees = addPayeeRepository.findAllByCustomerId((long) customerId);
+        if(Objects.isNull(payees)){
+            return null;
+        }else
+        {
+            for (AddPayee payee : payees) {
+                String decryptedAccountNumber = EncrpytionUtil.decrypt(payee.getAccountNumber(), "t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
+                if (decryptedAccountNumber.equals(accountNumber) && payee.getStatus().equals("00")) {
+                    payee.setLastTransferAmount(transferAmount);
+                    addPayeeRepository.save(payee);
+                }
+            }
+        }
+        response = new CustomResponseEntity<>(true,"Transfer Amount updated");
+        return response;
+    }
+
+
+
 }

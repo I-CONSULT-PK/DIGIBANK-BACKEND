@@ -89,4 +89,10 @@
         }
 
 
+        @PostMapping("/addTransferAmount")
+        public CustomResponseEntity addTransferAmountToBene (@RequestParam  String accountNumber ,@RequestParam String transferAmount, @RequestParam Long customerId) throws Exception {
+            return addPayeeService.addTransferAmount(accountNumber, transferAmount,customerId);
+        }
+
+
     }

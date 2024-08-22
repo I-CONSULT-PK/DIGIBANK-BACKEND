@@ -1,6 +1,7 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
+import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.response.CbsTransfer;
 import com.iconsult.userservice.model.dto.response.FetchAccountDto;
@@ -47,6 +48,10 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    BeneficiaryServiceClient beneficiaryServiceClient;
+
 
     @Override
     public CustomResponseEntity getAllBanks() {
@@ -222,6 +227,9 @@ public class FundTransferServiceImpl implements FundTransferService {
                         // Save both transfer logs
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
                         transactionsGenericDao.saveOrUpdate(fundsTransferReceiver);
+
+                        beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount),receiverAccount.get().getCustomer().getId());
+
 
                         // Return success message
                         return new CustomResponseEntity<>(responseDto, "Transaction successful.");

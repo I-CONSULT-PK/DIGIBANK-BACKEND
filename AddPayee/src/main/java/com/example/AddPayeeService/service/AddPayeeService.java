@@ -33,4 +33,6 @@ public interface AddPayeeService {
     CustomResponseEntity getLocalAccountTitle(String senderAccountNumber);
 
     CustomResponseEntity  addToFavourite(Long beneId , boolean flag , Long customerId);
+
+    CustomResponseEntity addTransferAmount(String accountNumber , String transferAmount , Long customerId) throws Exception;
 }

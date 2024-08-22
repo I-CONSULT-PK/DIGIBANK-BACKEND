@@ -26,5 +26,7 @@ public interface AddPayeeRepository extends JpaRepository<AddPayee, Long > {
 
     List<AddPayee> findAllByCustomerIdAndFlag(Long customerId , Boolean flag);
 
+    Optional<AddPayee> findByAccountNumber(String accountNumber);
+
 
 }

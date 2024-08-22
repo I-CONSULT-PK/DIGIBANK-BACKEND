@@ -35,7 +35,8 @@ public class AddPayee {
     @Column(name = "favourite bene")
     private Boolean flag ;
 
-
+    @Column(name = "last transfer amount")
+    private String lastTransferAmount;
 
     @Column(name = "Mobile Number")
     private String mobileNumber;
@@ -72,6 +73,14 @@ public class AddPayee {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getLastTransferAmount() {
+        return lastTransferAmount;
+    }
+
+    public void setLastTransferAmount(String lastTransferAmount) {
+        this.lastTransferAmount = lastTransferAmount;
     }
 
     public Long getId() {
