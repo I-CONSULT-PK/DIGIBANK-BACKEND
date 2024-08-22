@@ -84,7 +84,7 @@ public class AddPayeeServiceImpl implements AddPayeeService {
         addPayee.setAccountNumber(addPayeeRequestDto.getAccountNumber());
         addPayee.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
         addPayee.setAccountType(addPayeeRequestDto.getAccountType());
-        addPayee.setFlag(addPayeeRequestDto.getFlag());
+        addPayee.setFlag(false);
 
         addPayee.setStatus("00");
 
