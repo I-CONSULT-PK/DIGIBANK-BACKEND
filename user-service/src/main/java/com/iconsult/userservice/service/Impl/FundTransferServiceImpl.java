@@ -1,13 +1,17 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
+import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.response.CbsTransfer;
 import com.iconsult.userservice.model.dto.response.FetchAccountDto;
 import com.iconsult.userservice.model.entity.Account;
+import com.iconsult.userservice.model.entity.AccountCDDetails;
 import com.iconsult.userservice.model.entity.Bank;
 import com.iconsult.userservice.model.entity.Transactions;
+import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -16,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -33,6 +38,8 @@ public class FundTransferServiceImpl implements FundTransferService {
     private final String getAccountTitleURL = "http://localhost:8081/transaction/fetchAccountTitle";
 
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
+
+    private final String interBankFundTransferURL = "http://localhost:8080/api/v1/1link/creditTransaction";
 
     @Autowired
     private GenericDao<Bank> bankGenericDao;
@@ -53,6 +60,8 @@ public class FundTransferServiceImpl implements FundTransferService {
     BeneficiaryServiceClient beneficiaryServiceClient;
 
 
+    @Autowired
+    private AccountCDDetailsRepository accountCDDetailsRepository;
     @Override
     public CustomResponseEntity getAllBanks() {
         LOGGER.info("GetAllBanks Request Received...");
@@ -158,7 +167,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
             // Handle response
             if (response.getStatusCode() == HttpStatus.OK) {
-                CustomResponseEntity<CbsTransfer> responseDto = response.getBody();
+                CustomResponseEntity responseDto = response.getBody();
                 if (responseDto != null && responseDto.isSuccess()) {
                     // Process the success response
 
@@ -179,7 +188,28 @@ public class FundTransferServiceImpl implements FundTransferService {
 
                         senderBalance -= transferAmount;
                         receiverBalance += transferAmount;
+                        AccountCDDetails receiverAccountCDDetails;
+                        AccountCDDetails receiverAccountCDDetails2=accountCDDetailsRepository.findByAccount_Id(receiverAccount.get().getId());
+                        if(receiverAccountCDDetails2 != null) {
+                            receiverAccountCDDetails = receiverAccountCDDetails2;
+                            receiverAccountCDDetails.setActualBalance( receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount());
+                            receiverAccountCDDetails.setCredit(cbsTransferDto.getTransferAmount());
+                            receiverAccountCDDetails.setPreviousBalance(receiverAccount.get().getAccountBalance());
 
+                        } else {
+                            receiverAccountCDDetails = new AccountCDDetails(receiverAccount.get(),receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount(),receiverAccount.get().getAccountBalance(), cbsTransferDto.getTransferAmount(),0.0);
+                        }
+                        AccountCDDetails senderAccountCDDetails;
+                        AccountCDDetails senderAccountCDDetails2=accountCDDetailsRepository.findByAccount_Id(senderAccount.get().getId());
+                        if(senderAccountCDDetails2 != null) {
+                            senderAccountCDDetails = senderAccountCDDetails2;
+                            senderAccountCDDetails.setActualBalance(senderBalance);
+                            senderAccountCDDetails.setDebit(cbsTransferDto.getTransferAmount());
+                            senderAccountCDDetails.setPreviousBalance(senderAccount.get().getAccountBalance());
+
+                        } else {
+                            senderAccountCDDetails = new AccountCDDetails(senderAccount.get(),senderBalance,senderAccount.get().getAccountBalance(), 0.0,cbsTransferDto.getTransferAmount());
+                        }
                         // Update sender's account details
                         senderAccount.get().setAccountBalance(senderBalance);
 
@@ -194,15 +224,19 @@ public class FundTransferServiceImpl implements FundTransferService {
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         String formattedDateTime = LocalDateTime.now().format(formatter);
 
-                        receiverAccount.get().getAccountCdDetails().setCredit(cbsTransferDto.getTransferAmount());
-                        receiverAccount.get().getAccountCdDetails().setPreviousBalance(receiverAccount.get().getAccountBalance());
-                        double totalBalanceReceiverAccount = receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount();
-                        receiverAccount.get().getAccountCdDetails().setActualBalance(totalBalanceReceiverAccount);
-                        receiverAccount.get().setAccountBalance(totalBalanceReceiverAccount);
-                        senderAccount.get().getAccountCdDetails().setPreviousBalance(senderAccount.get().getAccountBalance());
-                        senderAccount.get().getAccountCdDetails().setDebit(cbsTransferDto.getTransferAmount());
-                        senderAccount.get().getAccountCdDetails().setActualBalance(senderBalance);
-                        senderAccount.get().setAccountBalance(senderBalance);
+//                        receiverAccount.get().getAccountCdDetails().setCredit(cbsTransferDto.getTransferAmount());
+//                        receiverAccount.get().getAccountCdDetails().setPreviousBalance(receiverAccount.get().getAccountBalance());
+//                        double totalBalanceReceiverAccount = receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount();
+//                        receiverAccount.get().getAccountCdDetails().setActualBalance(totalBalanceReceiverAccount);
+//                        receiverAccount.get().setAccountBalance(totalBalanceReceiverAccount);
+//                        senderAccount.get().getAccountCdDetails().setPreviousBalance(senderAccount.get().getAccountBalance());
+//                        senderAccount.get().getAccountCdDetails().setDebit(cbsTransferDto.getTransferAmount());
+//                        senderAccount.get().getAccountCdDetails().setActualBalance(senderBalance);
+//                        senderAccount.get().setAccountBalance(senderBalance);
+                        accountCDDetailsRepository.save(senderAccountCDDetails);
+                        accountCDDetailsRepository.save(receiverAccountCDDetails);
+                        senderAccount.get().setAccountCdDetails(senderAccountCDDetails);
+                        receiverAccount.get().setAccountCdDetails(receiverAccountCDDetails);
                         accountRepository.save(senderAccount.get());
                         // Introduce an error to trigger a rollback
                         accountRepository.save(receiverAccount.get());
@@ -213,7 +247,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setCurrentBalance(senderBalance);
                         fundsTransferSender.setDebitAmt(cbsTransferDto.getTransferAmount());
                         fundsTransferSender.setTransactionDate(String.valueOf(new Date()));
-                        fundsTransferSender.setTransactionId(responseDto.getData().getPaymentReference());
+                        HashMap<String,String> map = (HashMap<String, String>) responseDto.getData();
+                        fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
                         // Receiver Transfer Log
                         Transactions fundsTransferReceiver = new Transactions();
@@ -221,7 +256,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
                         fundsTransferReceiver.setTransactionDate(String.valueOf(new Date()));
-                        fundsTransferSender.setTransactionId(responseDto.getData().getPaymentReference());
+                        fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
 
                         // Save both transfer logs
@@ -253,7 +288,82 @@ public class FundTransferServiceImpl implements FundTransferService {
         }
     }
 
+    @Override
+    public CustomResponseEntity interBankFundTransfer(InterBankFundTransferDto fundTransferDto, String authHeader) {
 
+        Account account = accountRepository.getAccountByAccountNumber(fundTransferDto.getFromAccountNumberOrIbanCode());
+        if (account == null) {
+            return new CustomResponseEntity("sender account not found within DiGi Bank!");
+        }
+
+        // 1% of transaction
+        double transactionFee = fundTransferDto.getAmount() * 0.01;
+        double totalAmount = fundTransferDto.getAmount() + transactionFee;
+
+        if (totalAmount > account.getAccountBalance()) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("accountNumber", account.getAccountNumber());
+            map.put("currentBalance", account.getAccountBalance());
+            return new CustomResponseEntity(map, "your account does not have a sufficient balance!");
+        }
+
+        try {
+            URI uri = UriComponentsBuilder.fromHttpUrl(interBankFundTransferURL)
+                    .build()
+                    .toUri();
+
+            // Log the full request URL
+            LOGGER.info("Request URL: " + uri);
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION, authHeader);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+            // Create HttpEntity with Cbs_TransferDto as the body and headers
+            HttpEntity<InterBankFundTransferDto> entity = new HttpEntity<>(fundTransferDto, headers);
+
+            // Make HTTP POST request
+            ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.POST,
+                    entity,
+                    CustomResponseEntity.class
+            );
+            if (response.getStatusCode() == HttpStatus.OK) {
+                CustomResponseEntity responseDto = response.getBody();
+
+                if (responseDto != null && responseDto.isSuccess()) {
+
+                    Transactions fundsTransferSender = new Transactions();
+
+                    fundsTransferSender.setAccount(account);
+                    fundsTransferSender.setCurrentBalance(account.getAccountBalance() - totalAmount);
+                    fundsTransferSender.setDebitAmt(totalAmount);
+                    fundsTransferSender.setTransactionDate(String.valueOf(new Date()));
+                    fundsTransferSender.setCreditAmt(0.0);
+
+                    fundsTransferSender.setBankCode(fundTransferDto.getBankCode());
+
+                    transactionsGenericDao.saveOrUpdate(fundsTransferSender);
+
+                    account.setAccountBalance(account.getAccountBalance() - totalAmount);
+                    accountRepository.save(account);
+                    return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
+                } else {
+                    return new CustomResponseEntity("The recipient accountNumber or secretKey provided is incorrect. " +
+                            "Please verify both and try again.");
+                }
+            } else {
+                throw new RuntimeException("Failed to call API: " + response.getStatusCode());
+            }
+        } catch (RestClientException e) {
+            LOGGER.error("Exception occurred: ", e);
+            return CustomResponseEntity.error("Unable to process the request." +
+                    " Please verify that the provided information is correct and try again.");
+        }
+    }
 
 
 }
