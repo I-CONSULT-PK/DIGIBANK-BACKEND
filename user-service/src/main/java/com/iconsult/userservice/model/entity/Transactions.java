@@ -15,7 +15,7 @@ public class Transactions implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Bank Bank;
+    private String  bankCode;
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
