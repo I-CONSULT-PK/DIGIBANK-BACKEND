@@ -59,10 +59,15 @@ public class Account implements Serializable {
         this.accountNumber = accountNumber;
     }
 
+    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
+    @JsonBackReference
+    private AccountCDDetails accountCdDetails;
+
     @Override
     public String toString() {
         return "Account{" +
                 "id=" + id +
+                ", customer=" + customer +
                 ", accountNumber='" + accountNumber + '\'' +
                 ", accountStatus='" + accountStatus + '\'' +
                 ", accountType='" + accountType + '\'' +
@@ -72,6 +77,9 @@ public class Account implements Serializable {
                 ", ibanCode='" + ibanCode + '\'' +
                 ", accountClosedDate=" + accountClosedDate +
                 ", accountClosedReason='" + accountClosedReason + '\'' +
+                ", proofOfIncome='" + proofOfIncome + '\'' +
+                ", cardList=" + cardList +
+                ", accountCdDetails=" + accountCdDetails +
                 '}';
     }
 }
