@@ -6,8 +6,10 @@ import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.response.CbsTransfer;
 import com.iconsult.userservice.model.dto.response.FetchAccountDto;
 import com.iconsult.userservice.model.entity.Account;
+import com.iconsult.userservice.model.entity.AccountCDDetails;
 import com.iconsult.userservice.model.entity.Bank;
 import com.iconsult.userservice.model.entity.Transactions;
+import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -53,6 +55,8 @@ public class FundTransferServiceImpl implements FundTransferService {
     BeneficiaryServiceClient beneficiaryServiceClient;
 
 
+    @Autowired
+    private AccountCDDetailsRepository accountCDDetailsRepository;
     @Override
     public CustomResponseEntity getAllBanks() {
         LOGGER.info("GetAllBanks Request Received...");
@@ -158,7 +162,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
             // Handle response
             if (response.getStatusCode() == HttpStatus.OK) {
-                CustomResponseEntity<CbsTransfer> responseDto = response.getBody();
+                CustomResponseEntity responseDto = response.getBody();
                 if (responseDto != null && responseDto.isSuccess()) {
                     // Process the success response
 
@@ -179,7 +183,28 @@ public class FundTransferServiceImpl implements FundTransferService {
 
                         senderBalance -= transferAmount;
                         receiverBalance += transferAmount;
+                        AccountCDDetails receiverAccountCDDetails;
+                        AccountCDDetails receiverAccountCDDetails2=accountCDDetailsRepository.findByAccount_Id(receiverAccount.get().getId());
+                        if(receiverAccountCDDetails2 != null) {
+                            receiverAccountCDDetails = receiverAccountCDDetails2;
+                            receiverAccountCDDetails.setActualBalance( receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount());
+                            receiverAccountCDDetails.setCredit(cbsTransferDto.getTransferAmount());
+                            receiverAccountCDDetails.setPreviousBalance(receiverAccount.get().getAccountBalance());
 
+                        } else {
+                            receiverAccountCDDetails = new AccountCDDetails(receiverAccount.get(),receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount(),receiverAccount.get().getAccountBalance(), cbsTransferDto.getTransferAmount(),0.0);
+                        }
+                        AccountCDDetails senderAccountCDDetails;
+                        AccountCDDetails senderAccountCDDetails2=accountCDDetailsRepository.findByAccount_Id(senderAccount.get().getId());
+                        if(senderAccountCDDetails2 != null) {
+                            senderAccountCDDetails = senderAccountCDDetails2;
+                            senderAccountCDDetails.setActualBalance(senderBalance);
+                            senderAccountCDDetails.setDebit(cbsTransferDto.getTransferAmount());
+                            senderAccountCDDetails.setPreviousBalance(senderAccount.get().getAccountBalance());
+
+                        } else {
+                            senderAccountCDDetails = new AccountCDDetails(senderAccount.get(),senderBalance,senderAccount.get().getAccountBalance(), 0.0,cbsTransferDto.getTransferAmount());
+                        }
                         // Update sender's account details
                         senderAccount.get().setAccountBalance(senderBalance);
 
@@ -194,15 +219,19 @@ public class FundTransferServiceImpl implements FundTransferService {
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         String formattedDateTime = LocalDateTime.now().format(formatter);
 
-                        receiverAccount.get().getAccountCdDetails().setCredit(cbsTransferDto.getTransferAmount());
-                        receiverAccount.get().getAccountCdDetails().setPreviousBalance(receiverAccount.get().getAccountBalance());
-                        double totalBalanceReceiverAccount = receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount();
-                        receiverAccount.get().getAccountCdDetails().setActualBalance(totalBalanceReceiverAccount);
-                        receiverAccount.get().setAccountBalance(totalBalanceReceiverAccount);
-                        senderAccount.get().getAccountCdDetails().setPreviousBalance(senderAccount.get().getAccountBalance());
-                        senderAccount.get().getAccountCdDetails().setDebit(cbsTransferDto.getTransferAmount());
-                        senderAccount.get().getAccountCdDetails().setActualBalance(senderBalance);
-                        senderAccount.get().setAccountBalance(senderBalance);
+//                        receiverAccount.get().getAccountCdDetails().setCredit(cbsTransferDto.getTransferAmount());
+//                        receiverAccount.get().getAccountCdDetails().setPreviousBalance(receiverAccount.get().getAccountBalance());
+//                        double totalBalanceReceiverAccount = receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount();
+//                        receiverAccount.get().getAccountCdDetails().setActualBalance(totalBalanceReceiverAccount);
+//                        receiverAccount.get().setAccountBalance(totalBalanceReceiverAccount);
+//                        senderAccount.get().getAccountCdDetails().setPreviousBalance(senderAccount.get().getAccountBalance());
+//                        senderAccount.get().getAccountCdDetails().setDebit(cbsTransferDto.getTransferAmount());
+//                        senderAccount.get().getAccountCdDetails().setActualBalance(senderBalance);
+//                        senderAccount.get().setAccountBalance(senderBalance);
+                        accountCDDetailsRepository.save(senderAccountCDDetails);
+                        accountCDDetailsRepository.save(receiverAccountCDDetails);
+                        senderAccount.get().setAccountCdDetails(senderAccountCDDetails);
+                        receiverAccount.get().setAccountCdDetails(receiverAccountCDDetails);
                         accountRepository.save(senderAccount.get());
                         // Introduce an error to trigger a rollback
                         accountRepository.save(receiverAccount.get());
@@ -213,7 +242,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setCurrentBalance(senderBalance);
                         fundsTransferSender.setDebitAmt(cbsTransferDto.getTransferAmount());
                         fundsTransferSender.setTransactionDate(String.valueOf(new Date()));
-                        fundsTransferSender.setTransactionId(responseDto.getData().getPaymentReference());
+                        HashMap<String,String> map = (HashMap<String, String>) responseDto.getData();
+                        fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
                         // Receiver Transfer Log
                         Transactions fundsTransferReceiver = new Transactions();
@@ -221,7 +251,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
                         fundsTransferReceiver.setTransactionDate(String.valueOf(new Date()));
-                        fundsTransferSender.setTransactionId(responseDto.getData().getPaymentReference());
+                        fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
 
                         // Save both transfer logs

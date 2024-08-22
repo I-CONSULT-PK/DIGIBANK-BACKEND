@@ -27,4 +27,16 @@ public class AccountCDDetails {
     private Double previousBalance;
     private Double credit;
     private Double debit;
+
+
+    public AccountCDDetails() {
+    }
+
+    public AccountCDDetails(Account account, Double actualBalance, Double previousBalance, Double credit, Double debit) {
+        this.account = account;
+        this.actualBalance = actualBalance;
+        this.previousBalance = previousBalance;
+        this.credit = credit;
+        this.debit = debit;
+    }
 }
