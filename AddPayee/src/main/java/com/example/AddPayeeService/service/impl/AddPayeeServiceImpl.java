@@ -256,17 +256,8 @@ public class AddPayeeServiceImpl implements AddPayeeService {
 
             // Update the entity with new values from the DTO
 //            CbsAccountDto cbsAccountDto = getAccountDetails(addPayeeRequestDto.getAccountNumber());
-            addPayee.setAccountNumber(addPayeeRequestDto.getAccountNumber());
-            addPayee.setStatus("00");
-            addPayee.setAccountType(addPayeeRequestDto.getAccountType());
-            addPayee.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
             addPayee.setBeneficiaryAlias(addPayeeRequestDto.getBeneficiaryAlias());
-            addPayee.setBeneficiaryEmailId(addPayeeRequestDto.getBeneficiaryEmailId());
-            addPayee.setCategoryId(addPayeeRequestDto.getCategoryId());
-            addPayee.setCustomerId(addPayeeRequestDto.getCustomerId());
             addPayee.setMobileNumber(addPayeeRequestDto.getMobileNumber());
-            addPayee.setFlag(addPayeeRequestDto.getFlag());
-
             // Save the updated entity back to the repository
             addPayeeRepository.save(addPayee);
 
