@@ -113,19 +113,19 @@ public class DeviceServiceImpl implements DeviceService {
         validateSignUpDto(signUpDto);
 
         // Validate the image verification
-        ImageVerification imageVerification = validateImageVerification(signUpDto.getSecurityPictureId());
 
         // Create and set the customer and device entities
-        Customer customer = createCustomerFromDto(signUpDto, imageVerification);
+        Customer customer = createCustomerFromDto(signUpDto);
         Device device = createDeviceFromDto(signUpDto);
-
+        device.setCustomer(customer);
         // Save the customer (which will also save the device due to cascade settings)
-        Customer c = customerRepository.save(customer);
-        device.setCustomer(c);
-        Device dv = deviceRepository.save(device);
-        Optional<Customer> c2 = customerRepository.findById(c.getId());
-        c2.get().setDevice(dv);
-        customerRepository.save(c2.get());
+//        deviceRepository.save(device);
+        customerRepository.save(customer);
+//
+//
+//        Optional<Customer> c2 = customerRepository.findById(c.getId());
+//        c2.get().setDevice(dv);
+//        customerRepository.save(c2.get());
         return new CustomResponseEntity<>(customer, "Customer Registered successfully");
     }
 
@@ -157,7 +157,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
 
-    private Customer createCustomerFromDto(SignUpDto signUpDto, ImageVerification imageVerification) {
+    private Customer createCustomerFromDto(SignUpDto signUpDto) {
         Customer customer = new Customer();
         customer.setMobileNumber(signUpDto.getMobileNumber());
         customer.setFirstName(signUpDto.getFirstName());
@@ -166,7 +166,6 @@ public class DeviceServiceImpl implements DeviceService {
         customer.setEmail(signUpDto.getEmail());
         customer.setUserName(signUpDto.getUserName());
         customer.setPassword(signUpDto.getPassword());
-        customer.setSecurityPicture(imageVerification.getName());
         customer.setStatus(signUpDto.getStatus());
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());

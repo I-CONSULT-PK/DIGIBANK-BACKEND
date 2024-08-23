@@ -24,4 +24,12 @@ public class Device {
 
     private String deviceName;
     private String pinHash;
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
 }
