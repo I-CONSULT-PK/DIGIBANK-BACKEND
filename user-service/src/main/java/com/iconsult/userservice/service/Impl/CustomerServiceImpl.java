@@ -16,6 +16,7 @@ import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AppConfiguration;
 import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.model.entity.ImageVerification;
+import com.iconsult.userservice.model.mapper.CustomerMapper;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.ImageVerificationRepository;
@@ -71,6 +72,9 @@ public class CustomerServiceImpl implements CustomerService
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    CustomerMapper customerMapper;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -875,6 +879,18 @@ public class CustomerServiceImpl implements CustomerService
         }
 
         return new SuggestedUserName(uniqueUsernames, false);
+    }
+
+    @Override
+    public CustomResponseEntity fetchUserData(Long id) {
+        Customer customer = customerRepository.findById(id).orElse(null);
+        if(Objects.isNull(customer)){
+            LOGGER.info("Error Receiving User Details With Id  : " + id);
+            return CustomResponseEntity.error("Error Receiving User Details With Id  : \" + id");
+        }
+        CustomerDto customerDto = customerMapper.jpeToDto(customer);
+        customerDto.se
+        return new CustomResponseEntity<>(customerDto , "Customer Retrieved Successfully");
     }
 
     @Override

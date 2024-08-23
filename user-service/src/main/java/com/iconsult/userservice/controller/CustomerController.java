@@ -170,4 +170,9 @@ public class CustomerController
     public CustomResponseEntity requestApproval(@Valid @RequestBody CardRequestDto cardRequest){
         return this.cardRequestServiceImpl.createCardRequest(cardRequest);
     }
+
+    @GetMapping("/fetchUserDetails")
+    public CustomResponseEntity fetchUserDetails(@RequestParam ("userId") Long userId) {
+        return this.customerServiceImpl.fetchUserData(userId);
+    }
 }

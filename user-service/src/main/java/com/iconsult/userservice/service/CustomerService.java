@@ -61,5 +61,8 @@ public interface CustomerService
     public SuggestedUserName generateUniqueUsernames(String userName);
 
 
+    public CustomResponseEntity fetchUserData(Long Id);
+
+
     Boolean validateUser(String email, String mobileNumber);
 }

@@ -12,5 +12,7 @@ public interface CustomerMapper
     Customer dtoToJpe(CustomerDto customerDto);
     Customer dtoToJpe(CustomerSignUpDto signUpDto);
 
+    CustomerDto jpeToDto(Customer customer);
+
     Customer dtoToJpeSignUp(SignUpDto signUpDto);
 }
