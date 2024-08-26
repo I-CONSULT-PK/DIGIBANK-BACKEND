@@ -11,6 +11,9 @@ import jakarta.servlet.http.HttpSession;
 
 public interface CustomerService
 {
+    public CustomResponseEntity dashboard(Long customerId);
+
+    public CustomResponseEntity setDefaultAccount(String accountNumber,Boolean status);
      Customer addUser(Customer customer);
 
     CustomResponseEntity register(SignUpResponse customerDto, OTPLogImpl otpLogImpl);

@@ -1,5 +1,6 @@
 package com.iconsult.userservice.service.Impl;
 
+import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.Util.Util;
 import com.iconsult.userservice.domain.OTP;
 import com.iconsult.userservice.dto.EmailDto;
@@ -12,10 +13,7 @@ import com.iconsult.userservice.model.dto.response.DashBoardResponseDto;
 import com.iconsult.userservice.model.dto.response.ForgetUserAndPasswordResponse;
 import com.iconsult.userservice.model.dto.response.KafkaMessageDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
-import com.iconsult.userservice.model.entity.Account;
-import com.iconsult.userservice.model.entity.AppConfiguration;
-import com.iconsult.userservice.model.entity.Customer;
-import com.iconsult.userservice.model.entity.ImageVerification;
+import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.CustomerMapper;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
@@ -76,6 +74,13 @@ public class CustomerServiceImpl implements CustomerService
     @Autowired
     CustomerMapper customerMapper;
 
+    @Autowired
+    GenericDao<Customer> customerGenericDao;
+
+    @Autowired
+    GenericDao<Account> accountGenericDao;
+    @Autowired
+    GenericDao<AccountCDDetails> accountCDDetailsGenericDao;
     @Autowired
     private AccountRepository accountRepository;
 
@@ -897,4 +902,78 @@ public class CustomerServiceImpl implements CustomerService
         Optional<Customer> user = customerRepository.findByMobileNumberAndEmail(mobileNumber, email);
         return user.isPresent();
     }
+
+    public CustomResponseEntity dashboard(Long customerId) {
+        String jpql = "Select c from Customer c where c.id = :customerId";
+        Map<String, Object> param = new HashMap<>();
+        param.put("customerId",customerId);
+        Customer customer = customerGenericDao.findOneWithQuery(jpql, param);
+        if(customer == null){
+            return CustomResponseEntity.error("Customer not found ");
+        }
+        List<Account> accountList = customer.getAccountList();
+        if(accountList.isEmpty()){
+            return CustomResponseEntity.error("The customer does not have any accounts");
+        }
+
+        Optional<Account> defaultAccount = accountList.stream()
+                .filter(Account::getDefaultAccount)
+                .findFirst();
+
+        DashBoardResponseDto dashBoardResponseDto = new DashBoardResponseDto();
+        if(defaultAccount.isPresent()){
+            AccountCDDetails accountCDDetails = defaultAccount.get().getAccountCdDetails();
+            dashBoardResponseDto.setLastDebit(accountCDDetails.getDebit());
+            dashBoardResponseDto.setLastCredit(accountCDDetails.getCredit());
+            dashBoardResponseDto.setTotalBalance(totalBalance(accountList));
+            dashBoardResponseDto.setAccountList(accountList);
+            return new CustomResponseEntity(dashBoardResponseDto,"Success");
+        }
+        defaultAccount = Optional.ofNullable(accountList.get(0));
+        AccountCDDetails accountCDDetails = defaultAccount.get().getAccountCdDetails();
+        dashBoardResponseDto.setLastDebit(accountCDDetails.getDebit() == null ? 0 : accountCDDetails.getDebit());
+        dashBoardResponseDto.setLastCredit(accountCDDetails.getCredit() == null ? 0 : accountCDDetails.getCredit());
+        dashBoardResponseDto.setTotalBalance(totalBalance(accountList));
+        dashBoardResponseDto.setAccountList(accountList);
+        LOGGER.info("Dashboard Request Received...");
+        return new CustomResponseEntity(dashBoardResponseDto,"Success");
+    }
+    private Double totalBalance(List<Account> accountList){
+        Double availableBalance = 0.0;
+        for(Account account : accountList){
+            availableBalance += account.getAccountBalance();
+        }
+        return availableBalance;
+    }
+    public CustomResponseEntity setDefaultAccount(String accountNumber, Boolean setDefaultAccount) {
+
+        LOGGER.info("SetDefaultAccount Request Received...");
+        Map<String, Object> param = new HashMap<>();
+        param.put("accountNumber",accountNumber);
+        String jpql = "Select a from Account a where a.accountNumber = :accountNumber";
+
+        Optional<Account> account = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, param));
+        if(account.isPresent()){
+            List<Account> accountList = account.get().getCustomer().getAccountList();
+            Account checkAccount = accountList.stream()
+                    .filter(defaultAccount -> defaultAccount.getDefaultAccount() == true)
+                    .findFirst()
+                    .orElse(null);
+            if(setDefaultAccount){
+                account.get().setDefaultAccount(true);
+                LOGGER.info("Account found : ", account.get().getAccountNumber());
+                accountRepository.save(account.get());
+                return new CustomResponseEntity(account, "Success");
+
+            } else if (setDefaultAccount == false) {
+                account.get().setDefaultAccount(false);
+                accountRepository.save(account.get());
+                return new CustomResponseEntity(account, "Success");
+            } else return CustomResponseEntity.error("Invalid Status ");
+
+        }
+        LOGGER.info("Account not found");
+        return CustomResponseEntity.error("Account not found");
+    }
+
 }
