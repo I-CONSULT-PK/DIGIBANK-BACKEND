@@ -42,6 +42,22 @@ public class Account implements Serializable {
     private String accountClosedReason;
     private String proofOfIncome;
 
+    public Double getAccountBalance() {
+        return accountBalance;
+    }
+
+    public void setAccountBalance(Double accountBalance) {
+        this.accountBalance = accountBalance;
+    }
+
+    public Boolean getDefaultAccount() {
+        return defaultAccount;
+    }
+
+    public void setDefaultAccount(Boolean defaultAccount) {
+        this.defaultAccount = defaultAccount;
+    }
+
     @JsonManagedReference
     @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Card> cardList;
@@ -90,5 +106,13 @@ public class Account implements Serializable {
 
     public void setCustomer(Customer customer) {
         this.customer = customer;
+    }
+
+    public String getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
     }
 }

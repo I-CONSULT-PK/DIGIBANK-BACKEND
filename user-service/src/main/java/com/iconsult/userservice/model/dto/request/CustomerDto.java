@@ -39,6 +39,8 @@ public class CustomerDto {
     private String clientNature;
     List<AccountDto> accountList;
 
+    String defaultAccountBalance;
+
     private String accountNumber;
 
     private String userName;
@@ -193,5 +195,13 @@ public class CustomerDto {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getDefaultAccountBalance() {
+        return defaultAccountBalance;
+    }
+
+    public void setDefaultAccountBalance(String defaultAccountBalance) {
+        this.defaultAccountBalance = defaultAccountBalance;
     }
 }

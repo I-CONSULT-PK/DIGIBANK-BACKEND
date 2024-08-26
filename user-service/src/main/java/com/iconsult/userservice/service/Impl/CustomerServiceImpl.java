@@ -3,6 +3,7 @@ package com.iconsult.userservice.service.Impl;
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.Util.Util;
 import com.iconsult.userservice.domain.OTP;
+import com.iconsult.userservice.dto.DefaultAccountDto;
 import com.iconsult.userservice.dto.EmailDto;
 import com.iconsult.userservice.enums.AccountStatusCode;
 import com.iconsult.userservice.enums.CustomerStatus;
@@ -258,6 +259,7 @@ public class CustomerServiceImpl implements CustomerService
         account.setAccountOpenDate(new Date());
         account.setProofOfIncome(signUpDto.getAccountDto().getProofOfIncome());
         account.setCustomer(customer);
+        account.setDefaultAccount(true);
 
         customer.getAccountList().add(account);
 
@@ -889,12 +891,26 @@ public class CustomerServiceImpl implements CustomerService
     @Override
     public CustomResponseEntity fetchUserData(Long id) {
         Customer customer = customerRepository.findById(id).orElse(null);
+        CustomerDto customerDto = customerMapper.jpeToDto(customer);
+        DefaultAccountDto defaultAccountDto = new DefaultAccountDto();
         if(Objects.isNull(customer)){
             LOGGER.info("Error Receiving User Details With Id  : " + id);
             return CustomResponseEntity.error("Error Receiving User Details With Id  : \" + id");
         }
-        CustomerDto customerDto = customerMapper.jpeToDto(customer);
-        return new CustomResponseEntity<>(customerDto , "Customer Retrieved Successfully");
+        List<Account> accounts = customer.getAccountList();
+
+        // Stream and filter to get the default account
+        Optional<Account> defaultAccount = accounts.stream()
+                .filter(Account::getDefaultAccount)
+                .findFirst();
+        if (!defaultAccount.isEmpty()){
+            defaultAccountDto.setDefaultAccountBalance(String.valueOf(defaultAccount.get().getAccountBalance()));
+            defaultAccountDto.setAccountNumber(defaultAccount.get().getAccountNumber());
+            defaultAccountDto.setFirstName(customer.getFirstName());
+            defaultAccountDto.setLastName(customer.getLastName());
+            defaultAccountDto.setAccountType(defaultAccount.get().getAccountType());
+        }
+        return new CustomResponseEntity<>(defaultAccountDto , "Default Account Retrieved Successfully");
     }
 
     @Override
