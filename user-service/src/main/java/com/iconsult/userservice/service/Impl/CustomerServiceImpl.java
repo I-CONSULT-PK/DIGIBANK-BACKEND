@@ -889,7 +889,6 @@ public class CustomerServiceImpl implements CustomerService
             return CustomResponseEntity.error("Error Receiving User Details With Id  : \" + id");
         }
         CustomerDto customerDto = customerMapper.jpeToDto(customer);
-        customerDto.se
         return new CustomResponseEntity<>(customerDto , "Customer Retrieved Successfully");
     }
 
