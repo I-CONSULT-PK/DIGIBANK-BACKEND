@@ -16,6 +16,7 @@ import com.iconsult.userservice.model.dto.response.KafkaMessageDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.CustomerMapper;
+import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.ImageVerificationRepository;
@@ -82,6 +83,9 @@ public class CustomerServiceImpl implements CustomerService
     GenericDao<Account> accountGenericDao;
     @Autowired
     GenericDao<AccountCDDetails> accountCDDetailsGenericDao;
+
+    @Autowired
+    private AccountCDDetailsRepository accountCDDetailsRepository;
     @Autowired
     private AccountRepository accountRepository;
 
@@ -183,7 +187,10 @@ public class CustomerServiceImpl implements CustomerService
 
         // Create and save customer with account
         Customer customer = createCustomer(signUpDto, response.getBody());
-        customerRepository.save(customer); // This will cascade and save the account
+        customerRepository.save(customer);
+        Account account = accountRepository.findByAccountNumberAndCustomerCnic(accountDto.getAccountNumber(), accountDto.getCustomer().getCnic());
+        AccountCDDetails accountCDDetails = new AccountCDDetails(account, account.getAccountBalance(),0.0,accountDto.getLastCredit(),accountDto.getLastDebit());
+        accountCDDetailsRepository.save(accountCDDetails);// This will cascade and save the account
 
         // Return success response
         return new CustomResponseEntity<>("Customer registered successfully");
@@ -243,7 +250,6 @@ public class CustomerServiceImpl implements CustomerService
         customer.setStatus(signUpDto.getStatus());
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
-
         if (customer.getAccountList() == null) {
             customer.setAccountList(new ArrayList<>());
         }

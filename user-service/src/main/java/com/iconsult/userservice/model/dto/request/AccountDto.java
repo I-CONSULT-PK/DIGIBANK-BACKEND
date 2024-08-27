@@ -40,6 +40,9 @@ public class AccountDto {
     @JsonIgnore
     private BranchDto cbsBranchDto;
 
+    private Double lastCredit;
+    private Double lastDebit;
+
     public Customer getCustomer() {
         return customer;
     }
@@ -143,5 +146,22 @@ public class AccountDto {
     public void setCbsBranchDto(BranchDto cbsBranchDto) {
         this.cbsBranchDto = cbsBranchDto;
     }
+
+    public Double getLastCredit() {
+        return lastCredit;
+    }
+
+    public void setLastCredit(Double lastCredit) {
+        this.lastCredit = lastCredit;
+    }
+
+    public Double getLastDebit() {
+        return lastDebit;
+    }
+
+    public void setLastDebit(Double lastDebit) {
+        this.lastDebit = lastDebit;
+    }
+
     /*cbs9 done*/
 }
