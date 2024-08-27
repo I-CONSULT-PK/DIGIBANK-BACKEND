@@ -255,6 +255,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setCreditAmt(0.0);
                         fundsTransferSender.setSenderAccount(senderAccount.get().getAccountNumber());
                         fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
+                        fundsTransferSender.setCurrency(map.get("ccy"));
                         // Receiver Transfer Log
                         com.iconsult.userservice.model.entity.Transactions fundsTransferReceiver = new com.iconsult.userservice.model.entity.Transactions();
                         fundsTransferReceiver.setAccount(receiverAccount.get());
@@ -265,6 +266,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferReceiver.setDebitAmt(0.0);
                         fundsTransferReceiver.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferReceiver.setSenderAccount(senderAccount.get().getAccountNumber());
+                        fundsTransferReceiver.setCurrency(map.get("ccy"));
 
                         // Save both transfer logs
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
