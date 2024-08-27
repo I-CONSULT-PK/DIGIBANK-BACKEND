@@ -2,7 +2,9 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.model.entity.Card;
+import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.model.entity.Device;
+import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.SettingRepository;
 import com.iconsult.userservice.service.SettingService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -25,6 +28,9 @@ public class SettingServiceImpl implements SettingService {
 
     @Autowired
     CustomResponseEntity customResponseEntity;
+
+    @Autowired
+    CustomerRepository customerRepository;
 
     @Autowired
     private SettingRepository settingRepository;
@@ -69,5 +75,18 @@ public class SettingServiceImpl implements SettingService {
              LOGGER.error("Exception occurred: ", e);
          }
         return null;
+    }
+
+    @Override
+    public CustomResponseEntity setTransferLimit(Long userId, Double transferLimit) {
+        Customer customer = customerRepository.findById(userId).orElse(null);
+        if(Objects.isNull(customer)){
+            LOGGER.info("Error Receiving User Details With Id  : " + userId);
+            return CustomResponseEntity.error("Error Receiving User Details With Id  : \" + id");
+        }
+        customer.setTransferLimit(transferLimit);
+        customerRepository.save(customer);
+        CustomResponseEntity customResponse = new CustomResponseEntity<>(true, "Customer limit set successfully to : " + transferLimit);
+        return customResponse;
     }
 }

@@ -19,4 +19,10 @@ public class SettingController {
         return this.settingService.setDevicePin(deviceName, devicePin);
 
     }
+
+    @PostMapping("/setTransferLimit")
+    public CustomResponseEntity setTransferLimit(@RequestParam ("userId") Long userId, @RequestParam ("transferLimit") Double transferLimit) {
+        return this.settingService.setTransferLimit(userId, transferLimit);
+
+    }
 }

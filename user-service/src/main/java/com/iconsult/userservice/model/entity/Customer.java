@@ -38,6 +38,7 @@ public class Customer implements Serializable {
     private String sessionToken;
     private Long sessionTokenExpireTime;
     private String accountNumber;
+    private Double transferLimit;
 
 //    @JsonManagedReference
 //    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -58,4 +59,7 @@ public class Customer implements Serializable {
     public void setId(Long id) {
         this.id = id;
     }
+
+
+
 }
