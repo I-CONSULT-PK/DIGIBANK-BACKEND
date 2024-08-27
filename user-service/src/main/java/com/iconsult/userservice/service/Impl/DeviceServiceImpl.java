@@ -115,8 +115,10 @@ public class DeviceServiceImpl implements DeviceService {
         // Validate the image verification
 
         // Create and set the customer and device entities
-        Customer customer = createCustomerFromDto(signUpDto);
         Device device = createDeviceFromDto(signUpDto);
+
+        Customer customer = createCustomerFromDto(signUpDto);
+        customer.setDevices(Collections.singletonList(device));
         device.setCustomer(customer);
         // Save the customer (which will also save the device due to cascade settings)
 //        deviceRepository.save(device);
@@ -170,7 +172,6 @@ public class DeviceServiceImpl implements DeviceService {
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
         customer.setAccountNumber(signUpDto.getAccountDto().getAccountNumber());
-        customer.setDevice(signUpDto.getDevice());
 
         return customer;
     }
@@ -193,7 +194,7 @@ public class DeviceServiceImpl implements DeviceService {
         }
 
         // Check if the device exists and the pin hash matches
-        Device device = customer.getDevice();
+        Device device = (Device) customer.getDevices();
         if (device == null) {
             throw new ServiceException("Device not found for this customer");
         }

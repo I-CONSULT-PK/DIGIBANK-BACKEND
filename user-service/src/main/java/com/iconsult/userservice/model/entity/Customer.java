@@ -39,9 +39,13 @@ public class Customer implements Serializable {
     private Long sessionTokenExpireTime;
     private String accountNumber;
 
+//    @JsonManagedReference
+//    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private Device device;
+
     @JsonManagedReference
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Device device;
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Device> devices;
 
     //@JsonManagedReference
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
