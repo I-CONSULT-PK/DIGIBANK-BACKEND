@@ -184,4 +184,9 @@ public class CustomerController
         return this.customerServiceImpl.setDefaultAccount(accountNumber, defaultAccount);
     }
 
+    @GetMapping("/getAccount")
+    public CustomResponseEntity getAccount(@RequestParam ("accountNumber") String accountNumber){
+        return this.customerServiceImpl.getUserAccount(accountNumber);
+    }
+
 }

@@ -920,6 +920,20 @@ public class CustomerServiceImpl implements CustomerService
     }
 
     @Override
+    public CustomResponseEntity getUserAccount(String accountNumber) {
+        LOGGER.info("SetDefaultAccount Request Received...");
+        Map<String, Object> param = new HashMap<>();
+        param.put("accountNumber",accountNumber);
+        String jpql = "Select a from Account a where a.accountNumber = :accountNumber";
+
+        Optional<Account> account = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, param));
+        if(Objects.isNull(account)){
+            return CustomResponseEntity.error("The account does not exist");
+        }
+        return new CustomResponseEntity<>(account , "Account Retrieved Successfully");
+    }
+
+    @Override
     public Boolean validateUser(String mobileNumber, String email) {
         Optional<Customer> user = customerRepository.findByMobileNumberAndEmail(mobileNumber, email);
         return user.isPresent();

@@ -66,6 +66,7 @@ public interface CustomerService
 
     public CustomResponseEntity fetchUserData(Long Id);
 
+    public CustomResponseEntity getUserAccount(String accountNumber);
 
     Boolean validateUser(String email, String mobileNumber);
 }
