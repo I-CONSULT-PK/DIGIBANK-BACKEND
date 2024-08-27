@@ -3,7 +3,6 @@ package com.iconsult.userservice.controller;
 import com.iconsult.userservice.constant.StatementType;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
-import com.iconsult.userservice.model.dto.request.TransactionsDTO;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
@@ -12,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/customer/fund")
@@ -44,7 +43,7 @@ public class FundTransferController {
     }
 
     @GetMapping("/generateStatement")
-    public CustomResponseEntity<List<TransactionsDTO>> getTransactionsByAccountAndDateRange(
+    public CustomResponseEntity<Map<String, Object>> getTransactionsByAccountAndDateRange(
             @RequestParam String accountNumber,
             @RequestParam String startDate,
             @RequestParam String endDate,
@@ -55,11 +54,13 @@ public class FundTransferController {
         try {
             statementType = StatementType.valueOf(statementTypeParam.toUpperCase());
         }catch (IllegalArgumentException ex){
-            return new CustomResponseEntity<>("Invalid");
+            return new CustomResponseEntity<>("Invalid Request Param statement type!");
         }
 
+        CustomResponseEntity<Map<String, Object>> transactionResponse;
+
         if(statementType==StatementType.MINI){
-            CustomResponseEntity<List<TransactionsDTO>> transactionResponse = fundTransferService.generateMiniStatement(accountNumber);
+            transactionResponse  = fundTransferService.generateMiniStatement(accountNumber);
 
             if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {
                 transactionResponse.setSuccess(true);
@@ -74,7 +75,7 @@ public class FundTransferController {
             return transactionResponse;
 
         }else if(statementType==StatementType.DATE_RANGE){
-            CustomResponseEntity<List<TransactionsDTO>> transactionResponse = fundTransferService.getTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
+            transactionResponse = fundTransferService.getTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
 
             // Check if the data is present and not empty
             if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {

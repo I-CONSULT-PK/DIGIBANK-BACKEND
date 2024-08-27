@@ -1,18 +1,19 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
-import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
+import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.model.dto.request.TransactionsDTO;
 import com.iconsult.userservice.model.dto.response.FetchAccountDto;
+import com.iconsult.userservice.model.dto.response.StatementDetailDto;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AccountCDDetails;
 import com.iconsult.userservice.model.entity.Bank;
 import com.iconsult.userservice.model.entity.Transactions;
 import com.iconsult.userservice.model.mapper.TransactionsMapper;
-import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
+import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -26,7 +27,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -377,25 +377,43 @@ public class FundTransferServiceImpl implements FundTransferService {
     }
 
     @Override
-    public CustomResponseEntity<List<TransactionsDTO>> getTransactionsByAccountAndDateRange(
+    public CustomResponseEntity<Map<String, Object>> getTransactionsByAccountAndDateRange(
             String accountNumber, String startDate, String endDate) {
 
         List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, startDate, endDate);
         List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
 
+        StatementDetailDto statementDetailDto = new StatementDetailDto();
+        Transactions tran = transactions.get(0);
+        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
+        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
+        statementDetailDto.setCurrency(tran.getCurrency());
+        statementDetailDto.setAccountOpenDate(tran.getAccount().getAccountOpenDate());
+        statementDetailDto.setIBAN(tran.getIbanCode());
+        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
+        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+        if(tran.getBankCode()!=null) {
+            statementDetailDto.setBankCode(tran.getBankCode());
+        }
+
         CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
         response.setData(transactionDTOs);
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("AccountDetail",statementDetailDto);
+        map.put("transactionList",response);
+
 
         if (!transactionDTOs.isEmpty()) {
             response.setMessage("Transactions fetched successfully.");
         } else {
             response.setMessage("No transactions found for the given criteria.");
         }
-        return response;
+        return new CustomResponseEntity<>(map,"details");
     }
 
     @Override
-    public CustomResponseEntity<List<TransactionsDTO>> generateMiniStatement(String accountNumber) {
+    public CustomResponseEntity<Map<String, Object>> generateMiniStatement(String accountNumber) {
 
         DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -408,15 +426,33 @@ public class FundTransferServiceImpl implements FundTransferService {
         List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, start, end);
         List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
 
+        StatementDetailDto statementDetailDto = new StatementDetailDto();
+        Transactions tran = transactions.get(0);
+        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
+        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
+        statementDetailDto.setCurrency(tran.getCurrency());
+        statementDetailDto.setAccountOpenDate(tran.getAccount().getAccountOpenDate());
+        statementDetailDto.setIBAN(tran.getIbanCode());
+        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
+        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+        if(tran.getBankCode()!=null) {
+            statementDetailDto.setBankCode(tran.getBankCode());
+        }
+
         CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
         response.setData(transactionDTOs);
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("AccountDetail",statementDetailDto);
+        map.put("transactionList",response);
+
 
         if (!transactionDTOs.isEmpty()) {
             response.setMessage("Transactions fetched successfully.");
         } else {
             response.setMessage("No transactions found for the given criteria.");
         }
-        return response;
+        return new CustomResponseEntity<>(map,"details");
     }
 
 

@@ -2,10 +2,9 @@ package com.iconsult.userservice.service;
 
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
-import com.iconsult.userservice.model.dto.request.TransactionsDTO;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 
-import java.util.List;
+import java.util.Map;
 
 public interface FundTransferService {
 
@@ -17,9 +16,9 @@ public interface FundTransferService {
 
     CustomResponseEntity interBankFundTransfer(InterBankFundTransferDto interBankFundTransferDto, String authHeader);
 
-    CustomResponseEntity<List<TransactionsDTO>> getTransactionsByAccountAndDateRange(
+    CustomResponseEntity<Map<String, Object>>getTransactionsByAccountAndDateRange(
             String accountNumber, String startDate, String endDate);
 
-    CustomResponseEntity<List<TransactionsDTO>> generateMiniStatement(String accountNumber);
+    CustomResponseEntity<Map<String, Object>> generateMiniStatement(String accountNumber);
 }
 
