@@ -41,5 +41,9 @@ public class Transactions implements Serializable {
     private Double taxAmount;
     private Double serviceCharges;
     private String transactionNarration;
+    private String receiverAccount;
+    private String senderAccount;
+    private String natureOfAccount;
+    private String currency;
 
 }

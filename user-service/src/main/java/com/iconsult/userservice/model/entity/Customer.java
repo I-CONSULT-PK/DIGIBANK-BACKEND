@@ -38,6 +38,7 @@ public class Customer implements Serializable {
     private String sessionToken;
     private Long sessionTokenExpireTime;
     private String accountNumber;
+    private String registeredAddress;
 
     @JsonManagedReference
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -53,29 +54,5 @@ public class Customer implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public List<Account> getAccountList() {
-        return accountList;
-    }
-
-    public void setAccountList(List<Account> accountList) {
-        this.accountList = accountList;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
     }
 }
