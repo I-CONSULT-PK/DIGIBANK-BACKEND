@@ -1,5 +1,6 @@
 package com.iconsult.userservice.controller;
 
+import com.iconsult.userservice.constant.StatementType;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.model.dto.request.TransactionsDTO;
@@ -42,28 +43,54 @@ public class FundTransferController {
         return this.fundTransferService.interBankFundTransfer(fundTransferDto,authHeader);
     }
 
-    @GetMapping("/byAccountAndDateRange")
+    @GetMapping("/generateStatement")
     public CustomResponseEntity<List<TransactionsDTO>> getTransactionsByAccountAndDateRange(
             @RequestParam String accountNumber,
             @RequestParam String startDate,
-            @RequestParam String endDate) {
+            @RequestParam String endDate,
+            @RequestParam String statementTypeParam) {
 
-        CustomResponseEntity<List<TransactionsDTO>> transactionResponse = fundTransferService.getTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
+        StatementType statementType;
 
-        // Check if the data is present and not empty
-        if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {
-            transactionResponse.setSuccess(true);
-            transactionResponse.setMessage("Transactions fetched successfully.");
-
-        } else {
-            // Set an error message if no transactions are found
-            transactionResponse.setSuccess(false);
-            transactionResponse.setMessage("No transactions found for the given criteria.");
+        try {
+            statementType = StatementType.valueOf(statementTypeParam.toUpperCase());
+        }catch (IllegalArgumentException ex){
+            return new CustomResponseEntity<>("Invalid");
         }
 
-        return transactionResponse;
+        if(statementType==StatementType.MINI){
+            CustomResponseEntity<List<TransactionsDTO>> transactionResponse = fundTransferService.generateMiniStatement(accountNumber);
+
+            if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {
+                transactionResponse.setSuccess(true);
+                transactionResponse.setMessage("Transactions fetched successfully.");
+
+            } else {
+                // Set an error message if no transactions are found
+                transactionResponse.setSuccess(false);
+                transactionResponse.setMessage("No transactions found for the given criteria.");
+            }
+
+            return transactionResponse;
+
+        }else if(statementType==StatementType.DATE_RANGE){
+            CustomResponseEntity<List<TransactionsDTO>> transactionResponse = fundTransferService.getTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
+
+            // Check if the data is present and not empty
+            if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {
+                transactionResponse.setSuccess(true);
+                transactionResponse.setMessage("Transactions fetched successfully.");
+
+            } else {
+                // Set an error message if no transactions are found
+                transactionResponse.setSuccess(false);
+                transactionResponse.setMessage("No transactions found for the given criteria.");
+            }
+
+            return transactionResponse;
+
+        }else {
+            return CustomResponseEntity.error("invalid statement type");
+        }
     }
-
-
-
 }

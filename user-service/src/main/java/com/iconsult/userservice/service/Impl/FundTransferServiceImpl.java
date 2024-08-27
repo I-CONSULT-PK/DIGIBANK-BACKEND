@@ -392,8 +392,30 @@ public class FundTransferServiceImpl implements FundTransferService {
         return response;
     }
 
+    @Override
+    public CustomResponseEntity<List<TransactionsDTO>> generateMiniStatement(String accountNumber) {
 
+        DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+        LocalDate today = LocalDate.now();
+        LocalDate lastThreeMonths = today.minusMonths(3);
+
+        String start = lastThreeMonths.format(DATE_FORMATTER);
+        String end = today.format(DATE_FORMATTER);
+
+        List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, start, end);
+        List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
+
+        CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
+        response.setData(transactionDTOs);
+
+        if (!transactionDTOs.isEmpty()) {
+            response.setMessage("Transactions fetched successfully.");
+        } else {
+            response.setMessage("No transactions found for the given criteria.");
+        }
+        return response;
+    }
 
 
 }

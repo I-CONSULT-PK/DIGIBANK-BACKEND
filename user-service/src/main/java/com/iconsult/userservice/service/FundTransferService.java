@@ -19,5 +19,7 @@ public interface FundTransferService {
 
     CustomResponseEntity<List<TransactionsDTO>> getTransactionsByAccountAndDateRange(
             String accountNumber, String startDate, String endDate);
+
+    CustomResponseEntity<List<TransactionsDTO>> generateMiniStatement(String accountNumber);
 }
 
