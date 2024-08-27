@@ -4,15 +4,16 @@ import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
-import com.iconsult.userservice.model.dto.response.CbsTransfer;
+import com.iconsult.userservice.model.dto.request.TransactionsDTO;
 import com.iconsult.userservice.model.dto.response.FetchAccountDto;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AccountCDDetails;
 import com.iconsult.userservice.model.entity.Bank;
 import com.iconsult.userservice.model.entity.Transactions;
+import com.iconsult.userservice.model.mapper.TransactionsMapper;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
-import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -39,19 +40,22 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
-    private final String interBankFundTransferURL = "http://localhost:8080/api/v1/1link/creditTransaction";
+    private final String interBankFundTransferURL = "http://192.168.0.135:8080/api/v1/1link/creditTransaction";
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     @Autowired
     private GenericDao<Bank> bankGenericDao;
+
+    @Autowired
+    private GenericDao<com.iconsult.userservice.model.entity.Transactions> transactionsGenericDao;
 
     @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
     GenericDao<Account> accountGenericDao;
-
-    @Autowired
-    GenericDao<Transactions> transactionsGenericDao;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -221,9 +225,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                         accountGenericDao.saveOrUpdate(receiverAccount.get());
 
                         // 3. Log the transfer details (create and save Cbs_Transfer records for sender and receiver)
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                        String formattedDateTime = LocalDateTime.now().format(formatter);
-
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedDate = LocalDate.now().format(formatter);
 //                        receiverAccount.get().getAccountCdDetails().setCredit(cbsTransferDto.getTransferAmount());
 //                        receiverAccount.get().getAccountCdDetails().setPreviousBalance(receiverAccount.get().getAccountBalance());
 //                        double totalBalanceReceiverAccount = receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount();
@@ -242,22 +245,26 @@ public class FundTransferServiceImpl implements FundTransferService {
                         accountRepository.save(receiverAccount.get());
 
                         // Sender Transfer Log
-                        Transactions fundsTransferSender = new Transactions();
+                        com.iconsult.userservice.model.entity.Transactions fundsTransferSender = new com.iconsult.userservice.model.entity.Transactions();
                         fundsTransferSender.setAccount(senderAccount.get());
                         fundsTransferSender.setCurrentBalance(senderBalance);
                         fundsTransferSender.setDebitAmt(cbsTransferDto.getTransferAmount());
-                        fundsTransferSender.setTransactionDate(String.valueOf(new Date()));
+                        fundsTransferSender.setTransactionDate(formattedDate);
                         HashMap<String,String> map = (HashMap<String, String>) responseDto.getData();
                         fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
+                        fundsTransferSender.setSenderAccount(senderAccount.get().getAccountNumber());
+                        fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         // Receiver Transfer Log
-                        Transactions fundsTransferReceiver = new Transactions();
+                        com.iconsult.userservice.model.entity.Transactions fundsTransferReceiver = new com.iconsult.userservice.model.entity.Transactions();
                         fundsTransferReceiver.setAccount(receiverAccount.get());
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
-                        fundsTransferReceiver.setTransactionDate(String.valueOf(new Date()));
+                        fundsTransferReceiver.setTransactionDate(formattedDate);
                         fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
+                        fundsTransferReceiver.setReceiverAccount(receiverAccount.get().getAccountNumber());
+                        fundsTransferReceiver.setSenderAccount(senderAccount.get().getAccountNumber());
 
                         // Save both transfer logs
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
@@ -336,12 +343,14 @@ public class FundTransferServiceImpl implements FundTransferService {
 
                 if (responseDto != null && responseDto.isSuccess()) {
 
-                    Transactions fundsTransferSender = new Transactions();
+                    com.iconsult.userservice.model.entity.Transactions fundsTransferSender = new com.iconsult.userservice.model.entity.Transactions();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    String formattedDate = LocalDate.now().format(formatter);
 
                     fundsTransferSender.setAccount(account);
                     fundsTransferSender.setCurrentBalance(account.getAccountBalance() - totalAmount);
                     fundsTransferSender.setDebitAmt(totalAmount);
-                    fundsTransferSender.setTransactionDate(String.valueOf(new Date()));
+                    fundsTransferSender.setTransactionDate(formattedDate);
                     fundsTransferSender.setCreditAmt(0.0);
 
                     fundsTransferSender.setBankCode(fundTransferDto.getBankCode());
@@ -364,6 +373,27 @@ public class FundTransferServiceImpl implements FundTransferService {
                     " Please verify that the provided information is correct and try again.");
         }
     }
+
+    @Override
+    public CustomResponseEntity<List<TransactionsDTO>> getTransactionsByAccountAndDateRange(
+            String accountNumber, String startDate, String endDate) {
+
+        List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, startDate, endDate);
+        List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
+
+        CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
+        response.setData(transactionDTOs);
+
+        if (!transactionDTOs.isEmpty()) {
+            response.setMessage("Transactions fetched successfully.");
+        } else {
+            response.setMessage("No transactions found for the given criteria.");
+        }
+        return response;
+    }
+
+
+
 
 
 }

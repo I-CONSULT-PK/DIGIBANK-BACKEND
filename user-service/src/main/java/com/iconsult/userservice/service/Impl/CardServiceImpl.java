@@ -28,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.net.ssl.*;
 import java.net.URI;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -63,6 +64,11 @@ public class CardServiceImpl implements CardService {
     private CardRequestRepository requestRepository;
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    CustomResponseEntity customResponseEntity;
+
+    private final String URLL = "http://localhost:8081/cards/setPin";
     @Autowired
     private CardMapper cardMapper;
     public CustomResponseEntity cardExist(CardDto cardDto) {
@@ -362,5 +368,99 @@ public class CardServiceImpl implements CardService {
         cardDetail.setExpiryDate(outputDate);
         cardDetail = cardRepository.save(cardDetail);
         return cardDetail;
+    }
+
+    @Override
+    public CustomResponseEntity setPinDigiBankAndMyDatabase(String pin, String card){
+
+        try {
+            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }};
+
+
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = (hostname, session) -> true;
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+
+            // Build URL with path variables
+            URI uri = UriComponentsBuilder.fromHttpUrl(URLL)
+                    .queryParam("pin", pin)
+                    .queryParam("card", card)
+                    .build()
+                    .toUri();
+
+            // Log the full request URL
+            LOGGER.info("Request URL: " + uri.toString());
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Create HttpEntity with headers
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Make HTTP GET request
+            ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    CustomResponseEntity.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                CustomResponseEntity responseDto = response.getBody();
+                if (responseDto != null) {
+                    // Print or log responseDto to verify its content
+                    LOGGER.info("Received CustomerDto: " + responseDto.toString());
+
+
+                    String jpql = "SELECT c FROM Card c WHERE c.cardNumber = :card";
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("card", card);
+
+                    Card cardNo = cardGenericDao.findOneWithQuery(jpql, params);
+
+                    if (cardNo == null) {
+                        LOGGER.error("Card does not exists");
+                        return CustomResponseEntity.error("Card does not exists");
+                    }
+
+                    if (cardNo.getPin() != null) {
+                        LOGGER.error("Pin already exists");
+                        return CustomResponseEntity.error("Pin already exists");
+                    }
+                    else
+                    {
+                        cardNo.setPin(pin);
+                        cardNo.setCardNumber(card);
+                        cardGenericDao.saveOrUpdate(cardNo);
+                        return customResponseEntity = new CustomResponseEntity<>("Pin set Successfully!");
+                    }
+                } else
+                    return null;
+            } else {
+                // Handle error response or non-200 status
+                LOGGER.error("Unexpected response status: " + response.getStatusCode());
+                return null;
+            }
+        } catch (Exception e) {
+            // Handle exceptions
+            LOGGER.error("Exception occurred: ", e);
+        }
+        return null;
     }
 }

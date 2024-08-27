@@ -261,7 +261,7 @@ public class CustomerServiceImpl implements CustomerService
         account.setAccountType(signUpDto.getAccountDto().getAccountType());
         account.setAccountDescription(signUpDto.getAccountDto().getAccountDescription());
         account.setAccountStatus(AccountStatusCode.ACTIVE.getCode());
-        account.setIbanCode(signUpDto.getAccountDto().getIbanCode());
+        account.setIbanCode(responseDto.getIbanCode());
         account.setAccountOpenDate(new Date());
         account.setProofOfIncome(signUpDto.getAccountDto().getProofOfIncome());
         account.setCustomer(customer);
