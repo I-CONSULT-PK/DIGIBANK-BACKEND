@@ -36,4 +36,11 @@ public class CardController {
     public CustomResponseEntity requestApproval(@Valid @RequestBody CardRequestDto cardRequest){
         return this.cardService.createCardRequest(cardRequest);
     }
+
+    @PostMapping("/setPin")
+    public CustomResponseEntity setPinDigiBankAndMyDatabase(@Valid @RequestParam String pin, @RequestParam String card){
+        return this.cardService.setPinDigiBankAndMyDatabase(pin,card);
+    }
+
+
 }

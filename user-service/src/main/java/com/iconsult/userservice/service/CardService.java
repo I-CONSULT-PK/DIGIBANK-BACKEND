@@ -17,5 +17,5 @@ public interface CardService {
     CustomResponseEntity updateCardStatus(Long cardNumber, String accountNumber, Boolean status);
     CustomResponseEntity createCardRequest(CardRequestDto cardRequest);
 
-
+    CustomResponseEntity setPinDigiBankAndMyDatabase(String pin, String card);
 }

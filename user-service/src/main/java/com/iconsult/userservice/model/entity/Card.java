@@ -2,11 +2,15 @@ package com.iconsult.userservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.Date;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "cards")
 public class Card implements Serializable {
     @Id
@@ -26,6 +30,8 @@ public class Card implements Serializable {
 
     private Boolean isActive;
     private Boolean isCreditCard;
+
+    private String pin;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
@@ -117,6 +123,8 @@ public class Card implements Serializable {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
+
 
     @Override
     public String toString() {
