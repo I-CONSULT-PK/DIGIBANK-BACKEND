@@ -27,6 +27,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -245,7 +246,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         accountRepository.save(receiverAccount.get());
 
                         // Sender Transfer Log
-                        com.iconsult.userservice.model.entity.Transactions fundsTransferSender = new com.iconsult.userservice.model.entity.Transactions();
+                        Transactions fundsTransferSender = new Transactions();
                         fundsTransferSender.setAccount(senderAccount.get());
                         fundsTransferSender.setCurrentBalance(senderBalance);
                         fundsTransferSender.setDebitAmt(cbsTransferDto.getTransferAmount());
@@ -257,7 +258,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferSender.setCurrency(map.get("ccy"));
                         // Receiver Transfer Log
-                        com.iconsult.userservice.model.entity.Transactions fundsTransferReceiver = new com.iconsult.userservice.model.entity.Transactions();
+                        Transactions fundsTransferReceiver = new Transactions();
                         fundsTransferReceiver.setAccount(receiverAccount.get());
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
@@ -385,16 +386,20 @@ public class FundTransferServiceImpl implements FundTransferService {
 
         StatementDetailDto statementDetailDto = new StatementDetailDto();
         Transactions tran = transactions.get(0);
-        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
-        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
-        statementDetailDto.setCurrency(tran.getCurrency());
-        statementDetailDto.setAccountOpenDate(tran.getAccount().getAccountOpenDate());
-        statementDetailDto.setIBAN(tran.getIbanCode());
-        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
-        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+
         if(tran.getBankCode()!=null) {
             statementDetailDto.setBankCode(tran.getBankCode());
         }
+        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
+        statementDetailDto.setIBAN(tran.getIbanCode());
+        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
+        statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
+        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+        Date accountOpenDate = tran.getAccount().getAccountOpenDate();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        statementDetailDto.setAccountOpenDate(formatter.format(accountOpenDate));
+        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
+        statementDetailDto.setCurrency(tran.getCurrency());
 
         CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
         response.setData(transactionDTOs);
@@ -428,16 +433,20 @@ public class FundTransferServiceImpl implements FundTransferService {
 
         StatementDetailDto statementDetailDto = new StatementDetailDto();
         Transactions tran = transactions.get(0);
-        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
-        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
-        statementDetailDto.setCurrency(tran.getCurrency());
-        statementDetailDto.setAccountOpenDate(tran.getAccount().getAccountOpenDate());
-        statementDetailDto.setIBAN(tran.getIbanCode());
-        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
-        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+
         if(tran.getBankCode()!=null) {
             statementDetailDto.setBankCode(tran.getBankCode());
         }
+        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
+        statementDetailDto.setIBAN(tran.getIbanCode());
+        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
+        statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
+        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+        Date accountOpenDate = tran.getAccount().getAccountOpenDate();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        statementDetailDto.setAccountOpenDate(formatter.format(accountOpenDate));
+        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
+        statementDetailDto.setCurrency(tran.getCurrency());
 
         CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
         response.setData(transactionDTOs);
