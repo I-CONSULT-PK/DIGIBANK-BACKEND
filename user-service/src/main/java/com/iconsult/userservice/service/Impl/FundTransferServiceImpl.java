@@ -4,7 +4,6 @@ import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
-import com.iconsult.userservice.model.dto.response.CbsTransfer;
 import com.iconsult.userservice.model.dto.response.FetchAccountDto;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AccountCDDetails;
@@ -12,7 +11,6 @@ import com.iconsult.userservice.model.entity.Bank;
 import com.iconsult.userservice.model.entity.Transactions;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
-import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
@@ -181,6 +179,9 @@ public class FundTransferServiceImpl implements FundTransferService {
                     Optional<Account> receiverAccount = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
 
                     if (senderAccount.isPresent() && receiverAccount.isPresent()) {
+                        if(senderAccount.get().getTransactionLimit() < cbsTransferDto.getTransferAmount()) {
+                            return CustomResponseEntity.error("Account limit is lower than the transfer money");
+                        }
                         // 2. Apply credit and debit logic
                         double senderBalance = senderAccount.get().getAccountBalance();
                         double receiverBalance = receiverAccount.get().getAccountBalance();

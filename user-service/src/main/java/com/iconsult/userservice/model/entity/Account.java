@@ -1,7 +1,6 @@
 package com.iconsult.userservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -62,6 +61,7 @@ public class Account implements Serializable {
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
     @JsonBackReference
     private AccountCDDetails accountCdDetails;
+    private Double transactionLimit;
 
     @Override
     public String toString() {
@@ -80,6 +80,7 @@ public class Account implements Serializable {
                 ", proofOfIncome='" + proofOfIncome + '\'' +
                 ", cardList=" + cardList +
                 ", accountCdDetails=" + accountCdDetails +
+                ", transactionLimit=" + transactionLimit +
                 '}';
     }
 

@@ -1,12 +1,14 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
-import com.iconsult.userservice.model.entity.Card;
+import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.model.entity.Device;
+import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.SettingRepository;
 import com.iconsult.userservice.service.SettingService;
+import com.zanbeel.customUtility.exception.ServiceException;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class SettingServiceImpl implements SettingService {
@@ -25,12 +24,17 @@ public class SettingServiceImpl implements SettingService {
 
     @Autowired
     private GenericDao<Device> cardGenericDao;
+    @Autowired
+    private GenericDao<Account> accountGenericDao;
+
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @Autowired
     CustomResponseEntity customResponseEntity;
 
     @Autowired
-    CustomerRepository customerRepository;
+    AccountRepository accountRepository;
 
     @Autowired
     private SettingRepository settingRepository;
@@ -72,21 +76,22 @@ public class SettingServiceImpl implements SettingService {
          }
          catch (Exception e) {
 //              Handle exceptions
-             LOGGER.error("Exception occurred: ", e);
+             LOGGER.error("Exception occurred: ");
          }
         return null;
     }
 
     @Override
-    public CustomResponseEntity setTransferLimit(Long userId, Double transferLimit) {
-        Customer customer = customerRepository.findById(userId).orElse(null);
-        if(Objects.isNull(customer)){
-            LOGGER.info("Error Receiving User Details With Id  : " + userId);
-            return CustomResponseEntity.error("Error Receiving User Details With Id  : \" + id");
-        }
-        customer.setTransferLimit(transferLimit);
-        customerRepository.save(customer);
-        CustomResponseEntity customResponse = new CustomResponseEntity<>(true, "Customer limit set successfully to : " + transferLimit);
+    public CustomResponseEntity setTransactionLimit(String accountNumber, Long customerId, Double transferLimit) {
+        Customer customer = customerRepository.findById(customerId).orElse(null);
+        String jpql = "SELECT a FROM Account a WHERE a.accountNumber = :accountNumber and a.customer= :customer";
+        Map<String, Object> params = new HashMap<>();
+        params.put("accountNumber", accountNumber);
+        params.put("customer", customer);
+        Account account = accountGenericDao.findOneWithQuery(jpql, params);
+        account.setTransactionLimit(transferLimit);
+        accountGenericDao.saveOrUpdate(account);
+        CustomResponseEntity customResponse = new CustomResponseEntity<>( "Transaction limit set to : " + transferLimit);
         return customResponse;
     }
 }

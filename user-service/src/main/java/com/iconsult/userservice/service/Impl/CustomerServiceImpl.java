@@ -237,7 +237,7 @@ public class CustomerServiceImpl implements CustomerService
         customer.setStatus(signUpDto.getStatus());
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
-        customer.setTransferLimit(0.0);
+
 
         if (customer.getAccountList() == null) {
             customer.setAccountList(new ArrayList<>());
@@ -254,7 +254,7 @@ public class CustomerServiceImpl implements CustomerService
         account.setAccountOpenDate(new Date());
         account.setProofOfIncome(signUpDto.getAccountDto().getProofOfIncome());
         account.setCustomer(customer);
-
+        account.setTransactionLimit(0.0);
         customer.getAccountList().add(account);
 
         return customer;

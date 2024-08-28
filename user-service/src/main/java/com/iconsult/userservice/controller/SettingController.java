@@ -1,9 +1,7 @@
 package com.iconsult.userservice.controller;
 
-import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.service.Impl.SettingServiceImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,9 +18,9 @@ public class SettingController {
 
     }
 
-    @PostMapping("/setTransferLimit")
-    public CustomResponseEntity setTransferLimit(@RequestParam ("userId") Long userId, @RequestParam ("transferLimit") Double transferLimit) {
-        return this.settingService.setTransferLimit(userId, transferLimit);
+    @PostMapping("/setTransactionLimit")
+    public CustomResponseEntity setTransactionLimit(@RequestParam ("accountNumber") String accountNumber, @RequestParam ("userId") Long userId,@RequestParam ("transactionLimit") Double transactionLimit ) {
+        return this.settingService.setTransactionLimit(accountNumber, userId, transactionLimit);
 
     }
 }

@@ -5,5 +5,5 @@ import com.zanbeel.customUtility.model.CustomResponseEntity;
 public interface SettingService {
     CustomResponseEntity setDevicePin(String deviceName, String devicePin);
 
-    CustomResponseEntity setTransferLimit(Long userId, Double transferLimit);
+    CustomResponseEntity setTransactionLimit(String accountNumber, Long userId, Double transferLimit);
 }
