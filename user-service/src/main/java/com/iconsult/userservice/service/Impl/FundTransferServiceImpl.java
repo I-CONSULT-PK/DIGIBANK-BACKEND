@@ -1,6 +1,7 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
+import com.iconsult.userservice.constant.StatementType;
 import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
@@ -67,6 +68,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     @Autowired
     private AccountCDDetailsRepository accountCDDetailsRepository;
+
     @Override
     public CustomResponseEntity getAllBanks() {
         LOGGER.info("GetAllBanks Request Received...");
@@ -194,26 +196,26 @@ public class FundTransferServiceImpl implements FundTransferService {
                         senderBalance -= transferAmount;
                         receiverBalance += transferAmount;
                         AccountCDDetails receiverAccountCDDetails;
-                        AccountCDDetails receiverAccountCDDetails2=accountCDDetailsRepository.findByAccount_Id(receiverAccount.get().getId());
-                        if(receiverAccountCDDetails2 != null) {
+                        AccountCDDetails receiverAccountCDDetails2 = accountCDDetailsRepository.findByAccount_Id(receiverAccount.get().getId());
+                        if (receiverAccountCDDetails2 != null) {
                             receiverAccountCDDetails = receiverAccountCDDetails2;
-                            receiverAccountCDDetails.setActualBalance( receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount());
+                            receiverAccountCDDetails.setActualBalance(receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount());
                             receiverAccountCDDetails.setCredit(cbsTransferDto.getTransferAmount());
                             receiverAccountCDDetails.setPreviousBalance(receiverAccount.get().getAccountBalance());
 
                         } else {
-                            receiverAccountCDDetails = new AccountCDDetails(receiverAccount.get(),receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount(),receiverAccount.get().getAccountBalance(), cbsTransferDto.getTransferAmount(),0.0);
+                            receiverAccountCDDetails = new AccountCDDetails(receiverAccount.get(), receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount(), receiverAccount.get().getAccountBalance(), cbsTransferDto.getTransferAmount(), 0.0);
                         }
                         AccountCDDetails senderAccountCDDetails;
-                        AccountCDDetails senderAccountCDDetails2=accountCDDetailsRepository.findByAccount_Id(senderAccount.get().getId());
-                        if(senderAccountCDDetails2 != null) {
+                        AccountCDDetails senderAccountCDDetails2 = accountCDDetailsRepository.findByAccount_Id(senderAccount.get().getId());
+                        if (senderAccountCDDetails2 != null) {
                             senderAccountCDDetails = senderAccountCDDetails2;
                             senderAccountCDDetails.setActualBalance(senderBalance);
                             senderAccountCDDetails.setDebit(cbsTransferDto.getTransferAmount());
                             senderAccountCDDetails.setPreviousBalance(senderAccount.get().getAccountBalance());
 
                         } else {
-                            senderAccountCDDetails = new AccountCDDetails(senderAccount.get(),senderBalance,senderAccount.get().getAccountBalance(), 0.0,cbsTransferDto.getTransferAmount());
+                            senderAccountCDDetails = new AccountCDDetails(senderAccount.get(), senderBalance, senderAccount.get().getAccountBalance(), 0.0, cbsTransferDto.getTransferAmount());
                         }
                         // Update sender's account details
                         senderAccount.get().setAccountBalance(senderBalance);
@@ -251,7 +253,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setCurrentBalance(senderBalance);
                         fundsTransferSender.setDebitAmt(cbsTransferDto.getTransferAmount());
                         fundsTransferSender.setTransactionDate(formattedDate);
-                        HashMap<String,String> map = (HashMap<String, String>) responseDto.getData();
+                        HashMap<String, String> map = (HashMap<String, String>) responseDto.getData();
                         fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
                         fundsTransferSender.setSenderAccount(senderAccount.get().getAccountNumber());
@@ -273,7 +275,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
                         transactionsGenericDao.saveOrUpdate(fundsTransferReceiver);
 
-                        beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount),receiverAccount.get().getCustomer().getId());
+                        beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount), receiverAccount.get().getCustomer().getId());
 
 
                         // Return success message
@@ -381,40 +383,50 @@ public class FundTransferServiceImpl implements FundTransferService {
     public CustomResponseEntity<Map<String, Object>> getTransactionsByAccountAndDateRange(
             String accountNumber, String startDate, String endDate) {
 
-        List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, startDate, endDate);
-        List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
+        LocalDate startDt = LocalDate.parse(startDate);
+        LocalDate endDt = LocalDate.parse(endDate);
 
-        StatementDetailDto statementDetailDto = new StatementDetailDto();
-        Transactions tran = transactions.get(0);
-
-        if(tran.getBankCode()!=null) {
-            statementDetailDto.setBankCode(tran.getBankCode());
+        if(startDt.isAfter(endDt)){
+            return new CustomResponseEntity<>("Start date cannot be after end date.");
         }
-        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
-        statementDetailDto.setIBAN(tran.getIbanCode());
-        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
-        statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
-        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
-        Date accountOpenDate = tran.getAccount().getAccountOpenDate();
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        statementDetailDto.setAccountOpenDate(formatter.format(accountOpenDate));
-        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
-        statementDetailDto.setCurrency(tran.getCurrency());
+        List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, startDate, endDate);
+        if(transactions.isEmpty()) {
+           return new CustomResponseEntity<>("no transactions found against this account number within this date range");
+        }
+            List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
 
-        CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
-        response.setData(transactionDTOs);
+            StatementDetailDto statementDetailDto = new StatementDetailDto();
+            Transactions tran = transactions.get(0);
 
-        Map<String,Object> map = new HashMap<>();
-        map.put("AccountDetail",statementDetailDto);
-        map.put("transactionList",response);
+            if (tran.getBankCode() != null) {
+                statementDetailDto.setBankCode(tran.getBankCode());
+            }
+            statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
+            statementDetailDto.setIBAN(tran.getIbanCode());
+            statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " + tran.getAccount().getCustomer().getLastName());
+            statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
+            statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+            Date accountOpenDate = tran.getAccount().getAccountOpenDate();
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            statementDetailDto.setAccountOpenDate(formatter.format(accountOpenDate));
+            statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
+            statementDetailDto.setCurrency(tran.getCurrency());
+
+            CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
+            response.setData(transactionDTOs);
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("AccountDetail", statementDetailDto);
+            map.put("transactionList", response);
 
 
         if (!transactionDTOs.isEmpty()) {
+            response.setSuccess(true);
             response.setMessage("Transactions fetched successfully.");
         } else {
             response.setMessage("No transactions found for the given criteria.");
         }
-        return new CustomResponseEntity<>(map,"details");
+        return new CustomResponseEntity<>(map, "details");
     }
 
     @Override
@@ -423,23 +435,26 @@ public class FundTransferServiceImpl implements FundTransferService {
         DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         LocalDate today = LocalDate.now();
-        LocalDate lastThreeMonths = today.minusMonths(3);
+        LocalDate lastThreeMonths = today.minusMonths(1);
 
         String start = lastThreeMonths.format(DATE_FORMATTER);
         String end = today.format(DATE_FORMATTER);
 
         List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, start, end);
+        if(transactions.isEmpty()) {
+            return new CustomResponseEntity<>("invalid account number");
+        }
         List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
 
         StatementDetailDto statementDetailDto = new StatementDetailDto();
         Transactions tran = transactions.get(0);
 
-        if(tran.getBankCode()!=null) {
+        if (tran.getBankCode() != null) {
             statementDetailDto.setBankCode(tran.getBankCode());
         }
         statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
         statementDetailDto.setIBAN(tran.getIbanCode());
-        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
+        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " + tran.getAccount().getCustomer().getLastName());
         statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
         statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
         Date accountOpenDate = tran.getAccount().getAccountOpenDate();
@@ -451,17 +466,50 @@ public class FundTransferServiceImpl implements FundTransferService {
         CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
         response.setData(transactionDTOs);
 
-        Map<String,Object> map = new HashMap<>();
-        map.put("AccountDetail",statementDetailDto);
-        map.put("transactionList",response);
+        Map<String, Object> map = new HashMap<>();
+        map.put("AccountDetail", statementDetailDto);
+        map.put("transactionList", response);
 
 
         if (!transactionDTOs.isEmpty()) {
+            response.setSuccess(true);
             response.setMessage("Transactions fetched successfully.");
         } else {
             response.setMessage("No transactions found for the given criteria.");
         }
-        return new CustomResponseEntity<>(map,"details");
+        return new CustomResponseEntity<>(map, "details");
+    }
+
+    @Override
+    public CustomResponseEntity<Map<String, Object>> generateStatement(String accountNumber, String startDate, String endDate, String statementType) {
+
+        StatementType statementTypeParam;
+        try {
+            statementTypeParam = StatementType.valueOf(statementType.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return new CustomResponseEntity<>("Invalid Request Param for statement type!");
+        }
+
+        CustomResponseEntity<Map<String, Object>> transactionResponse;
+
+        if (statementTypeParam == StatementType.MINI) {
+            transactionResponse = generateMiniStatement(accountNumber);
+
+            if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {
+                transactionResponse.setSuccess(true);
+            }
+            return transactionResponse;
+        } else if (statementTypeParam == StatementType.DATE_RANGE) {
+            transactionResponse = getTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
+            if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {
+                transactionResponse.setSuccess(true);
+            }
+            return transactionResponse;
+
+        } else {
+            return new CustomResponseEntity<>("Please enter valid statement type param");
+        }
+
     }
 
 
