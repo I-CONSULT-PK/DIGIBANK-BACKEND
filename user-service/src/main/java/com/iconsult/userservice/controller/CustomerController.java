@@ -157,15 +157,15 @@ public class CustomerController
         return customerServiceImpl.validateUser(mobileNumber,email);
     }
 
-    @GetMapping("/dashboard")
-    public CustomResponseEntity dashboard(@RequestParam("customerId")Long customerId, @RequestParam("accountId")Long accountId) {
-        return this.customerServiceImpl.dashboard(customerId, accountId);
-    }
+//    @GetMapping("/dashboard")
+//    public CustomResponseEntity dashboard(@RequestParam("customerId")Long customerId, @RequestParam("accountId")Long accountId) {
+//        return this.customerServiceImpl.dashboard(customerId, accountId);
+//    }
 
-    @GetMapping("/setdefaultaccount")
-    public CustomResponseEntity setDefaultAccount(@RequestParam ("accountNumber") String accountNumber) {
-        return this.customerServiceImpl.setDefaultAccount(accountNumber);
-    }
+//    @GetMapping("/setdefaultaccount")
+//    public CustomResponseEntity setDefaultAccount(@RequestParam ("accountNumber") String accountNumber) {
+//        return this.customerServiceImpl.setDefaultAccount(accountNumber);
+//    }
     @PostMapping("/cardApprovalRequest")
     public CustomResponseEntity requestApproval(@Valid @RequestBody CardRequestDto cardRequest){
         return this.cardRequestServiceImpl.createCardRequest(cardRequest);
@@ -175,4 +175,18 @@ public class CustomerController
     public CustomResponseEntity fetchUserDetails(@RequestParam ("userId") Long userId) {
         return this.customerServiceImpl.fetchUserData(userId);
     }
+    @GetMapping("/dashboard")
+    public CustomResponseEntity dashboard(@RequestParam("customerId")Long customerId) {
+        return this.customerServiceImpl.dashboard(customerId);
+    }
+    @GetMapping("/setdefaultaccount")
+    public CustomResponseEntity setDefaultAccount(@RequestParam ("accountNumber") String accountNumber,@RequestParam("defaultAccount") Boolean defaultAccount) {
+        return this.customerServiceImpl.setDefaultAccount(accountNumber, defaultAccount);
+    }
+
+    @GetMapping("/getAccount")
+    public CustomResponseEntity getAccount(@RequestParam ("accountNumber") String accountNumber){
+        return this.customerServiceImpl.getUserAccount(accountNumber);
+    }
+
 }

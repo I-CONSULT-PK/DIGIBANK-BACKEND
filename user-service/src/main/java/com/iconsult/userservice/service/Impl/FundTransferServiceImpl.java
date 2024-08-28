@@ -1,16 +1,20 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
-import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
+import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
+import com.iconsult.userservice.model.dto.request.TransactionsDTO;
 import com.iconsult.userservice.model.dto.response.FetchAccountDto;
+import com.iconsult.userservice.model.dto.response.StatementDetailDto;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AccountCDDetails;
 import com.iconsult.userservice.model.entity.Bank;
 import com.iconsult.userservice.model.entity.Transactions;
-import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.model.mapper.TransactionsMapper;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
+import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
@@ -23,8 +27,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-
-import java.time.LocalDateTime;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -37,19 +41,22 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
-    private final String interBankFundTransferURL = "http://localhost:8080/api/v1/1link/creditTransaction";
+    private final String interBankFundTransferURL = "http://192.168.0.135:8080/api/v1/1link/creditTransaction";
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     @Autowired
     private GenericDao<Bank> bankGenericDao;
+
+    @Autowired
+    private GenericDao<com.iconsult.userservice.model.entity.Transactions> transactionsGenericDao;
 
     @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
     GenericDao<Account> accountGenericDao;
-
-    @Autowired
-    GenericDao<Transactions> transactionsGenericDao;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -222,9 +229,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                         accountGenericDao.saveOrUpdate(receiverAccount.get());
 
                         // 3. Log the transfer details (create and save Cbs_Transfer records for sender and receiver)
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                        String formattedDateTime = LocalDateTime.now().format(formatter);
-
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                        String formattedDate = LocalDate.now().format(formatter);
 //                        receiverAccount.get().getAccountCdDetails().setCredit(cbsTransferDto.getTransferAmount());
 //                        receiverAccount.get().getAccountCdDetails().setPreviousBalance(receiverAccount.get().getAccountBalance());
 //                        double totalBalanceReceiverAccount = receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount();
@@ -247,18 +253,24 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setAccount(senderAccount.get());
                         fundsTransferSender.setCurrentBalance(senderBalance);
                         fundsTransferSender.setDebitAmt(cbsTransferDto.getTransferAmount());
-                        fundsTransferSender.setTransactionDate(String.valueOf(new Date()));
+                        fundsTransferSender.setTransactionDate(formattedDate);
                         HashMap<String,String> map = (HashMap<String, String>) responseDto.getData();
                         fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
+                        fundsTransferSender.setSenderAccount(senderAccount.get().getAccountNumber());
+                        fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
+                        fundsTransferSender.setCurrency(map.get("ccy"));
                         // Receiver Transfer Log
                         Transactions fundsTransferReceiver = new Transactions();
                         fundsTransferReceiver.setAccount(receiverAccount.get());
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
-                        fundsTransferReceiver.setTransactionDate(String.valueOf(new Date()));
+                        fundsTransferReceiver.setTransactionDate(formattedDate);
                         fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
+                        fundsTransferReceiver.setReceiverAccount(receiverAccount.get().getAccountNumber());
+                        fundsTransferReceiver.setSenderAccount(senderAccount.get().getAccountNumber());
+                        fundsTransferReceiver.setCurrency(map.get("ccy"));
 
                         // Save both transfer logs
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
@@ -337,12 +349,14 @@ public class FundTransferServiceImpl implements FundTransferService {
 
                 if (responseDto != null && responseDto.isSuccess()) {
 
-                    Transactions fundsTransferSender = new Transactions();
+                    com.iconsult.userservice.model.entity.Transactions fundsTransferSender = new com.iconsult.userservice.model.entity.Transactions();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    String formattedDate = LocalDate.now().format(formatter);
 
                     fundsTransferSender.setAccount(account);
                     fundsTransferSender.setCurrentBalance(account.getAccountBalance() - totalAmount);
                     fundsTransferSender.setDebitAmt(totalAmount);
-                    fundsTransferSender.setTransactionDate(String.valueOf(new Date()));
+                    fundsTransferSender.setTransactionDate(formattedDate);
                     fundsTransferSender.setCreditAmt(0.0);
 
                     fundsTransferSender.setBankCode(fundTransferDto.getBankCode());
@@ -364,6 +378,93 @@ public class FundTransferServiceImpl implements FundTransferService {
             return CustomResponseEntity.error("Unable to process the request." +
                     " Please verify that the provided information is correct and try again.");
         }
+    }
+
+    @Override
+    public CustomResponseEntity<Map<String, Object>> getTransactionsByAccountAndDateRange(
+            String accountNumber, String startDate, String endDate) {
+
+        List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, startDate, endDate);
+        List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
+
+        StatementDetailDto statementDetailDto = new StatementDetailDto();
+        Transactions tran = transactions.get(0);
+
+        if(tran.getBankCode()!=null) {
+            statementDetailDto.setBankCode(tran.getBankCode());
+        }
+        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
+        statementDetailDto.setIBAN(tran.getIbanCode());
+        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
+        statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
+        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+        Date accountOpenDate = tran.getAccount().getAccountOpenDate();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        statementDetailDto.setAccountOpenDate(formatter.format(accountOpenDate));
+        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
+        statementDetailDto.setCurrency(tran.getCurrency());
+
+        CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
+        response.setData(transactionDTOs);
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("AccountDetail",statementDetailDto);
+        map.put("transactionList",response);
+
+
+        if (!transactionDTOs.isEmpty()) {
+            response.setMessage("Transactions fetched successfully.");
+        } else {
+            response.setMessage("No transactions found for the given criteria.");
+        }
+        return new CustomResponseEntity<>(map,"details");
+    }
+
+    @Override
+    public CustomResponseEntity<Map<String, Object>> generateMiniStatement(String accountNumber) {
+
+        DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        LocalDate today = LocalDate.now();
+        LocalDate lastThreeMonths = today.minusMonths(3);
+
+        String start = lastThreeMonths.format(DATE_FORMATTER);
+        String end = today.format(DATE_FORMATTER);
+
+        List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, start, end);
+        List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
+
+        StatementDetailDto statementDetailDto = new StatementDetailDto();
+        Transactions tran = transactions.get(0);
+
+        if(tran.getBankCode()!=null) {
+            statementDetailDto.setBankCode(tran.getBankCode());
+        }
+        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
+        statementDetailDto.setIBAN(tran.getIbanCode());
+        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " +tran.getAccount().getCustomer().getLastName());
+        statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
+        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+        Date accountOpenDate = tran.getAccount().getAccountOpenDate();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        statementDetailDto.setAccountOpenDate(formatter.format(accountOpenDate));
+        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
+        statementDetailDto.setCurrency(tran.getCurrency());
+
+        CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
+        response.setData(transactionDTOs);
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("AccountDetail",statementDetailDto);
+        map.put("transactionList",response);
+
+
+        if (!transactionDTOs.isEmpty()) {
+            response.setMessage("Transactions fetched successfully.");
+        } else {
+            response.setMessage("No transactions found for the given criteria.");
+        }
+        return new CustomResponseEntity<>(map,"details");
     }
 
 
