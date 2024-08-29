@@ -259,6 +259,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setSenderAccount(senderAccount.get().getAccountNumber());
                         fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferSender.setCurrency(map.get("ccy"));
+                        fundsTransferSender.setIbanCode(senderAccount.get().getIbanCode());
                         // Receiver Transfer Log
                         Transactions fundsTransferReceiver = new Transactions();
                         fundsTransferReceiver.setAccount(receiverAccount.get());
@@ -270,6 +271,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferReceiver.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferReceiver.setSenderAccount(senderAccount.get().getAccountNumber());
                         fundsTransferReceiver.setCurrency(map.get("ccy"));
+                        fundsTransferReceiver.setIbanCode(receiverAccount.get().getIbanCode());
 
                         // Save both transfer logs
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
