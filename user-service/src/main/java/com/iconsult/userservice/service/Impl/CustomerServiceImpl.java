@@ -164,7 +164,10 @@ public class CustomerServiceImpl implements CustomerService
         checkExistingData(signUpDto);
 
         // Validate the security picture
-        validateImage(signUpDto.getSecurityPictureId());
+        if(Objects.nonNull(signUpDto.getSecurityPictureId())){
+            validateImage(signUpDto.getSecurityPictureId());
+        }
+
 
         // Validate account information
         AccountDto accountDto = signUpDto.getAccountDto();
@@ -245,8 +248,11 @@ public class CustomerServiceImpl implements CustomerService
         customer.setEmail(signUpDto.getEmail());
         customer.setUserName(signUpDto.getUserName());
         customer.setPassword(signUpDto.getPassword());
-        customer.setSecurityPicture(imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
+        if(Objects.nonNull(signUpDto.getSecurityPictureId())){
+            customer.setSecurityPicture(imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
                 .orElseThrow(() -> new ServiceException("Image does not exist")).getName());
+        }
+
         customer.setStatus(signUpDto.getStatus());
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
