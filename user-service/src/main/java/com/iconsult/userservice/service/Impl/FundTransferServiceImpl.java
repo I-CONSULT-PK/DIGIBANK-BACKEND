@@ -321,6 +321,16 @@ public class FundTransferServiceImpl implements FundTransferService {
             return new CustomResponseEntity(map, "your account does not have a sufficient balance!");
         }
 
+
+        String jpql = "SELECT c FROM Account c WHERE c.accountNumber = :accountNumber Or c.ibanCode = :accountNumber";
+        Map<String, Object> params = new HashMap<>();
+        params.put("accountNumber", fundTransferDto.getFromAccountNumberOrIbanCode());
+        Optional<Account> senderAccount = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
+
+        double senderBalance = senderAccount.get().getAccountBalance();
+        senderBalance -= fundTransferDto.getAmount();
+
+
         try {
             URI uri = UriComponentsBuilder.fromHttpUrl(interBankFundTransferURL)
                     .build()
@@ -350,7 +360,20 @@ public class FundTransferServiceImpl implements FundTransferService {
 
                 if (responseDto != null && responseDto.isSuccess()) {
 
-                    com.iconsult.userservice.model.entity.Transactions fundsTransferSender = new com.iconsult.userservice.model.entity.Transactions();
+                    AccountCDDetails senderAccountCDDetails = accountCDDetailsRepository.findByAccount_Id(senderAccount.get().getId());
+
+                    if (senderAccountCDDetails != null) {
+                        senderAccountCDDetails.setActualBalance(senderBalance);
+                        senderAccountCDDetails.setDebit(fundTransferDto.getAmount());
+                        senderAccountCDDetails.setPreviousBalance(senderAccount.get().getAccountBalance());
+
+                    } else {
+                        senderAccountCDDetails = new AccountCDDetails(senderAccount.get(), senderBalance, senderAccount.get().getAccountBalance(), 0.0, fundTransferDto.getAmount());
+                    }
+
+                    accountCDDetailsRepository.save(senderAccountCDDetails);
+
+                    Transactions fundsTransferSender = new Transactions();
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                     String formattedDate = LocalDate.now().format(formatter);
 
