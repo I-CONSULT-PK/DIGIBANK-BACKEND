@@ -179,9 +179,9 @@ public class CustomerController
     public CustomResponseEntity dashboard(@RequestParam("customerId")Long customerId) {
         return this.customerServiceImpl.dashboard(customerId);
     }
-    @GetMapping("/setdefaultaccount")
-    public CustomResponseEntity setDefaultAccount(@RequestParam ("accountNumber") String accountNumber,@RequestParam("defaultAccount") Boolean defaultAccount) {
-        return this.customerServiceImpl.setDefaultAccount(accountNumber, defaultAccount);
+    @PutMapping("/setdefaultaccount")
+    public CustomResponseEntity setDefaultAccount(@RequestParam("customerId")Long customerId, @RequestParam ("accountNumber") String accountNumber,@RequestParam("defaultAccount") Boolean defaultAccount) {
+        return this.customerServiceImpl.setDefaultAccount(customerId, accountNumber, defaultAccount);
     }
 
     @GetMapping("/getAccount")

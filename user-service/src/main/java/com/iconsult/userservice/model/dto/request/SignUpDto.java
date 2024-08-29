@@ -14,7 +14,7 @@ import lombok.*;
 @NoArgsConstructor
 public class SignUpDto {
     @NotBlank(message = "mobile is mandatory")
-    @Pattern(regexp = "^\\+923\\d{9}$", message = "Mobile number must follow the pattern +923XXXXXXXXX")
+    //@Pattern(regexp = "^\\+923\\d{9}$", message = "Mobile number must follow the pattern +923XXXXXXXXX")
     private String mobileNumber;
     private String firstName;
     private String lastName;
