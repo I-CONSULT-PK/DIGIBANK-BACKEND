@@ -1,5 +1,6 @@
 package com.iconsult.userservice.controller;
 import com.iconsult.userservice.model.dto.request.DeviceDto;
+import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.dto.request.SignUpDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.Customer;
@@ -45,10 +46,14 @@ public class DeviceController {
     }
 
     @PostMapping("/loginWithPin")
-    public CustomResponseEntity login(@Valid  @RequestParam String accountNumber,
-                                      @RequestParam String pinHash) {
-        return this.deviceService.getPinHashByAccountNumberAndPinHash(accountNumber,pinHash);
+    public CustomResponseEntity login(@Valid  @RequestParam Long customerId,
+                                      @RequestParam String pinHash,  @RequestParam String uniquePin) {
+        return this.deviceService.getPinHashByAccountNumberAndPinHash(customerId,pinHash,uniquePin);
     }
 
+    @PostMapping("/deviceRegister/{id}")
+    public CustomResponseEntity deviceRegister(@PathVariable("id") Long id, @RequestBody SettingDTO settingDTO) {
+        return this.deviceService.deviceRegister(id, settingDTO);
+    }
 }
 

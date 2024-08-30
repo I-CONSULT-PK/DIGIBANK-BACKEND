@@ -1,22 +1,30 @@
 package com.iconsult.userservice.controller;
 
 import com.iconsult.userservice.model.dto.request.CustomerDto;
+import com.iconsult.userservice.model.dto.request.SettingDTO;
+import com.iconsult.userservice.model.entity.Device;
 import com.iconsult.userservice.service.Impl.SettingServiceImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/settings")
+@RequestMapping("/v1/settings")
 public class SettingController {
 
     @Autowired
     private SettingServiceImpl settingService;
 
-    @PostMapping("/setDevicePin")
-    public CustomResponseEntity setDevicePin(@RequestParam String deviceName, @RequestParam String devicePin) {
-        return this.settingService.setDevicePin(deviceName, devicePin);
+    @PostMapping("/setDevicePin/{id}")
+    public CustomResponseEntity setDevicePin(@PathVariable("id")Long id, @Valid @RequestBody SettingDTO settingDTO) {
+        return this.settingService.setDevicePin(id, settingDTO);
+    }
 
+    @PutMapping("/updateDevicePin/{id}")
+    public CustomResponseEntity updateDevicePin(@PathVariable("id") String id, @RequestBody SettingDTO settingDTO)
+    {
+        return this.settingService.updateDevicePin(id, settingDTO);
     }
 
     @PostMapping("/setTransactionLimit")
@@ -34,4 +42,6 @@ public class SettingController {
     public CustomResponseEntity updateProfile(CustomerDto customerDto){
         return this.settingService.updateProfile(customerDto);
     }
+
+
 }

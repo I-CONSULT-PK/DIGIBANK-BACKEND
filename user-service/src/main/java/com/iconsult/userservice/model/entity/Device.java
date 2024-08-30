@@ -26,13 +26,19 @@ public class Device implements Serializable {
 //    private Customer customer;
 
     @JsonBackReference
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     private String deviceName;
     private String pinHash;
     private String devicePin;
+
+    private String deviceType;
+    private String unique1;
+    private String osv_osn;
+    private String modelName;
+    private String manufacture;
 
     public Customer getCustomer() {
         return customer;

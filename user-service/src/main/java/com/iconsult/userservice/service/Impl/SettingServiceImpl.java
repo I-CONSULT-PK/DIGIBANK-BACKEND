@@ -1,6 +1,8 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
+import com.iconsult.userservice.model.dto.request.SettingDTO;
+import com.iconsult.userservice.model.entity.Card;
 import com.iconsult.userservice.Util.EncryptionUtil;
 import com.iconsult.userservice.model.dto.request.CustomerDto;
 import com.iconsult.userservice.model.entity.Account;
@@ -12,9 +14,11 @@ import com.iconsult.userservice.repository.SettingRepository;
 import com.iconsult.userservice.service.SettingService;
 import com.zanbeel.customUtility.exception.ServiceException;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -42,31 +46,32 @@ public class SettingServiceImpl implements SettingService {
     @Autowired
     private SettingRepository settingRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CardServiceImpl.class);
 
     @Override
-    public CustomResponseEntity setDevicePin(String deviceName, String devicePin) {
-
-
+    public CustomResponseEntity setDevicePin(Long id,SettingDTO settingDTO) {
          try {
 
-             if (deviceName != null && devicePin != null)
+             if (id != null && settingDTO.getDevicePin() != null)
              {
-                 String jpql = "SELECT c FROM Device c WHERE c.deviceName = :deviceName";
+                 String jpql = "SELECT c FROM Device c WHERE c.id = :deviceId";
                  Map<String, Object> params = new HashMap<>();
-                 params.put("deviceName", deviceName);
+                 params.put("deviceId", id);
 
                  Device device = cardGenericDao.findOneWithQuery(jpql, params);
-
 
                  if (device.getDevicePin() != null) {
                      LOGGER.error("Pin already exists");
                      return CustomResponseEntity.error("Pin already exists");
-
                  }
                  else
                  {
-                     device.setDevicePin(devicePin);
+//                     device.setDevicePin(passwordEncoder.encode(settingDTO.getDevicePin()));
+                     device.setDevicePin(settingDTO.getDevicePin());
+//                     device.setUnique1(settingDTO.getUnique());
                      cardGenericDao.saveOrUpdate(device);
                      return customResponseEntity = new CustomResponseEntity<>("Pin set Successfully!");
                  }
@@ -78,13 +83,38 @@ public class SettingServiceImpl implements SettingService {
             }
          }
          catch (Exception e) {
-//              Handle exceptions
-             LOGGER.error("Exception occurred: ");
+             LOGGER.error("Exception occurred: ", e);
+             return new CustomResponseEntity<>(e.getMessage(),"Failed to set pin");
          }
-        return null;
     }
 
+    @Override
+    public CustomResponseEntity updateDevicePin(String id, SettingDTO settingDTO) {
 
+        try
+        {
+            Device existingDevice = settingRepository.findById(Long.valueOf(id)).orElseThrow();
+            if(existingDevice.getDevicePin().equals(settingDTO.getOldPin()))
+            {
+                existingDevice.setDevicePin(settingDTO.getDevicePin());
+                settingRepository.save(existingDevice);
+                return customResponseEntity = new CustomResponseEntity<>("Pin Updated Successfully!");
+            }
+            else
+            {
+                return customResponseEntity = new CustomResponseEntity<>("Old PIN Invalid");
+            }
+        }
+        catch (EntityNotFoundException e) {
+            // Handle case where the device is not found
+            LOGGER.error("EntityNotFoundException occurred: ", e);
+            return new CustomResponseEntity<>(e.getMessage(), "Failed to update pin");
+        } catch (Exception e) {
+            // Handle any other unexpected exceptions
+            LOGGER.error("Exception occurred: ", e);
+            return new CustomResponseEntity<>(e.getMessage(),"Failed to update pin");
+        }
+    }
 
     @Override
     public CustomResponseEntity setTransactionLimit(String accountNumber, Long customerId, Double transferLimit) {

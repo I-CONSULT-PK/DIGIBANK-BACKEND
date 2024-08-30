@@ -32,7 +32,7 @@ public class AuthConfig {
                         authorizeRequests
                                 .requestMatchers("/v1/customer/**").permitAll()
                                 .requestMatchers("/api/devices/**").permitAll()
-                                .requestMatchers("/api/settings/**").permitAll()
+                                .requestMatchers("/v1/settings/**").permitAll()
                 ).build();
     }
 

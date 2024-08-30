@@ -39,6 +39,9 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>
     @Query("SELECT c FROM Customer c WHERE c.accountNumber = :accountNumber  AND c.securityPicture = :securityPicture")
     Customer findByAccountNumberAndSecurityPicture(String accountNumber, String securityPicture);
 
+    @Query("SELECT c FROM Customer c JOIN c.accountList a WHERE a.accountNumber = :accountNumber")
+    Customer findCustomerByAccountNumber(String accountNumber);
+
     @Query("SELECT COUNT(c) > 0 FROM Customer c WHERE c.sessionToken = :token AND c.sessionTokenExpireTime > :currentTime")
     boolean isValidToken(@Param("token") String token, @Param("currentTime") long currentTime);
 

@@ -47,6 +47,12 @@ spring:
             - Path=/v1/beneficiary/**
           filters:
             - name: AuthenticationFilter
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/v1/settings/**
+          filters:
+            - name: AuthenticationFilter
 
 eureka:
   client:
