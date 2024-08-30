@@ -1,5 +1,6 @@
 package com.iconsult.userservice.controller;
 
+import com.iconsult.userservice.model.dto.request.CustomerDto;
 import com.iconsult.userservice.service.Impl.SettingServiceImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,5 +23,15 @@ public class SettingController {
     public CustomResponseEntity setTransactionLimit(@RequestParam ("accountNumber") String accountNumber, @RequestParam ("userId") Long userId,@RequestParam ("transactionLimit") Double transactionLimit ) {
         return this.settingService.setTransactionLimit(accountNumber, userId, transactionLimit);
 
+    }
+
+    @PostMapping("/changePassword")
+    public CustomResponseEntity changePassword (@RequestParam Long customerId , @RequestParam String oldPassword , @RequestParam String newPassword) throws Exception {
+        return this.settingService.changePassword(oldPassword,newPassword,customerId);
+    }
+
+    @PostMapping("/updateProfile")
+    public CustomResponseEntity updateProfile(CustomerDto customerDto){
+        return this.settingService.updateProfile(customerDto);
     }
 }

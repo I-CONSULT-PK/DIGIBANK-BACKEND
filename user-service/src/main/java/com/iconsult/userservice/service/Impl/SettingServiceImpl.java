@@ -1,6 +1,8 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
+import com.iconsult.userservice.Util.EncryptionUtil;
+import com.iconsult.userservice.model.dto.request.CustomerDto;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.model.entity.Device;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class SettingServiceImpl implements SettingService {
@@ -81,6 +84,8 @@ public class SettingServiceImpl implements SettingService {
         return null;
     }
 
+
+
     @Override
     public CustomResponseEntity setTransactionLimit(String accountNumber, Long customerId, Double transferLimit) {
         Customer customer = customerRepository.findById(customerId).orElse(null);
@@ -93,5 +98,47 @@ public class SettingServiceImpl implements SettingService {
         accountGenericDao.saveOrUpdate(account);
         CustomResponseEntity customResponse = new CustomResponseEntity<>( "Transaction limit set to : " + transferLimit);
         return customResponse;
+    }
+
+    public CustomResponseEntity changePassword(String oldPassword,String newPassword, Long id) throws Exception {
+        try{
+            String newEncryptedPassword;
+            Customer customer = customerRepository.findById(id).orElse(null);
+            if(Objects.isNull(customer)){
+                LOGGER.error("customer does not exist");
+                return CustomResponseEntity.error("customer does not exist");
+            }
+            String decryptedSavedPassword = EncryptionUtil.decrypt(customer.getPassword(),"t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
+            if(!decryptedSavedPassword.equals(oldPassword)){
+                LOGGER.error("password does not exist");
+                return CustomResponseEntity.error("password does not match");
+            }
+//            newEncryptedPassword = EncryptionUtil.decrypt(newPassword ,"t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
+            newEncryptedPassword = EncryptionUtil.encrypt("t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=",newPassword);
+            customer.setPassword(newEncryptedPassword);
+            customerRepository.save(customer);
+
+
+        }catch (Exception e){
+            LOGGER.error("Exception occurred: ", e);
+            return CustomResponseEntity.error("change password Exception" + e);
+
+        }
+        return CustomResponseEntity.builder().message("Password Change Successfully").success(true).build();
+    }
+
+    @Override
+    public CustomResponseEntity updateProfile(CustomerDto customerDto) {
+        Customer customer = customerRepository.findById(customerDto.getClientNo()).orElse(null);
+        if(Objects.isNull(customer)){
+            LOGGER.error("customer does not exist");
+            return CustomResponseEntity.error("customer does not exist");
+        }
+        if(!customerDto.getMobileNumber().isEmpty() || !customerDto.getEmail().isEmpty()){
+            customer.setMobileNumber(customer.getMobileNumber());
+            customer.setEmail(customer.getEmail());
+            customerRepository.save(customer);
+        }
+        return CustomResponseEntity.builder().message("Profile Updated Successfully").success(true).build();
     }
 }
