@@ -309,9 +309,13 @@ public class FundTransferServiceImpl implements FundTransferService {
             return new CustomResponseEntity("sender account not found within DiGi Bank!");
         }
 
+
         // 1% of transaction
         double transactionFee = fundTransferDto.getAmount() * 0.01;
         double totalAmount = fundTransferDto.getAmount() + transactionFee;
+        if(account.getTransactionLimit() < totalAmount) {
+            return CustomResponseEntity.error("Account limit is lower than the transfer money");
+        }
 
         if (totalAmount > account.getAccountBalance()) {
             Map<String, Object> map = new HashMap<>();
