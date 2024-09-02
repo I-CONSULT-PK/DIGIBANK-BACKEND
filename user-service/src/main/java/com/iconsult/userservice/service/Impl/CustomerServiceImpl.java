@@ -16,10 +16,7 @@ import com.iconsult.userservice.model.dto.response.KafkaMessageDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.CustomerMapper;
-import com.iconsult.userservice.repository.AccountCDDetailsRepository;
-import com.iconsult.userservice.repository.AccountRepository;
-import com.iconsult.userservice.repository.CustomerRepository;
-import com.iconsult.userservice.repository.ImageVerificationRepository;
+import com.iconsult.userservice.repository.*;
 import com.iconsult.userservice.service.CustomerService;
 import com.iconsult.userservice.service.EmailService;
 import com.iconsult.userservice.service.JwtService;
@@ -65,6 +62,9 @@ public class CustomerServiceImpl implements CustomerService
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
     private KafkaMessageDto kafkaMessage;
+
+    @Autowired
+    BankRepository bankRepository;
 
     private CustomResponseEntity response;
     @Autowired
@@ -164,7 +164,10 @@ public class CustomerServiceImpl implements CustomerService
         checkExistingData(signUpDto);
 
         // Validate the security picture
-        validateImage(signUpDto.getSecurityPictureId());
+        if(Objects.nonNull(signUpDto.getSecurityPictureId())){
+            validateImage(signUpDto.getSecurityPictureId());
+        }
+
 
         // Validate account information
         AccountDto accountDto = signUpDto.getAccountDto();
@@ -188,7 +191,7 @@ public class CustomerServiceImpl implements CustomerService
         // Create and save customer with account
         Customer customer = createCustomer(signUpDto, response.getBody());
         customerRepository.save(customer);
-        Account account = accountRepository.findByAccountNumberAndCustomerCnic(accountDto.getAccountNumber(), accountDto.getCustomer().getCnic());
+        Account account = accountRepository.findByAccountNumberAndCustomerCnic(signUpDto.getAccountDto().getAccountNumber(), signUpDto.getCnic());
         AccountCDDetails accountCDDetails = new AccountCDDetails(account, account.getAccountBalance(),0.0,accountDto.getLastCredit(),accountDto.getLastDebit());
         accountCDDetailsRepository.save(accountCDDetails);// This will cascade and save the account
 
@@ -245,8 +248,11 @@ public class CustomerServiceImpl implements CustomerService
         customer.setEmail(signUpDto.getEmail());
         customer.setUserName(signUpDto.getUserName());
         customer.setPassword(signUpDto.getPassword());
-        customer.setSecurityPicture(imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
+        if(Objects.nonNull(signUpDto.getSecurityPictureId())){
+            customer.setSecurityPicture(imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
                 .orElseThrow(() -> new ServiceException("Image does not exist")).getName());
+        }
+
         customer.setStatus(signUpDto.getStatus());
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
@@ -913,11 +919,14 @@ public class CustomerServiceImpl implements CustomerService
                 .filter(Account::getDefaultAccount)
                 .findFirst();
         if (!defaultAccount.isEmpty()){
+            Bank bank = bankRepository.findByBankCode("DIGIB");
             defaultAccountDto.setDefaultAccountBalance(String.valueOf(defaultAccount.get().getAccountBalance()));
             defaultAccountDto.setAccountNumber(defaultAccount.get().getAccountNumber());
             defaultAccountDto.setFirstName(customer.getFirstName());
             defaultAccountDto.setLastName(customer.getLastName());
             defaultAccountDto.setAccountType(defaultAccount.get().getAccountType());
+            defaultAccountDto.setBankImage(bank.getBankLogo());
+            defaultAccountDto.setBankName(bank.getBankName());
         }
         return new CustomResponseEntity<>(defaultAccountDto , "Default Account Retrieved Successfully");
     }
@@ -984,12 +993,20 @@ public class CustomerServiceImpl implements CustomerService
         }
         return availableBalance;
     }
-    public CustomResponseEntity setDefaultAccount(String accountNumber, Boolean setDefaultAccount) {
+    public CustomResponseEntity setDefaultAccount(Long customerId,String accountNumber, Boolean setDefaultAccount) {
 
         LOGGER.info("SetDefaultAccount Request Received...");
         Map<String, Object> param = new HashMap<>();
+    //    String jpqlCustomer = "Select * from Customer c where c.id = :customerId";
+       // param.put("customerId",customerId);
+//        Optional<Customer> customer = Optional.ofNullable(customerGenericDao.findOneWithQuery(jpqlCustomer, param));
+//        if(customer.isPresent()){
+//
+//        }
         param.put("accountNumber",accountNumber);
-        String jpql = "Select a from Account a where a.accountNumber = :accountNumber";
+        String jpql = "Select a from Account a where a.accountNumber = :accountNumber And a.customer = :customerId";
+      //  Select a from Account a where a.account_number = 'zanbeel-33500bb' And a.customer_id = '213';
+        //accountNumber
 
         Optional<Account> account = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, param));
         if(account.isPresent()){

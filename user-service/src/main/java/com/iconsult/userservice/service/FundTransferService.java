@@ -20,5 +20,7 @@ public interface FundTransferService {
             String accountNumber, String startDate, String endDate);
 
     CustomResponseEntity<Map<String, Object>> generateMiniStatement(String accountNumber);
+
+    CustomResponseEntity<Map<String, Object>> generateStatement(String accountNumber, String startDate, String endDate, String statementType);
 }
 

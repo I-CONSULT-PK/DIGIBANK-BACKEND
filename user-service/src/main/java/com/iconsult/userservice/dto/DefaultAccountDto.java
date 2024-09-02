@@ -12,6 +12,26 @@ public class DefaultAccountDto {
 
     private String accountType;
 
+    private String bankImage;
+
+    private String bankName;
+
+    public String getBankImage() {
+        return bankImage;
+    }
+
+    public void setBankImage(String bankImage) {
+        this.bankImage = bankImage;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
+    }
+
     public String getFirstName() {
         return firstName;
     }

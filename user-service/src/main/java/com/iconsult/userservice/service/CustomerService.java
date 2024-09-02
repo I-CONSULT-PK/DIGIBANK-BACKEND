@@ -13,7 +13,7 @@ public interface CustomerService
 {
     public CustomResponseEntity dashboard(Long customerId);
 
-    public CustomResponseEntity setDefaultAccount(String accountNumber,Boolean status);
+    public CustomResponseEntity setDefaultAccount(Long customerId, String accountNumber,Boolean status);
      Customer addUser(Customer customer);
 
     CustomResponseEntity register(SignUpResponse customerDto, OTPLogImpl otpLogImpl);

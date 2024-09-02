@@ -47,51 +47,9 @@ public class FundTransferController {
             @RequestParam String accountNumber,
             @RequestParam String startDate,
             @RequestParam String endDate,
-            @RequestParam String statementTypeParam) {
+            @RequestParam String statementType) {
 
-        StatementType statementType;
+        return  fundTransferService.generateStatement(accountNumber, startDate, endDate, statementType);
 
-        try {
-            statementType = StatementType.valueOf(statementTypeParam.toUpperCase());
-        }catch (IllegalArgumentException ex){
-            return new CustomResponseEntity<>("Invalid Request Param statement type!");
-        }
-
-        CustomResponseEntity<Map<String, Object>> transactionResponse;
-
-        if(statementType==StatementType.MINI){
-            transactionResponse  = fundTransferService.generateMiniStatement(accountNumber);
-
-            if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {
-                transactionResponse.setSuccess(true);
-                transactionResponse.setMessage("Transactions fetched successfully.");
-
-            } else {
-                // Set an error message if no transactions are found
-                transactionResponse.setSuccess(false);
-                transactionResponse.setMessage("No transactions found for the given criteria.");
-            }
-
-            return transactionResponse;
-
-        }else if(statementType==StatementType.DATE_RANGE){
-            transactionResponse = fundTransferService.getTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
-
-            // Check if the data is present and not empty
-            if (transactionResponse.getData() != null && !transactionResponse.getData().isEmpty()) {
-                transactionResponse.setSuccess(true);
-                transactionResponse.setMessage("Transactions fetched successfully.");
-
-            } else {
-                // Set an error message if no transactions are found
-                transactionResponse.setSuccess(false);
-                transactionResponse.setMessage("No transactions found for the given criteria.");
-            }
-
-            return transactionResponse;
-
-        }else {
-            return CustomResponseEntity.error("invalid statement type");
-        }
     }
 }

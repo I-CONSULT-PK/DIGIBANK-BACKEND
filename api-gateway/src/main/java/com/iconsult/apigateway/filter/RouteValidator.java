@@ -25,6 +25,7 @@ public class RouteValidator {
             "/v1/customer/verifyForgetPasswordToken",
             "/api/devices/**",
             "/v1/settings/**",
+            "/v1/customer/fund/**",
             "/eureka"
     );
 
