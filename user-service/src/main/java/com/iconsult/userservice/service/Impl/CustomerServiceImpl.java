@@ -15,6 +15,10 @@ import com.iconsult.userservice.model.dto.response.ForgetUserAndPasswordResponse
 import com.iconsult.userservice.model.dto.response.KafkaMessageDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.*;
+import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.repository.CustomerRepository;
+import com.iconsult.userservice.repository.ImageVerificationRepository;
+import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.CustomerMapper;
 import com.iconsult.userservice.repository.*;
 import com.iconsult.userservice.service.CustomerService;
@@ -113,9 +117,7 @@ public class CustomerServiceImpl implements CustomerService
 
     @Autowired
     AccountServiceImpl accountService;
-
     private AccountStatusCode accountStatusCode;
-
     public CustomResponseEntity register(SignUpResponse customerDto, OTPLogImpl otpLogImpl) {
         LOGGER.info("Sign up Request received");
 
@@ -663,111 +665,31 @@ public class CustomerServiceImpl implements CustomerService
         }
     }
 
-    public CustomResponseEntity dashboard(Long customerId, Long accountId) {
-
-        LOGGER.info("Dashboard Request Received...");
-
-        try {
-            // Build URL with path variables
-            URI uri = UriComponentsBuilder.fromHttpUrl(dashBoardCBSURL)
-                    .queryParam("customerId", customerId)
-                    .queryParam("accountId", accountId)
-                    .build()
-                    .toUri();
-
-            // Log the full request URL
-            LOGGER.info("Request URL: " + dashBoardCBSURL);
-
-            // Set headers
-            HttpHeaders headers = new HttpHeaders();
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            // Create HttpEntity with headers
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            // Make HTTP GET request
-            ResponseEntity<DashBoardResponseDto> response = restTemplate.exchange(
-                    uri,
-                    HttpMethod.GET,
-                    entity,
-                    DashBoardResponseDto.class
-            );
-
-            // Handle response
-            if (response.getStatusCode() == HttpStatus.OK) {
-                DashBoardResponseDto dashBoardResponseDto = response.getBody();
-
-                LOGGER.info(dashBoardResponseDto.toString());
-                Map<String, Object> data = new HashMap<>();
-                data.put("dasboard", dashBoardResponseDto);
-                return this.response = new CustomResponseEntity<>(data, "SUCCESS");
-
-            } else {
-                // Handle error response or non-200 status
-                LOGGER.error("Unexpected response status: " + response.getStatusCode());
-                return CustomResponseEntity.error("CBS is Down");
-            }
-        } catch (RestClientException e) {
-            LOGGER.error("Exception occurred: ", e);
-            return CustomResponseEntity.error("CBS is Down");
-        }
-
-    }
-
-    public CustomResponseEntity setDefaultAccount(String accountNumber) {
+    public CustomResponseEntity setDefaultAccount(Long customerId, String accountNumber, Boolean setDefaultAccount) {
 
         LOGGER.info("SetDefaultAccount Request Received...");
-
-        try {
-            // Build URL with path variables
-            URI uri = UriComponentsBuilder.fromHttpUrl(setdefaultaccountCBSURL)
-                    .queryParam("accountNumber", accountNumber)
-                    .build()
-                    .toUri();
-
-            // Log the full request URL
-            LOGGER.info("Request URL: " + setdefaultaccountCBSURL);
-
-            // Set headers
-            HttpHeaders headers = new HttpHeaders();
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            // Create HttpEntity with headers
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            // Make HTTP GET request
-            ResponseEntity<String> response = restTemplate.exchange(
-                    uri,
-                    HttpMethod.POST,
-                    entity,
-                    String.class
-            );
-
-            // Handle response
-            if (response.getStatusCode() == HttpStatus.OK) {
-                String setDefaultAccountResponse = response.getBody();
-
-                LOGGER.info(setDefaultAccountResponse);
-                Map<String, Object> data = new HashMap<>();
-                data.put("DefaultAccountStatus", setDefaultAccountResponse);
-                assert setDefaultAccountResponse != null;
-                if(setDefaultAccountResponse.equals("Invalid Account Number"))
-                {
-                    return this.response = new CustomResponseEntity<>(100, "False", data);
-                }
-                return this.response = new CustomResponseEntity<>(data, "SUCCESS");
-
-            } else {
-                // Handle error response or non-200 status
-                LOGGER.error("Unexpected response status: " + response.getStatusCode());
-                return CustomResponseEntity.error("CBS is Down");
+        Map<String, Object> param = new HashMap<>();
+        param.put("accountNumber",accountNumber);
+        param.put("customerId",customerId);
+        String jpql = "Select a from Account a where a.accountNumber = :accountNumber And a.customer.id = :customerId";
+        Account account = accountGenericDao.findOneWithQuery(jpql, param);
+        if(!Objects.isNull(account)){
+            List<Account> accountList = account.getCustomer().getAccountList();
+            Account checkAccount = accountList.stream()
+                    .filter(defaultAccount -> defaultAccount.getDefaultAccount() == true)
+                    .findFirst()
+                    .orElse(null);
+            if(!Objects.isNull(checkAccount)) {
+                account.setDefaultAccount(true);
+                checkAccount.setDefaultAccount(false);
+                LOGGER.info("Account found : ", account.getAccountNumber());
+                accountRepository.save(account);
+                accountRepository.save(checkAccount);
+                return new CustomResponseEntity(account, "Success");
             }
-        } catch (RestClientException e) {
-            LOGGER.error("Exception occurred: ", e);
-            return CustomResponseEntity.error("CBS is Down");
         }
+        LOGGER.info("Account not found");
+        return CustomResponseEntity.error("Account not found");
 
     }
     public void sendMessage(Object message, String topicName) {
@@ -947,14 +869,13 @@ public class CustomerServiceImpl implements CustomerService
         Optional<Customer> user = customerRepository.findByMobileNumberAndEmail(mobileNumber, email);
         return user.isPresent();
     }
-
     public CustomResponseEntity dashboard(Long customerId) {
         String jpql = "Select c from Customer c where c.id = :customerId";
         Map<String, Object> param = new HashMap<>();
         param.put("customerId",customerId);
         Customer customer = customerGenericDao.findOneWithQuery(jpql, param);
         if(customer == null){
-            return CustomResponseEntity.error("Customer not found ");
+            return CustomResponseEntity.error("Customer not found");
         }
         List<Account> accountList = customer.getAccountList();
         if(accountList.isEmpty()){
@@ -968,8 +889,8 @@ public class CustomerServiceImpl implements CustomerService
         DashBoardResponseDto dashBoardResponseDto = new DashBoardResponseDto();
         if(defaultAccount.isPresent()){
             AccountCDDetails accountCDDetails = defaultAccount.get().getAccountCdDetails();
-            dashBoardResponseDto.setLastDebit(accountCDDetails.getDebit());
-            dashBoardResponseDto.setLastCredit(accountCDDetails.getCredit());
+            dashBoardResponseDto.setLastDebit(defaultAccount.get().getAccountCdDetails().getDebit());
+            dashBoardResponseDto.setLastCredit(defaultAccount.get().getAccountCdDetails().getCredit());
             dashBoardResponseDto.setTotalBalance(totalBalance(accountList));
             dashBoardResponseDto.setAccountList(accountList);
             return new CustomResponseEntity(dashBoardResponseDto,"Success");
@@ -989,44 +910,6 @@ public class CustomerServiceImpl implements CustomerService
             availableBalance += account.getAccountBalance();
         }
         return availableBalance;
-    }
-    public CustomResponseEntity setDefaultAccount(Long customerId,String accountNumber, Boolean setDefaultAccount) {
-
-        LOGGER.info("SetDefaultAccount Request Received...");
-        Map<String, Object> param = new HashMap<>();
-    //    String jpqlCustomer = "Select * from Customer c where c.id = :customerId";
-       // param.put("customerId",customerId);
-//        Optional<Customer> customer = Optional.ofNullable(customerGenericDao.findOneWithQuery(jpqlCustomer, param));
-//        if(customer.isPresent()){
-//
-//        }
-        param.put("accountNumber",accountNumber);
-        String jpql = "Select a from Account a where a.accountNumber = :accountNumber And a.customer = :customerId";
-      //  Select a from Account a where a.account_number = 'zanbeel-33500bb' And a.customer_id = '213';
-        //accountNumber
-
-        Optional<Account> account = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, param));
-        if(account.isPresent()){
-            List<Account> accountList = account.get().getCustomer().getAccountList();
-            Account checkAccount = accountList.stream()
-                    .filter(defaultAccount -> defaultAccount.getDefaultAccount() == true)
-                    .findFirst()
-                    .orElse(null);
-            if(setDefaultAccount){
-                account.get().setDefaultAccount(true);
-                LOGGER.info("Account found : ", account.get().getAccountNumber());
-                accountRepository.save(account.get());
-                return new CustomResponseEntity(account, "Success");
-
-            } else if (setDefaultAccount == false) {
-                account.get().setDefaultAccount(false);
-                accountRepository.save(account.get());
-                return new CustomResponseEntity(account, "Success");
-            } else return CustomResponseEntity.error("Invalid Status ");
-
-        }
-        LOGGER.info("Account not found");
-        return CustomResponseEntity.error("Account not found");
     }
 
 }

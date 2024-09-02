@@ -4,6 +4,7 @@ import com.iconsult.userservice.model.dto.request.*;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.CardRequest;
 import com.iconsult.userservice.model.entity.Customer;
+import com.iconsult.userservice.service.CustomerService;
 import com.iconsult.userservice.service.Impl.CardRequestServiceImpl;
 import com.iconsult.userservice.service.Impl.CustomerServiceImpl;
 import com.iconsult.userservice.service.Impl.OTPLogImpl;
@@ -157,15 +158,14 @@ public class CustomerController
         return customerServiceImpl.validateUser(mobileNumber,email);
     }
 
-//    @GetMapping("/dashboard")
-//    public CustomResponseEntity dashboard(@RequestParam("customerId")Long customerId, @RequestParam("accountId")Long accountId) {
-//        return this.customerServiceImpl.dashboard(customerId, accountId);
-//    }
-
-//    @GetMapping("/setdefaultaccount")
-//    public CustomResponseEntity setDefaultAccount(@RequestParam ("accountNumber") String accountNumber) {
-//        return this.customerServiceImpl.setDefaultAccount(accountNumber);
-//    }
+    @GetMapping("/dashboard")
+    public CustomResponseEntity dashboard(@RequestParam("customerId")Long customerId) {
+        return this.customerServiceImpl.dashboard(customerId);
+    }
+    @GetMapping("/setdefaultaccount")
+    public CustomResponseEntity setDefaultAccount(@RequestParam ("customerId")Long customerId, @RequestParam ("accountNumber") String accountNumber, @RequestParam("defaultAccount") Boolean defaultAccount) {
+        return this.customerServiceImpl.setDefaultAccount(customerId,accountNumber, defaultAccount);
+    }
     @PostMapping("/cardApprovalRequest")
     public CustomResponseEntity requestApproval(@Valid @RequestBody CardRequestDto cardRequest){
         return this.cardRequestServiceImpl.createCardRequest(cardRequest);
@@ -174,14 +174,6 @@ public class CustomerController
     @GetMapping("/fetchUserDetails")
     public CustomResponseEntity fetchUserDetails(@RequestParam ("userId") Long userId) {
         return this.customerServiceImpl.fetchUserData(userId);
-    }
-    @GetMapping("/dashboard")
-    public CustomResponseEntity dashboard(@RequestParam("customerId")Long customerId) {
-        return this.customerServiceImpl.dashboard(customerId);
-    }
-    @PutMapping("/setdefaultaccount")
-    public CustomResponseEntity setDefaultAccount(@RequestParam("customerId")Long customerId, @RequestParam ("accountNumber") String accountNumber,@RequestParam("defaultAccount") Boolean defaultAccount) {
-        return this.customerServiceImpl.setDefaultAccount(customerId, accountNumber, defaultAccount);
     }
 
     @GetMapping("/getAccount")

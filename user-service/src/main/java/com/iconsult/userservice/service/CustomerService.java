@@ -8,12 +8,11 @@ import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.service.Impl.OTPLogImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.servlet.http.HttpSession;
+import org.apache.kafka.common.protocol.types.Field;
 
 public interface CustomerService
 {
-    public CustomResponseEntity dashboard(Long customerId);
 
-    public CustomResponseEntity setDefaultAccount(Long customerId, String accountNumber,Boolean status);
      Customer addUser(Customer customer);
 
     CustomResponseEntity register(SignUpResponse customerDto, OTPLogImpl otpLogImpl);
@@ -57,9 +56,9 @@ public interface CustomerService
 
     CustomResponseEntity resetPassword(ResetPasswordDto resetPasswordDto, HttpSession session);
 
-    public CustomResponseEntity dashboard(Long customerId, Long accountId);
+    public CustomResponseEntity dashboard(Long customerId);
 
-    public CustomResponseEntity setDefaultAccount(String accountNumber);
+    public CustomResponseEntity setDefaultAccount(Long customerId, String accountNumber,Boolean status);
 
     public SuggestedUserName generateUniqueUsernames(String userName);
 
