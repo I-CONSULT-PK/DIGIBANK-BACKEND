@@ -16,5 +16,11 @@ public class FundTransferDto {
     private String localDate;
     private int successCode;
 
+    public Double getTransferAmount() {
+        return transferAmount;
+    }
 
+    public void setTransferAmount(Double transferAmount) {
+        this.transferAmount = transferAmount;
+    }
 }

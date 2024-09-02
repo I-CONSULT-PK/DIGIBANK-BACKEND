@@ -80,6 +80,9 @@ public class Account implements Serializable {
     private AccountCDDetails accountCdDetails;
     private Double transactionLimit;
 
+    @Column(name = "singleDayLimit")
+    private Double singleDayLimit;
+
     @Override
     public String toString() {
         return "Account{" +
@@ -115,5 +118,13 @@ public class Account implements Serializable {
 
     public void setAccountType(String accountType) {
         this.accountType = accountType;
+    }
+
+    public Double getSingleDayLimit() {
+        return singleDayLimit;
+    }
+
+    public void setSingleDayLimit(Double singleDayLimit) {
+        this.singleDayLimit = singleDayLimit;
     }
 }

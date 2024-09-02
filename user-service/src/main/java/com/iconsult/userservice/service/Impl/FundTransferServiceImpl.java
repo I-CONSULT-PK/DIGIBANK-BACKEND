@@ -143,7 +143,37 @@ public class FundTransferServiceImpl implements FundTransferService {
             return CustomResponseEntity.error("Unable to Process!");
         }
     }
+    private Double calculateTotalDailyAmount(Optional<Account> account) {
 
+        LocalDate today = LocalDate.now();
+
+        // Start and end of the day
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59, 999_999_999);
+
+        // Formatters for converting LocalDateTime to String
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // Convert to String
+        String startOfDayStr = startOfDay.format(formatter);
+        String endOfDayStr = endOfDay.format(formatter);
+
+        List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(
+                account.get().getAccountNumber(), startOfDayStr, endOfDayStr);
+
+        return transactions.stream()
+                .mapToDouble(Transactions::getDebitAmt)
+                .sum();
+    }
+
+    public boolean isTransactionAllowed(Optional<Account> account, Double transactionAmount) {
+        Double totalTransactionsForToday = calculateTotalDailyAmount(account);
+
+        if (totalTransactionsForToday + transactionAmount <= account.get().getSingleDayLimit()) {
+            return true;
+        }
+        return false;
+    }
     public CustomResponseEntity fundTransfer(FundTransferDto cbsTransferDto) {
         try {
             // Build the URI for the POST request
@@ -188,6 +218,9 @@ public class FundTransferServiceImpl implements FundTransferService {
                     if (senderAccount.isPresent() && receiverAccount.isPresent()) {
                         if(senderAccount.get().getTransactionLimit() < cbsTransferDto.getTransferAmount()) {
                             return CustomResponseEntity.error("Account limit is lower than the transfer money");
+                        }
+                        if (isTransactionAllowed(senderAccount,cbsTransferDto.getTransferAmount()) == false){
+                            return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
                         }
                         // 2. Apply credit and debit logic
                         double senderBalance = senderAccount.get().getAccountBalance();
