@@ -23,12 +23,10 @@ public class Account implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Boolean defaultAccount;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     @JsonIgnoreProperties("accountList") // Avoid infinite recursion
     private Customer customer;
-
     @Column(name = "Account_Number")
     private String accountNumber;
     private String accountStatus;

@@ -32,6 +32,7 @@ public class AuthConfig {
                         authorizeRequests
                                 .requestMatchers("/v1/customer/**").permitAll()
                                 .requestMatchers("/api/devices/**").permitAll()
+                                .requestMatchers("/v1/account/**").permitAll()
                                 .requestMatchers("/v1/settings/**").permitAll()
                 ).build();
     }
@@ -54,4 +55,5 @@ public class AuthConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
 }
