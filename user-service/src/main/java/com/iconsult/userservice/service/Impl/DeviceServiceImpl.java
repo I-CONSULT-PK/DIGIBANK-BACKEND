@@ -189,7 +189,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public CustomResponseEntity getPinHashByAccountNumberAndPinHash(Long customerId, String devicePin, String uniquePin) {
+    public CustomResponseEntity loginWithPin(Long customerId, String devicePin, String uniquePin) {
 
 //        Customer customer = customerRepository.findByAccountNumber(accountNumber);
 
@@ -200,24 +200,25 @@ public class DeviceServiceImpl implements DeviceService {
         try
         {
             // Check if the customer exists
-            Customer customer = customerRepository.findById(customerId).orElseThrow();
+            Customer customer = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new ServiceException("Account not found"));
 
+//            if (customer == null) {
+//                throw new ServiceException("Account not found");
+//            }
 
-            if (customer == null) {
-                throw new ServiceException("Account not found");
-            }
-
-            Long findByUnique1 = customer.getId();
-
-            Device device = deviceRepository.findDevicesByCustomerIdAndDevicePinAndUniquePin(findByUnique1, devicePin, uniquePin);
-
-            if (!device.getUnique1().equals(uniquePin)) {
-                throw new ServiceException("Invalid pin hash");
-            }
+//            Long findByUnique1 = customer.getId();
+            Device device = deviceRepository.findDevicesByCustomerIdAndDevicePinAndUniquePin(customer.getId(), devicePin, uniquePin);
 
             if (device == null) {
-                throw new ServiceException("Device not found for this customer");
+                return CustomResponseEntity.error("Device not found for this customer");
             }
+
+//            if (!device.getUnique1().equals(uniquePin)) {
+//                return CustomResponseEntity.error("Invalid pin hash");
+//            }
+
+
 
             // JWT Implementation Starts
             Authentication authentication = authenticationManager.authenticate(
@@ -246,14 +247,15 @@ public class DeviceServiceImpl implements DeviceService {
             return new CustomResponseEntity<>(data, "Customer logged in successfully");
 
         }
-        catch (EntityNotFoundException e) {
-            // Handle case where the device is not found
-            LOGGER.error("EntityNotFoundException occurred: ", e);
-            return new CustomResponseEntity<>(e.getMessage(), "Failed to update pin");
+
+        catch (ServiceException e) {
+            // Handle specific service exceptions
+            LOGGER.error("ServiceException occurred: ", e);
+            return CustomResponseEntity.error(e.getMessage());
         } catch (Exception e) {
             // Handle any other unexpected exceptions
             LOGGER.error("Exception occurred: ", e);
-            return new CustomResponseEntity<>(e.getMessage(),"Account not found");
+            return CustomResponseEntity.error(e.getMessage());
         }
     }
 
@@ -268,8 +270,8 @@ public class DeviceServiceImpl implements DeviceService {
 
             Device device = cardGenericDao.findOneWithQuery(jpql, params);
             if (Objects.nonNull(device)) {
-                LOGGER.error("Pin already exists");
-                return CustomResponseEntity.error("Pin already exists");
+                LOGGER.error("Device already exists");
+                return CustomResponseEntity.error("Device already exists");
             }
             if(device == null)
             {
@@ -285,6 +287,7 @@ public class DeviceServiceImpl implements DeviceService {
                 dv.setOsv_osn(settingDTO.getOsv_osn());
                 dv.setDevicePin(settingDTO.getDevicePin());
                 deviceRepository.save(dv);
+                LOGGER.error("Device Registered with Customer successfully...");
                 return new CustomResponseEntity<>("Device Registered with Customer successfully...");
             }
 

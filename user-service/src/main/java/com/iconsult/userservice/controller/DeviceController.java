@@ -45,10 +45,16 @@ public class DeviceController {
         return this.deviceService.signup(signUpDto);
     }
 
+//    @PostMapping("/loginWithPin")
+//    public CustomResponseEntity login(@Valid  @RequestParam Long customerId,
+//                                      @RequestParam String devicePin,  @RequestParam String uniquePin) {
+//        return this.deviceService.getPinHashByAccountNumberAndPinHash(customerId,devicePin,uniquePin);
+//    }
+
     @PostMapping("/loginWithPin")
-    public CustomResponseEntity login(@Valid  @RequestParam Long customerId,
-                                      @RequestParam String pinHash,  @RequestParam String uniquePin) {
-        return this.deviceService.getPinHashByAccountNumberAndPinHash(customerId,pinHash,uniquePin);
+    public CustomResponseEntity loginWithPin(@Valid  @RequestParam Long customerId,
+                                      @RequestParam String devicePin,  @RequestParam String uniquePin) {
+        return this.deviceService.loginWithPin(customerId,devicePin,uniquePin);
     }
 
     @PostMapping("/deviceRegister/{id}")
