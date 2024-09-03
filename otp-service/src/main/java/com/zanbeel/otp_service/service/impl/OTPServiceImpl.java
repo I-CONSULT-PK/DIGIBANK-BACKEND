@@ -255,7 +255,7 @@ public class OTPServiceImpl implements OTPService {
                     save(otp);
                     sendNotificationEmail(EmailOTPVerifyDto.getEmail(), "You have made an incorrect OTP attempt. " +
                             "If this wasn't you, please call +923333739201.");
-                    return new CustomApiResponse("Invalid OTP");
+                    return CustomApiResponse.error("Invalid OTP");
                 }
             }
 
