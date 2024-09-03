@@ -61,5 +61,10 @@ public class DeviceController {
     public CustomResponseEntity deviceRegister(@PathVariable("id") Long id, @RequestBody SettingDTO settingDTO) {
         return this.deviceService.deviceRegister(id, settingDTO);
     }
+
+    @GetMapping("/fetchDeviceRegister/{unique}")
+    public CustomResponseEntity fetchDeviceDetailsById(@PathVariable("unique") String unique){
+        return deviceService.fetchDeviceRegister(unique);
+    }
 }
 
