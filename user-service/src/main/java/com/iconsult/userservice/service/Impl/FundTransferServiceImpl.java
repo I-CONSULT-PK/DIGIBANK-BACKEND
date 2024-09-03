@@ -8,13 +8,11 @@ import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.model.dto.request.TransactionsDTO;
 import com.iconsult.userservice.model.dto.response.FetchAccountDto;
 import com.iconsult.userservice.model.dto.response.StatementDetailDto;
-import com.iconsult.userservice.model.entity.Account;
-import com.iconsult.userservice.model.entity.AccountCDDetails;
-import com.iconsult.userservice.model.entity.Bank;
-import com.iconsult.userservice.model.entity.Transactions;
+import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.TransactionsMapper;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -30,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -61,6 +60,9 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    CustomerRepository customerRepository;
 
     @Autowired
     BeneficiaryServiceClient beneficiaryServiceClient;
@@ -145,7 +147,7 @@ public class FundTransferServiceImpl implements FundTransferService {
             return CustomResponseEntity.error("Unable to Process!");
         }
     }
-    private Double calculateTotalDailyAmount(Optional<Account> account) {
+    private Double calculateTotalDailyAmount(String account) {
 
         LocalDate today = LocalDate.now();
 
@@ -161,17 +163,17 @@ public class FundTransferServiceImpl implements FundTransferService {
         String endOfDayStr = endOfDay.format(formatter);
 
         List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(
-                account.get().getAccountNumber(), startOfDayStr, endOfDayStr);
+                account, startOfDayStr, endOfDayStr);
 
         return transactions.stream()
                 .mapToDouble(Transactions::getDebitAmt)
                 .sum();
     }
 
-    public boolean isTransactionAllowed(Optional<Account> account, Double transactionAmount) {
+    public boolean isTransactionAllowed(String account, Double transactionAmount, Double singleDayLimit) {
         Double totalTransactionsForToday = calculateTotalDailyAmount(account);
 
-        if (totalTransactionsForToday + transactionAmount <= account.get().getSingleDayLimit()) {
+        if (totalTransactionsForToday + transactionAmount <= singleDayLimit) {
             return true;
         }
         return false;
@@ -221,7 +223,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         if(senderAccount.get().getTransactionLimit() < cbsTransferDto.getTransferAmount()) {
                             return CustomResponseEntity.error("Account limit is lower than the transfer money");
                         }
-                        if (isTransactionAllowed(senderAccount,cbsTransferDto.getTransferAmount()) == false){
+                        if (isTransactionAllowed(senderAccount.get().getAccountNumber(),cbsTransferDto.getTransferAmount(),senderAccount.get().getSingleDayLimit()) == false){
                             return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
                         }
                         // 2. Apply credit and debit logic
@@ -359,6 +361,9 @@ public class FundTransferServiceImpl implements FundTransferService {
             map.put("accountNumber", account.getAccountNumber());
             map.put("currentBalance", account.getAccountBalance());
             return new CustomResponseEntity(map, "your account does not have a sufficient balance!");
+        }
+        if (isTransactionAllowed(account.getAccountNumber(),totalAmount,account.getSingleDayLimit()) == false){
+            return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
         }
 
 
@@ -574,6 +579,25 @@ public class FundTransferServiceImpl implements FundTransferService {
         } else {
             return new CustomResponseEntity<>("Please enter valid statement type param");
         }
+
+    }
+
+    @Override
+    public CustomResponseEntity setOneDayLimit(String accountNumber,Long customerId, Double ondDayLimit) {
+        Customer customer = customerRepository.findById(customerId).orElse(null);
+        String jpql = "SELECT a FROM Account a WHERE a.accountNumber = :accountNumber and a.customer= :customer";
+        Map<String, Object> params = new HashMap<>();
+        params.put("accountNumber", accountNumber);
+        params.put("customer", customer);
+        Account account = accountGenericDao.findOneWithQuery(jpql, params);
+        if(Objects.isNull(account)){
+            return new CustomResponseEntity<>("Account Does Not Exist");
+
+        }
+        account.setSingleDayLimit(ondDayLimit);
+        accountGenericDao.saveOrUpdate(account);
+        CustomResponseEntity customResponse = new CustomResponseEntity<>( "One Day Transaction limit set to : " + ondDayLimit);
+        return customResponse;
 
     }
 

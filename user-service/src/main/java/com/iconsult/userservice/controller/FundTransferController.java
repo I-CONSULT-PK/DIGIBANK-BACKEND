@@ -52,4 +52,9 @@ public class FundTransferController {
         return  fundTransferService.generateStatement(accountNumber, startDate, endDate, statementType);
 
     }
+
+    @PostMapping("/setOneDayLimit")
+    public CustomResponseEntity setOneDayLimit(@RequestParam String account ,@RequestParam Long customerId, @RequestParam Double ondDayLimit){
+        return fundTransferService.setOneDayLimit(account ,customerId, ondDayLimit);
+    }
 }
