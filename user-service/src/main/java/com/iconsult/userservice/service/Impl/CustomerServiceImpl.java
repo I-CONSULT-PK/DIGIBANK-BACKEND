@@ -226,7 +226,7 @@ public class CustomerServiceImpl implements CustomerService
     private ResponseEntity<AccountDto> makeAccountRequest(AccountDto accountDto) {
         URI uri = UriComponentsBuilder.fromHttpUrl(accountURL)
                 .queryParam("accountNumber", accountDto.getAccountNumber())
-                .queryParam("bankName", "HBL")
+                .queryParam("bankName", "DigiBank")
                 .build()
                 .toUri();
 
