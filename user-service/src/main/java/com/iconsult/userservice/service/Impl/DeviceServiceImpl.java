@@ -2,6 +2,7 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.Util.Util;
+import com.iconsult.userservice.model.dto.request.DeviceDetailDto;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.dto.request.SignUpDto;
 import com.iconsult.userservice.model.entity.*;
@@ -302,6 +303,29 @@ public class DeviceServiceImpl implements DeviceService {
             return new CustomResponseEntity<>(e.getMessage(),"Failed Register Device!");
         }
         return null;
+    }
+
+    @Override
+    public CustomResponseEntity fetchDeviceRegister(String unique) {
+
+//        Device device = deviceRepository.findById(unique).orElse(null);
+
+//        String jpql = "SELECT d FROM Device d WHERE d.unique1 = :unique1";
+//        String jpql = "SELECT d FROM Device d JOIN FETCH d.customer WHERE d.unique1 = :unique1";
+        String jpql = "SELECT d FROM Device d WHERE d.unique1 = :unique1";
+        Map<String, Object> params = new HashMap<>();
+        params.put("unique1", unique);
+
+        Device device = cardGenericDao.findOneWithQuery(jpql, params);
+
+        if(Objects.isNull(device)){
+            LOGGER.info("Error Receiving Device Details With Unique  : " + unique);
+            return CustomResponseEntity.error("Device not found with given unique value" );
+        }
+
+        DeviceDetailDto deviceDetailDto = new DeviceDetailDto(device);
+
+        return new CustomResponseEntity<>(deviceDetailDto, "Device Details");
     }
 }
 //    private void associateCustomerWithDevice(Customer customer, Device device) {

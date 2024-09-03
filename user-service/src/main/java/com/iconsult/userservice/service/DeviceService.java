@@ -15,4 +15,7 @@ public interface DeviceService {
     CustomResponseEntity deviceRegister(Long id, SettingDTO settingDTO);
 
     CustomResponseEntity loginWithPin(Long customerId, String devicePin, String uniquePin);
+
+    CustomResponseEntity fetchDeviceRegister(String unique);
+
 }
