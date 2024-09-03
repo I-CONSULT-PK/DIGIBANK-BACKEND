@@ -10,7 +10,9 @@ public interface DeviceService {
 
     public CustomResponseEntity signup(SignUpDto signUpDto);
 
-    public CustomResponseEntity getPinHashByAccountNumberAndPinHash(Long customerId, String devicePin, String uniquePin);
+//    public CustomResponseEntity getPinHashByAccountNumberAndPinHash(Long customerId, String devicePin, String uniquePin);
 
     CustomResponseEntity deviceRegister(Long id, SettingDTO settingDTO);
+
+    CustomResponseEntity loginWithPin(Long customerId, String devicePin, String uniquePin);
 }
