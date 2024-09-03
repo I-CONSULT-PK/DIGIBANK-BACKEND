@@ -1,0 +1,32 @@
+# Server settings
+server:
+  port: 8078
+
+
+
+# Database configuration
+spring:
+
+  application:
+    name: Bill-Service
+  datasource:
+    url: jdbc:postgresql://192.168.0.196:5432/BillPayment
+    username: postgres
+    password: mysecretpassword
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+     ddl-auto: update
+    show-sql: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8772/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+
+
+
