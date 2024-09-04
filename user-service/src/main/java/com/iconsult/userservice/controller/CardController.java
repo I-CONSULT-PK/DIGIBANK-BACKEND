@@ -2,6 +2,7 @@ package com.iconsult.userservice.controller;
 
 import com.iconsult.userservice.model.dto.request.CardDto;
 import com.iconsult.userservice.model.dto.request.CardRequestDto;
+import com.iconsult.userservice.model.dto.request.ChangePinDto;
 import com.iconsult.userservice.service.CardService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
@@ -42,5 +43,13 @@ public class CardController {
         return this.cardService.setPinDigiBankAndMyDatabase(pin,card);
     }
 
+    @PostMapping("/sendOtp")
+    public CustomResponseEntity sendOtpForChangeCardPin(@RequestParam("customerId") Long customerId) {
+        return this.cardService.sendOtpForChangeCardPin(customerId);
+    }
 
+    @PostMapping("/changePin")
+    public CustomResponseEntity changePin(@Valid @RequestBody ChangePinDto changePinRequestDto) {
+        return cardService.changePin(changePinRequestDto);
+    }
 }

@@ -1,10 +1,9 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
-import com.iconsult.userservice.model.dto.request.CardDto;
-import com.iconsult.userservice.model.dto.request.CardRequestDto;
+
+import com.iconsult.userservice.model.dto.request.*;
 import com.iconsult.userservice.model.dto.response.CardApprovalResDto;
-import com.iconsult.userservice.model.dto.response.CardResponseDto;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.Card;
 import com.iconsult.userservice.model.entity.CardRequest;
@@ -17,6 +16,7 @@ import com.iconsult.userservice.repository.CardRequestRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.service.CardService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+import com.zanbeel.otp_service.config.CustomApiResponse;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +43,9 @@ public class CardServiceImpl implements CardService {
 
     private final String URL = "http://localhost:8081/cards/verifyCard";
     private final String addCardURL = "http://localhost:8081/cards/addCard";
+
+    private final String otpUrl = "http://localhost:9000/v1/otp";
+
 
     @Autowired
     private GenericDao<Customer> customerGenericDao;
@@ -71,6 +74,7 @@ public class CardServiceImpl implements CardService {
     private final String URLL = "http://localhost:8081/cards/setPin";
     @Autowired
     private CardMapper cardMapper;
+
     public CustomResponseEntity cardExist(CardDto cardDto) {
         try {
             // Create a trust manager that does not validate certificate chains
@@ -195,7 +199,7 @@ public class CardServiceImpl implements CardService {
     public CustomResponseEntity getAllCardById(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber);
 
-        if(account == null) return CustomResponseEntity.error("No Cards Exist");
+        if (account == null) return CustomResponseEntity.error("No Cards Exist");
 
         List<Card> listOfCard = account.getCardList();
 
@@ -293,7 +297,7 @@ public class CardServiceImpl implements CardService {
             creditCardRequest.setExpiryDate(cardRequestDto.getExpireDate());
             creditCardRequest.setAccountNumber(cardRequestDto.getAccountNumber());
             // Create HttpEntity with headers
-            HttpEntity<CardApprovalResDto> entity = new HttpEntity<>(creditCardRequest ,headers);
+            HttpEntity<CardApprovalResDto> entity = new HttpEntity<>(creditCardRequest, headers);
 
             // Make HTTP GET request
             ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
@@ -309,10 +313,10 @@ public class CardServiceImpl implements CardService {
                 if (responseDto != null) {
                     // Print or log responseDto to verify its content
                     LOGGER.info("Received CustomerDto: " + responseDto.getMessage());
-                    if (responseDto.isSuccess()){//card request work
+                    if (responseDto.isSuccess()) {//card request work
                         //AddCard
                         Card card = addCreditCard(creditCardRequest);
-                        if(card == null){
+                        if (card == null) {
                             return CustomResponseEntity.error("Customer does not exist!");
                         }
                         //request
@@ -347,10 +351,10 @@ public class CardServiceImpl implements CardService {
         return RandomStringUtils.randomNumeric(length);
     }
 
-    public Card addCreditCard(CardApprovalResDto card){
+    public Card addCreditCard(CardApprovalResDto card) {
         Card cardDetail = cardMapper.dtoJpe(card);
         long customerId = accountRepository.findCustomerByAccountNumber(card.getAccountNumber());
-        if(customerId == 0){
+        if (customerId == 0) {
             return null;
         }
         Account account = accountRepository.findByAccountNumber(card.getAccountNumber());
@@ -371,7 +375,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public CustomResponseEntity setPinDigiBankAndMyDatabase(String pin, String card){
+    public CustomResponseEntity setPinDigiBankAndMyDatabase(String pin, String card) {
 
         try {
             TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
@@ -438,7 +442,6 @@ public class CardServiceImpl implements CardService {
                         LOGGER.error("Card does not exists");
                         return CustomResponseEntity.error("Card does not exists");
                     }
-
                     if (cardNo.getPin() != null) {
                         LOGGER.error("Pin already exists");
                         return CustomResponseEntity.error("Pin already exists");
@@ -462,5 +465,84 @@ public class CardServiceImpl implements CardService {
             LOGGER.error("Exception occurred: ", e);
         }
         return null;
+    }
+
+
+    @Override
+    public CustomResponseEntity sendOtpForChangeCardPin(Long customerId) {
+        Optional<Customer> customer = customerRepository.findById(customerId);
+        if (customer.isPresent()) {
+//            Customer customer = customerById.get();
+            String email = customer.get().getEmail();
+
+            // Create the OTP request DTO
+            EmailOTPSendDto otpSendDto = new EmailOTPSendDto();
+            otpSendDto.setEmail(email);
+            otpSendDto.setReason("Change Card Pin");
+            otpSendDto.setMobileNumber(customer.get().getMobileNumber());
+            // Call the OTP service
+            String sendOtp = "/createOTP";
+            String otpServiceUrl = otpUrl + sendOtp;
+            URI uri = UriComponentsBuilder.fromHttpUrl(otpServiceUrl)
+                    .build()
+                    .toUri();
+            // Log the full request URL
+            LOGGER.info("Request URL: " + uri.toString());
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Create HttpEntity with headers
+            HttpEntity<EmailOTPSendDto> entity = new HttpEntity<>(otpSendDto, headers);
+
+            // Make HTTP GET request
+            ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.POST,
+                    entity,
+                    CustomResponseEntity.class
+            );
+            LOGGER.info(uri.toString() + "  " + response.toString());
+            return response.getBody();
+        }
+        return CustomResponseEntity.error("Invalid Customer Id");
+    }
+
+
+    @Override
+    public CustomResponseEntity changePin(ChangePinDto changePinRequestDto) {
+        try {
+            String cardNumber = changePinRequestDto.getCardNumber();
+            String newPin = changePinRequestDto.getNewPin();
+            String confirmNewPin = changePinRequestDto.getConfirmNewPin();
+
+            if (!newPin.equals(confirmNewPin)) {
+                LOGGER.error("New PIN and confirmation PIN do not match");
+                return CustomResponseEntity.error("New PIN and confirmation PIN do not match");
+            }
+
+            Optional<Card> optionalCard = cardRepository.findByCardNumber(cardNumber);
+            if (!optionalCard.isPresent()) {
+                LOGGER.error("Card not found");
+                return CustomResponseEntity.error("Card not found");
+            }
+
+            Card card = optionalCard.get();
+            if (!card.getPin().equals(changePinRequestDto.getOldPin())) {
+                return CustomResponseEntity.error("Old PIN is incorrect");
+            }
+
+            card.setPin(newPin);
+            cardRepository.save(card);
+
+            LOGGER.info("PIN successfully changed for card with ID {}", card.getCardId());
+            return customResponseEntity = new CustomResponseEntity<>("PIN changed successfully");
+
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while changing PIN: ", e);
+            return CustomResponseEntity.error("Unable to change PIN");
+        }
     }
 }
