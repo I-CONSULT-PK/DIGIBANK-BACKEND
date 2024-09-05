@@ -33,6 +33,7 @@ public class AuthConfig {
                                 .requestMatchers("/v1/customer/**").permitAll()
                                 .requestMatchers("/api/devices/**").permitAll()
                                 .requestMatchers("/v1/account/**").permitAll()
+                                .requestMatchers("/v1/feedback/**").permitAll()
                 ).build();
     }
 

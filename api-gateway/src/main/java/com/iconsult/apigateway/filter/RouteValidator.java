@@ -25,7 +25,8 @@ public class RouteValidator {
             "/v1/customer/verifyForgetPasswordToken",
             "/api/devices/**",
             "/v1/customer/fund/**",
-            "/eureka"
+            "/eureka",
+            "/v1/feedback/**"
     );
 
     private final PathMatcher pathMatcher = new AntPathMatcher();
