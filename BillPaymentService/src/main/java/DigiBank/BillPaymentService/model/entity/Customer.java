@@ -6,19 +6,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class ElectricityAccount {
+public class Customer {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
-    private ElectricityBillConsumer consumer;
-    private String accountNumber;
-    private String accountType;
-    private Double balance;
+    private String name;
+    private String email;
+    private String phoneNumber;
+    private String address;
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    private Set<Account> accounts;
+
 }

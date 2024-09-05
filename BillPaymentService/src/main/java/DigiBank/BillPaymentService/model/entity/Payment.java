@@ -1,4 +1,5 @@
 package DigiBank.BillPaymentService.model.entity;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,20 +13,16 @@ import java.util.Date;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ElectricityPayment {
+public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    @ManyToOne
-    private ElectricityBillConsumer consumer;
-    @ManyToOne
-    private ElectricityAccount account;
-    @ManyToOne
-    private ElectricityBill bill;
-    private Double amount;
+    private String amount;
     private Date paymentDate;
-    private String status; // e.g., 'successful', 'failed'
-
+    private String transactionId;
+    @ManyToOne
+    @JoinColumn(name = "bill_id", nullable = false)
+    private Bill bill;
 
 }
