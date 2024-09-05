@@ -41,6 +41,12 @@ spring:
             - Path=/v1/account/**
           filters:
             - name: AuthenticationFilter
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/v1/billPayment/**
+          filters:
+            - name: AuthenticationFilter
         - id: otp-service
           uri: lb://otp-service
           predicates:
@@ -53,6 +59,7 @@ spring:
             - Path=/v1/beneficiary/**
           filters:
             - name: AuthenticationFilter
+
 
 eureka:
   client:
