@@ -2,8 +2,12 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.model.dto.request.BillPaymentDto;
+import com.iconsult.userservice.model.dto.response.BillPaymentTransactionDto;
 import com.iconsult.userservice.model.entity.Account;
+import com.iconsult.userservice.model.entity.AccountCDDetails;
 import com.iconsult.userservice.model.entity.Transactions;
+import com.iconsult.userservice.model.mapper.BillPaymentTransactionMapper;
+import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.service.BillPaymentService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -16,8 +20,12 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -34,7 +42,10 @@ public class BillPaymentServiceImpl implements BillPaymentService {
     @Autowired
     private GenericDao<Transactions> transactionsGenericDao;
 
-    private final String URL = "http://192.168.0.152:8078/v1/billpayment/getBillDetails";
+    @Autowired
+    private AccountCDDetailsRepository accountCDDetailsRepository;
+
+    private final String URL = "http://localhost:8078/v1/billpayment/getBillDetails";
 
     @Override
     public CustomResponseEntity<Object> getUtilityDetails(String consumerNumber, String serviceCode, String utilityType, BillPaymentDto billPaymentDto) {
@@ -87,20 +98,17 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                     Object amountObject = billMap.get("amount");
                     Object afterDueDateAmountObject = billMap.get("amountDueAfterDueDate");
                     String dueDateString = (String) billMap.get("dueDate");
+                    String referenceNumber = (String) billMap.get("referenceNumber");
+                    Date date = new Date();
+                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
                     // Convert amountObject to a Double
                     Double amount = convertToDouble(amountObject);
                     Double afterDueDateAmount = convertToDouble(afterDueDateAmountObject);
 
-                    // Check due date and select the amount to deduct
-                    if (dueDateString != null) {
-                        LocalDate dueDate = LocalDate.parse(dueDateString); // Parse dueDateString to LocalDate
-                        LocalDate today = LocalDate.now();
-
-                        if (dueDate.isBefore(today)) {
-                            // Due date has passed, use afterDueDateAmount
-                            amount = afterDueDateAmount != null ? afterDueDateAmount : amount;
-                        }
+                    // Validate the amount
+                    if (amount == null || amount <= 0) {
+                        throw new RuntimeException("Invalid amount: " + amount);
                     }
 
                     // Fetch account details
@@ -109,31 +117,84 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                     if (account != null) {
                         Double accountBalance = account.getAccountBalance();
 
-                        // Deduct amount from account balance
-                        accountBalance -= amount;
+                        // Check if account balance is sufficient
+                        if (amount <= accountBalance) {
+                            // Check due date and select the amount to deduct
+                            if (dueDateString != null) {
+                                LocalDate dueDate = LocalDate.parse(dueDateString); // Parse dueDateString to LocalDate
+                                LocalDate today = LocalDate.now();
 
-                        // Update account balance
-                        account.setAccountBalance(accountBalance);
+                                if (dueDate.isBefore(today)) {
+                                    // Due date has passed, use afterDueDateAmount
+                                    amount = afterDueDateAmount != null ? afterDueDateAmount : amount;
+                                }
+                            }
 
-                        // Create and set up the transaction
-                        Transactions updateTransactionForBill = new Transactions();
-                        updateTransactionForBill.setAccount(account); // Set the account reference
-                        updateTransactionForBill.setDebitAmt(amount);
-                        updateTransactionForBill.setCreditAmt(0.0);
-                        updateTransactionForBill.setCurrentBalance(accountBalance);
-                        updateTransactionForBill.setNatureOfAccount(account.getAccountType());
-                        // Save the updated account and transaction back to the database
-                        accountRepository.save(account);
-                        transactionsGenericDao.saveOrUpdate(updateTransactionForBill);
+                            // Deduct amount from account balance
+                            Double previousBalance = accountBalance; // Save the previous balance
+                            accountBalance -= amount;
 
-                        LOGGER.info("Account balance and transaction updated successfully");
+                            // Update account balance
+                            account.setAccountBalance(accountBalance);
+
+                            // Create and set up the transaction DTO
+                            BillPaymentTransactionDto transactionDto = new BillPaymentTransactionDto();
+                            transactionDto.setAccountNumber(account.getAccountNumber());
+                            transactionDto.setDebitAmount(amount);
+                            transactionDto.setCreditAmount(0.0);
+                            transactionDto.setCurrentBalance(accountBalance);
+                            transactionDto.setTransactionId(referenceNumber);
+                            transactionDto.setTransactionDate(formatter.format(date));
+                            transactionDto.setIbanCode(account.getCustomer().getAccountNumber());
+                            transactionDto.setTransactionNarration("Bill Payment Against Consumer Number " + data.get("accountNumber"));
+
+                            // Convert DTO to entity
+                            Transactions transaction = BillPaymentTransactionMapper.toEntity(transactionDto, account);
+
+                            // Update AccountCDDetails
+                            AccountCDDetails updateLastDebitAmount = accountCDDetailsRepository.findByAccount_Id(account.getId());
+                            if (updateLastDebitAmount != null) {
+                                updateLastDebitAmount.setDebit(amount);
+                                updateLastDebitAmount.setAccount(account);
+                                updateLastDebitAmount.setActualBalance(accountBalance);
+                                updateLastDebitAmount.setPreviousBalance(previousBalance); // Set the previous balance
+                                updateLastDebitAmount.setCredit(0.0);
+                            } else {
+                                // Handle the case where AccountCDDetails is not found
+                                updateLastDebitAmount = new AccountCDDetails();
+                                updateLastDebitAmount.setDebit(amount);
+                                updateLastDebitAmount.setAccount(account);
+                                updateLastDebitAmount.setActualBalance(accountBalance);
+                                updateLastDebitAmount.setPreviousBalance(previousBalance);
+                                updateLastDebitAmount.setCredit(0.0);
+                            }
+                            accountCDDetailsRepository.save(updateLastDebitAmount);
+
+                            // Save the updated account and transaction back to the database
+                            accountRepository.save(account);
+                            transactionsGenericDao.saveOrUpdate(transaction);
+
+                            LOGGER.info("Account balance and transaction updated successfully");
+
+                            // Prepare the response data with only the processed amount
+                            Map<String, Object> processedData = new HashMap<>();
+                            processedData.put("processedAmount", amount);
+                            processedData.put("referenceNumber", referenceNumber);
+                            processedData.put("date", formatter.format(date));
+                            processedData.put("consumerNumber", consumerNumber);
+
+                            // Return the successful response body
+                            return new CustomResponseEntity<>(processedData, "Utility Bill processed successfully");
+                        } else {
+                            // Handle case where account balance is not sufficient
+                            LOGGER.warn("Insufficient balance for account number: {}", billPaymentDto.getAccountNumber());
+                            return new CustomResponseEntity<>(1001, "Insufficient balance for the transaction");
+                        }
                     } else {
                         LOGGER.warn("Account not found for account number: {}", billPaymentDto.getAccountNumber());
                         throw new RuntimeException("Account not found");
                     }
 
-                    // Return the successful response body
-                    return new CustomResponseEntity<>(data, "Utility details processed successfully");
                 } else {
                     LOGGER.warn("Bill object is not a Map");
                     throw new RuntimeException("Invalid bill format");
@@ -151,6 +212,7 @@ public class BillPaymentServiceImpl implements BillPaymentService {
             return CustomResponseEntity.errorResponse(e);
         }
     }
+
 
     private Double convertToDouble(Object value) {
         if (value instanceof Number) {
