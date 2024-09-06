@@ -65,3 +65,6 @@ logging:
     com.iconsult.apigateway: DEBUG
     org.springframework.web: DEBUG
     org.springframework.cloud.gateway: DEBUG
+
+
+

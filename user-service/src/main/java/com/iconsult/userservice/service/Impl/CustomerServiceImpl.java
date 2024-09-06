@@ -23,7 +23,6 @@ import com.iconsult.userservice.service.JwtService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
-import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,14 +31,15 @@ import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -306,29 +306,61 @@ public class CustomerServiceImpl implements CustomerService
                 return response;
             }
 
+
+//            ResponseEntity<String> beforeSaveUser = saveUserToWSO2(customer.getUserName(), customer.getPassword());
+
             if (customer.getPassword().equals(loginDto.getPassword()) &&
                     (loginDto.getSecurityImage() == null || customer.getSecurityPicture().equals(loginDto.getSecurityImage()))) {
-                // JWT Implementation Starts
-                Authentication authentication =
-                        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmailorUsername(), loginDto.getPassword()));
-                String email = authentication.getName();
-                String token = jwtService.generateToken(email);
-                LOGGER.info("Token = " + token);
-                LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
-                // JWT Implementation Ends
 
-                Map<String, Object> data = new HashMap<>();
-                data.put("customerId", customer.getId());
-                data.put("token", token);
-                data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
-                response = new CustomResponseEntity<>(data, "customer logged in successfully");
+                // Set up headers
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-                //set customer token
-                customer.setSessionToken(token);
-                AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
-                customer.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
-                updateCustomer(customer);
-                return response;
+                // Set up Basic Authentication
+                String auth = "l4vv_tsdP2Re301YKlD9wASCbowa:MftzCiCsNyiLW2v4PmmMXUAHtU4a";
+                String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+                headers.set("Authorization", "Basic " + encodedAuth);
+
+                // Set up the request body
+                MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+                body.add("grant_type", "password");
+                body.add("username", "admin");
+                body.add("password", "admin");
+
+                // Create the request entity
+                HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+
+                // Send the request
+                String url = "https://localhost:9443/oauth2/token";
+                ResponseEntity<String> res = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+                // Print the response
+                System.out.println(res.getBody());
+
+                return new CustomResponseEntity<>(res ,"JWT");
+
+
+//                // JWT Implementation Starts
+//                Authentication authentication =
+//                        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmailorUsername(), loginDto.getPassword()));
+//                String email = authentication.getName();
+//                String token = jwtService.generateToken(email);
+//                LOGGER.info("Token = " + token);
+//                LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
+//                // JWT Implementation Ends
+//
+//                Map<String, Object> data = new HashMap<>();
+//                data.put("customerId", customer.getId());
+//                data.put("token", token);
+//                data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
+//                response = new CustomResponseEntity<>(data, "customer logged in successfully");
+//
+//                //set customer token
+//                customer.setSessionToken(res.getBody());
+//                AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
+//                customer.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
+//                updateCustomer(customer);
+//                return response;
             } else {
                 throw new ServiceException("Invalid Password or Security Image");
             }
@@ -336,6 +368,45 @@ public class CustomerServiceImpl implements CustomerService
 
         throw new ServiceException("Customer does not exist");
     }
+
+//    public ResponseEntity<String> saveUserToWSO2(String username, String password) {
+//        String url = "https://localhost:9443/scim2/Users";
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//
+//        // Set Authorization header
+//        String plainCredentials = "admin:admin"; // Replace with your admin credentials
+//        String base64Credentials = new String(Base64.getEncoder().encode(plainCredentials.getBytes()));
+//        headers.add("Authorization", "Basic " + base64Credentials);
+//
+//        // Build JSON body according to SCIM 2.0 API format
+//        String body = "{\n" +
+//                "  \"schemas\": [],\n" +
+//                "  \"userName\": \"" + username + "\",\n" +
+//                "  \"password\": \"" + password + "\",\n" +
+//                "  \"name\": {\n" +
+//                "    \"givenName\": \"John\",\n" +
+//                "    \"familyName\": \"Doe\"\n" +
+//                "  },\n" +
+//                "  \"emails\": [\n" +
+//                "    {\n" +
+//                "      \"primary\": true,\n" +
+//                "      \"value\": \"john.doe@example.com\",\n" +
+//                "      \"type\": \"home\"\n" +
+//                "    }\n" +
+//                "  ]\n" +
+//                "}";
+//
+//        HttpEntity<String> requestEntity = new HttpEntity<>(body, headers);
+//
+//        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+//
+//        // Handle response if needed
+//        System.out.println(response.getBody());
+//
+//        return response;
+//    }
 
     @Override
     public CustomResponseEntity verifyCNIC(String cnic, String mobileNumber, String accountNumber) {
