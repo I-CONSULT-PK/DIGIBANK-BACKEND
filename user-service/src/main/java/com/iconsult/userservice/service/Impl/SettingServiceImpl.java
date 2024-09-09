@@ -1,6 +1,7 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
+import com.iconsult.userservice.constant.PinStatus;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.entity.Card;
 import com.iconsult.userservice.Util.EncryptionUtil;
@@ -18,6 +19,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -55,8 +57,21 @@ public class SettingServiceImpl implements SettingService {
     public CustomResponseEntity setDevicePin(Long id,SettingDTO settingDTO) {
          try {
 
-             if (id != null && settingDTO.getDevicePin() != null)
-             {
+             if (id != null && settingDTO.getDevicePin() != null) {
+
+              String pin = settingDTO.getDevicePin();
+
+//              if(!pin.matches("\\d{4}")){
+//                  LOGGER.error("Pin must be exactly 4 digits");
+//                  return CustomResponseEntity.error("Pin must be exactly 4 digits");
+//              }
+
+                 // Check if the pin is sequential (e.g., 1234, 2345, etc.)
+                 if (isSequential(pin)) {
+                     LOGGER.error("Sequential pins are not allowed");
+                     return CustomResponseEntity.error("Sequential pins are not allowed");
+                 }
+
                  String jpql = "SELECT c FROM Device c WHERE c.id = :deviceId";
                  Map<String, Object> params = new HashMap<>();
                  params.put("deviceId", id);
@@ -69,9 +84,8 @@ public class SettingServiceImpl implements SettingService {
                  }
                  else
                  {
-//                     device.setDevicePin(passwordEncoder.encode(settingDTO.getDevicePin()));
                      device.setDevicePin(settingDTO.getDevicePin());
-//                     device.setUnique1(settingDTO.getUnique());
+                     device.setPinStatus(PinStatus.ACTIVE);
                      cardGenericDao.saveOrUpdate(device);
                      return customResponseEntity = new CustomResponseEntity<>("Pin set Successfully!");
                  }
@@ -88,6 +102,19 @@ public class SettingServiceImpl implements SettingService {
          }
     }
 
+    private boolean isSequential(String pin) {
+        // Convert pin to a char array for easy manipulation
+        char[] digits = pin.toCharArray();
+
+        // Check for sequential increment (e.g., 1234, 2345, etc.)
+        for (int i = 1; i < digits.length; i++) {
+            if (digits[i] != digits[i - 1] + 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public CustomResponseEntity updateDevicePin(String id, SettingDTO settingDTO) {
 
@@ -96,7 +123,21 @@ public class SettingServiceImpl implements SettingService {
             Device existingDevice = settingRepository.findById(Long.valueOf(id)).orElseThrow();
             if(existingDevice.getDevicePin().equals(settingDTO.getOldPin()))
             {
+                String pin = settingDTO.getDevicePin();
+
+              if(!pin.matches("\\d{4}")){
+                  LOGGER.error("Pin must be exactly 4 digits");
+                  return CustomResponseEntity.error("Pin must be exactly 4 digits");
+              }
+
+                // Check if the pin is sequential (e.g., 1234, 2345, etc.)
+                if (isSequential(pin)) {
+                    LOGGER.error("Sequential pins are not allowed");
+                    return CustomResponseEntity.error("Sequential pins are not allowed");
+                }
+
                 existingDevice.setDevicePin(settingDTO.getDevicePin());
+                existingDevice.setPinStatus(PinStatus.ACTIVE);
                 settingRepository.save(existingDevice);
                 return customResponseEntity = new CustomResponseEntity<>("Pin Updated Successfully!");
             }
@@ -170,5 +211,30 @@ public class SettingServiceImpl implements SettingService {
             customerRepository.save(customer);
         }
         return CustomResponseEntity.builder().message("Profile Updated Successfully").success(true).build();
+    }
+    @Override
+    public CustomResponseEntity deactivatePin(Long customerId, String unique) {
+        try {
+            Device device = settingRepository.findByCustomerIdAndUnique1AndPinStatus(customerId, unique, PinStatus.ACTIVE);
+
+            if (device == null) {
+                return CustomResponseEntity.error("Device already De-Activated");
+            }
+
+            // Deactivate the PIN
+            device.setDevicePin(null);
+            device.setPinStatus(PinStatus.INACTIVE);
+            settingRepository.save(device);
+
+            // success response
+            return new CustomResponseEntity<>(/*"success",*/ "Pin De-Activated Successfully.");
+
+        } catch (DataAccessException e) {
+            // Handle database access issues
+            return CustomResponseEntity.error("Database error: " + e.getMessage());
+        } catch (Exception e) {
+            // Handle other unexpected exceptions
+            return CustomResponseEntity.error("An unexpected error occurred: " + e.getMessage());
+        }
     }
 }

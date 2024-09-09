@@ -1,8 +1,8 @@
 package com.iconsult.userservice.controller;
 
 import com.iconsult.userservice.model.dto.request.CustomerDto;
+import com.iconsult.userservice.model.dto.request.DeactivatePinRequest;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
-import com.iconsult.userservice.model.entity.Device;
 import com.iconsult.userservice.service.Impl.SettingServiceImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
@@ -41,6 +41,12 @@ public class SettingController {
     @PostMapping("/updateProfile")
     public CustomResponseEntity updateProfile(CustomerDto customerDto){
         return this.settingService.updateProfile(customerDto);
+    }
+
+    @PostMapping("/deactivate-pin")
+    public CustomResponseEntity deactivatePin(@RequestBody DeactivatePinRequest request) {
+        CustomResponseEntity response = settingService.deactivatePin(request.getCustomerId(), request.getUnique());
+        return response;
     }
 
 

@@ -14,10 +14,10 @@ public class SettingDTO {
 
     private String deviceName;
 
-    @Pattern(regexp = "\\d+", message = "New Pin must be numeric")
+    @Pattern(regexp = "\\d{4}", message = "Pin must be exactly 4 digits")
     private String devicePin;
 
-    @Pattern(regexp = "\\d+", message = "Old Pin must be numeric")
+//    @Pattern(regexp = "\\d{4}+", message = "Pin must be exactly 4 digits")
     private String oldPin;
 
     private String deviceType;

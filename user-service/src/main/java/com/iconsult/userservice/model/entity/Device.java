@@ -2,6 +2,7 @@ package com.iconsult.userservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.iconsult.userservice.constant.PinStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,6 +40,10 @@ public class Device implements Serializable {
     private String osv_osn;
     private String modelName;
     private String manufacture;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pin_status")
+    private PinStatus pinStatus = PinStatus.ACTIVE;
 
     public Customer getCustomer() {
         return customer;
