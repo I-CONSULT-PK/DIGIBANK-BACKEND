@@ -42,7 +42,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
-    private final String interBankFundTransferURL = "http://192.168.0.135:8080/api/v1/1link/creditTransaction";
+    private final String interBankFundTransferURL = "http://192.168.0.63:8080/api/v1/1link/creditTransaction";
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -303,7 +303,7 @@ public class FundTransferServiceImpl implements FundTransferService {
     }
 
     @Override
-    public CustomResponseEntity interBankFundTransfer(InterBankFundTransferDto fundTransferDto, String authHeader) {
+    public CustomResponseEntity interBankFundTransfer(InterBankFundTransferDto fundTransferDto) {
 
         Account account = accountRepository.getAccountByAccountNumber(fundTransferDto.getFromAccountNumberOrIbanCode());
         if (account == null) {
@@ -341,7 +341,6 @@ public class FundTransferServiceImpl implements FundTransferService {
 
             // Set headers
             HttpHeaders headers = new HttpHeaders();
-            headers.set(HttpHeaders.AUTHORIZATION, authHeader);
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
@@ -378,6 +377,10 @@ public class FundTransferServiceImpl implements FundTransferService {
                     String formattedDate = LocalDate.now().format(formatter);
 
                     fundsTransferSender.setAccount(account);
+                    Map<String, Object> data = (Map<String, Object>) responseDto.getData();
+                    Object billObject = data.get("transactionId");
+                    fundsTransferSender.setTransactionId(String.valueOf(billObject));
+                    fundsTransferSender.setTransactionNarration("IBFT");
                     fundsTransferSender.setCurrentBalance(account.getAccountBalance() - totalAmount);
                     fundsTransferSender.setDebitAmt(totalAmount);
                     fundsTransferSender.setTransactionDate(formattedDate);

@@ -14,7 +14,7 @@ public interface FundTransferService {
 
     CustomResponseEntity fundTransfer(FundTransferDto cbsTransferDto);
 
-    CustomResponseEntity interBankFundTransfer(InterBankFundTransferDto interBankFundTransferDto, String authHeader);
+    CustomResponseEntity interBankFundTransfer(InterBankFundTransferDto interBankFundTransferDto);
 
     CustomResponseEntity<Map<String, Object>>getTransactionsByAccountAndDateRange(
             String accountNumber, String startDate, String endDate);

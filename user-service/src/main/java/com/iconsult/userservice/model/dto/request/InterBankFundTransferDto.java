@@ -14,7 +14,7 @@ public class InterBankFundTransferDto {
     private String bankCode;
     private String fromAccountNumberOrIbanCode;
     private String toAccountNumberOrIbanCode;
-    private String accountTitle;
+    private String secretKey;
     private Double amount;
     private Date transactionDate;
     private String purpose;

@@ -37,9 +37,8 @@ public class FundTransferController {
     }
 
     @PostMapping("/interBankFundsTransfer")
-    public CustomResponseEntity interBankFundsTransfer (@RequestBody InterBankFundTransferDto fundTransferDto,
-                                                        @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
-        return this.fundTransferService.interBankFundTransfer(fundTransferDto,authHeader);
+    public CustomResponseEntity interBankFundsTransfer (@RequestBody InterBankFundTransferDto fundTransferDto) {
+        return this.fundTransferService.interBankFundTransfer(fundTransferDto);
     }
 
     @GetMapping("/generateStatement")
