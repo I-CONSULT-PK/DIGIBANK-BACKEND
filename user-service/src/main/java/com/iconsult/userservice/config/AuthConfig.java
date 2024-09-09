@@ -35,6 +35,7 @@ public class AuthConfig {
                                 .requestMatchers("/v1/account/**").permitAll()
                                 .requestMatchers("/v1/billPayment/**").permitAll()
                                 .requestMatchers("/v1/feedback/**").permitAll()
+                                .requestMatchers("/v1/complaint/**").permitAll()
                 ).build();
     }
 

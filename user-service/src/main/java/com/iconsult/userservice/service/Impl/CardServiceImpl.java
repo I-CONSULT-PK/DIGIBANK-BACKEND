@@ -16,7 +16,6 @@ import com.iconsult.userservice.repository.CardRequestRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.service.CardService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
-import com.zanbeel.otp_service.config.CustomApiResponse;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
