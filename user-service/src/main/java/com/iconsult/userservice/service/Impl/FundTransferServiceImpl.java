@@ -305,8 +305,13 @@ public class FundTransferServiceImpl implements FundTransferService {
     @Override
     public CustomResponseEntity interBankFundTransfer(InterBankFundTransferDto fundTransferDto) {
 
-        Account account = accountRepository.getAccountByAccountNumber(fundTransferDto.getFromAccountNumberOrIbanCode());
-        if (account == null) {
+        String jpql = "SELECT c FROM Account c WHERE c.accountNumber = :accountNumber Or c.ibanCode = :accountNumber";
+        Map<String, Object> params = new HashMap<>();
+        params.put("accountNumber", fundTransferDto.getFromAccountNumber());
+
+        Optional<Account> account  = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
+//        Account account = accountRepository.getAccountByAccountNumber(fundTransferDto.getFromAccountNumber());
+        if (!account.isPresent()) {
             return new CustomResponseEntity("sender account not found within DiGi Bank!");
         }
 
@@ -314,20 +319,20 @@ public class FundTransferServiceImpl implements FundTransferService {
         double transactionFee = fundTransferDto.getAmount() * 0.01;
         double totalAmount = fundTransferDto.getAmount() + transactionFee;
 
-        if (totalAmount > account.getAccountBalance()) {
+        if (totalAmount > account.get().getAccountBalance()) {
             Map<String, Object> map = new HashMap<>();
-            map.put("accountNumber", account.getAccountNumber());
-            map.put("currentBalance", account.getAccountBalance());
+            map.put("accountNumber", account.get().getAccountNumber());
+            map.put("currentBalance", account.get().getAccountBalance());
             return new CustomResponseEntity(map, "your account does not have a sufficient balance!");
         }
 
 
-        String jpql = "SELECT c FROM Account c WHERE c.accountNumber = :accountNumber Or c.ibanCode = :accountNumber";
-        Map<String, Object> params = new HashMap<>();
-        params.put("accountNumber", fundTransferDto.getFromAccountNumberOrIbanCode());
-        Optional<Account> senderAccount = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
+//        String jpql = "SELECT c FROM Account c WHERE c.accountNumber = :accountNumber Or c.ibanCode = :accountNumber";
+//        Map<String, Object> params = new HashMap<>();
+//        params.put("accountNumber", fundTransferDto.getFromAccountNumber());
+//        Optional<Account> senderAccount = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
 
-        double senderBalance = senderAccount.get().getAccountBalance();
+        double senderBalance = account.get().getAccountBalance();
         senderBalance -= fundTransferDto.getAmount();
 
 
@@ -359,15 +364,15 @@ public class FundTransferServiceImpl implements FundTransferService {
 
                 if (responseDto != null && responseDto.isSuccess()) {
 
-                    AccountCDDetails senderAccountCDDetails = accountCDDetailsRepository.findByAccount_Id(senderAccount.get().getId());
+                    AccountCDDetails senderAccountCDDetails = accountCDDetailsRepository.findByAccount_Id(account.get().getId());
 
                     if (senderAccountCDDetails != null) {
-                        senderAccountCDDetails.setActualBalance(senderBalance);
-                        senderAccountCDDetails.setDebit(fundTransferDto.getAmount());
-                        senderAccountCDDetails.setPreviousBalance(senderAccount.get().getAccountBalance());
+                        senderAccountCDDetails.setActualBalance(senderBalance-transactionFee);
+                        senderAccountCDDetails.setDebit(fundTransferDto.getAmount()+transactionFee);
+                        senderAccountCDDetails.setPreviousBalance(account.get().getAccountBalance());
 
                     } else {
-                        senderAccountCDDetails = new AccountCDDetails(senderAccount.get(), senderBalance, senderAccount.get().getAccountBalance(), 0.0, fundTransferDto.getAmount());
+                        senderAccountCDDetails = new AccountCDDetails(account.get(), senderBalance, account.get().getAccountBalance(), 0.0, fundTransferDto.getAmount());
                     }
 
                     accountCDDetailsRepository.save(senderAccountCDDetails);
@@ -376,12 +381,12 @@ public class FundTransferServiceImpl implements FundTransferService {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                     String formattedDate = LocalDate.now().format(formatter);
 
-                    fundsTransferSender.setAccount(account);
+                    fundsTransferSender.setAccount(account.get());
                     Map<String, Object> data = (Map<String, Object>) responseDto.getData();
                     Object billObject = data.get("transactionId");
                     fundsTransferSender.setTransactionId(String.valueOf(billObject));
                     fundsTransferSender.setTransactionNarration("IBFT");
-                    fundsTransferSender.setCurrentBalance(account.getAccountBalance() - totalAmount);
+                    fundsTransferSender.setCurrentBalance(account.get().getAccountBalance() - totalAmount);
                     fundsTransferSender.setDebitAmt(totalAmount);
                     fundsTransferSender.setTransactionDate(formattedDate);
                     fundsTransferSender.setCreditAmt(0.0);
@@ -390,8 +395,8 @@ public class FundTransferServiceImpl implements FundTransferService {
 
                     transactionsGenericDao.saveOrUpdate(fundsTransferSender);
 
-                    account.setAccountBalance(account.getAccountBalance() - totalAmount);
-                    accountRepository.save(account);
+                    account.get().setAccountBalance(account.get().getAccountBalance() - totalAmount);
+                    accountRepository.save(account.get());
                     return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
                 } else {
                     return new CustomResponseEntity("The recipient accountNumber or secretKey provided is incorrect. " +

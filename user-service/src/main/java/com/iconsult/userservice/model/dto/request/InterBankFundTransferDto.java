@@ -12,10 +12,8 @@ import java.util.Date;
 public class InterBankFundTransferDto {
 
     private String bankCode;
-    private String fromAccountNumberOrIbanCode;
-    private String toAccountNumberOrIbanCode;
-    private String secretKey;
+    private String fromAccountNumber;
+    private String toAccountNumber;
     private Double amount;
-    private Date transactionDate;
     private String purpose;
 }
