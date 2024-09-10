@@ -399,8 +399,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                     accountRepository.save(account.get());
                     return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
                 } else {
-                    return new CustomResponseEntity("The recipient accountNumber or secretKey provided is incorrect. " +
-                            "Please verify both and try again.");
+                    return new CustomResponseEntity("The recipient accountNumber is incorrect. " +
+                            "Please verify and try again.");
                 }
             } else {
                 throw new RuntimeException("Failed to call API: " + response.getStatusCode());
