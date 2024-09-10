@@ -1,14 +1,13 @@
 package com.iconsult.userservice.controller;
 
 import com.iconsult.userservice.model.dto.request.*;
+import com.iconsult.userservice.model.dto.response.OAuthTokenResponseDTO;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
-import com.iconsult.userservice.model.entity.CardRequest;
 import com.iconsult.userservice.model.entity.Customer;
-import com.iconsult.userservice.service.CustomerService;
 import com.iconsult.userservice.service.Impl.CardRequestServiceImpl;
 import com.iconsult.userservice.service.Impl.CustomerServiceImpl;
 import com.iconsult.userservice.service.Impl.OTPLogImpl;
-import com.netflix.discovery.converters.Auto;
+import com.iconsult.userservice.service.OAuthTokenRequest;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpSession;
@@ -16,12 +15,17 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/v1/customer")
@@ -181,4 +185,8 @@ public class CustomerController
         return this.customerServiceImpl.getUserAccount(accountNumber);
     }
 
+    @GetMapping("/createUser")
+    public boolean getToken() {
+        return OAuthTokenRequest.createUser();
+    }
 }

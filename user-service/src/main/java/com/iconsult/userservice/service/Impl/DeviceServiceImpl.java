@@ -41,9 +41,6 @@ public class DeviceServiceImpl implements DeviceService {
     private EmailService emailService;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private CustomerServiceImpl customerService;
 
     @Autowired
@@ -57,12 +54,6 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Autowired
     CustomResponseEntity customResponseEntity;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtService jwtService;
 
     @Autowired
     private AppConfigurationImpl appConfigurationImpl;
@@ -204,31 +195,31 @@ public class DeviceServiceImpl implements DeviceService {
             throw new ServiceException("Invalid pin hash");
         }
 
-        // JWT Implementation Starts
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(customer.getUserName(), customer.getPassword())
-        );
-        String email = authentication.getName();
-        String token = jwtService.generateToken(email);
-        LOGGER.info("Token = " + token);
-        LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("customerId", customer.getId());
-        data.put("token", token);
-        data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
+//        // JWT Implementation Starts
+//        Authentication authentication = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(customer.getUserName(), customer.getPassword())
+//        );
+//        String email = authentication.getName();
+//        String token = jwtService.generateToken(email);
+//        LOGGER.info("Token = " + token);
+//        LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
+//
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("customerId", customer.getId());
+//        data.put("token", token);
+//        data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
 
         // Update customer with session token and expiration time
-        customer.setSessionToken(token);
-        AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
-        customer.setSessionTokenExpireTime(
-                Long.parseLong(Util.dateFormat.format(
-                        DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue()))
-                ))
-        );
-        customerRepository.save(customer);
+        //customer.setSessionToken(token);
+//        AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
+//        customer.setSessionTokenExpireTime(
+//                Long.parseLong(Util.dateFormat.format(
+//                        DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue()))
+//                ))
+//        );
+//        customerRepository.save(customer);
 
-        return new CustomResponseEntity<>(data, "Customer logged in successfully");
+        return new CustomResponseEntity<>("", "Customer logged in successfully");
     }
 }
 //    private void associateCustomerWithDevice(Customer customer, Device device) {

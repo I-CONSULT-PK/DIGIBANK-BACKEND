@@ -21,10 +21,10 @@ public class GlobalExceptionHandler {
 //        return CustomResponseEntity.error(ex.getMessage());
 //    }
 
-    @ExceptionHandler(ServiceException.class)
+    @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ResponseBody
-    public CustomResponseEntity<Object> handleNotFoundException(ServiceException ex) {
+    public CustomResponseEntity<Object> handleNotFoundException(RuntimeException ex) {
         return CustomResponseEntity.error(ex.getMessage());
     }
 

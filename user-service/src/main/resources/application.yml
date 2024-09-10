@@ -1,6 +1,11 @@
 # Server settings
 server:
   port: 8088
+  ssl:
+    enabled: false
+
+provider:
+  host: https://localhost:9443
 
 
 
@@ -24,6 +29,19 @@ spring:
     hibernate:
 #      ddl-auto: update
     show-sql: false
+  security:
+    oauth2:
+      client:
+        client-id: 7QFfRuMBtyfn2x2f0em7MCU_FQIa
+        client-secret: cvbtf0zdP0cff2sHOTJsE8BVguAa
+        access-token-uri: https://localhost:9443/oauth2/token
+        user-authorization-uri: https://localhost:9443/oauth2/token/authorize
+        scope: openid
+      resource:
+        filter-order: 3
+        user-info-uri: https://localhost:9443/oauth2/userinfo
+        token-info-uri: https://localhost:9443/oauth2/introspect
+        prefer-token-info: true
 
   mail:
     host: smtp.gmail.com

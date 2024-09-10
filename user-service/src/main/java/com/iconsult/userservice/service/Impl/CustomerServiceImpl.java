@@ -10,10 +10,8 @@ import com.iconsult.userservice.enums.CustomerStatus;
 import com.iconsult.userservice.enums.ResponseCodes;
 import com.iconsult.userservice.exception.ServiceException;
 import com.iconsult.userservice.model.dto.request.*;
-import com.iconsult.userservice.model.dto.response.DashBoardResponseDto;
-import com.iconsult.userservice.model.dto.response.ForgetUserAndPasswordResponse;
-import com.iconsult.userservice.model.dto.response.KafkaMessageDto;
-import com.iconsult.userservice.model.dto.response.SignUpResponse;
+import com.iconsult.userservice.model.dto.request.AccountDto;
+import com.iconsult.userservice.model.dto.response.*;
 import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
@@ -24,6 +22,7 @@ import com.iconsult.userservice.repository.*;
 import com.iconsult.userservice.service.CustomerService;
 import com.iconsult.userservice.service.EmailService;
 import com.iconsult.userservice.service.JwtService;
+import com.iconsult.userservice.service.OAuthTokenRequest;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
@@ -103,14 +102,6 @@ public class CustomerServiceImpl implements CustomerService
 
     @Autowired
     private AppConfigurationImpl appConfigurationImpl;
-
-    @Autowired
-    private JwtService jwtService;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-//    @Autowired
-//    private EmailService emailService;
 
     @Autowired
     private ImageVerificationRepository imageVerificationRepository;
@@ -308,24 +299,22 @@ public class CustomerServiceImpl implements CustomerService
             if (customer.getPassword().equals(loginDto.getPassword()) &&
                     (loginDto.getSecurityImage() == null || customer.getSecurityPicture().equals(loginDto.getSecurityImage()))) {
                 // JWT Implementation Starts
-                Authentication authentication =
-                        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmailorUsername(), loginDto.getPassword()));
-                String email = authentication.getName();
-                String token = jwtService.generateToken(email);
-                LOGGER.info("Token = " + token);
-                LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
+                OAuthTokenResponseDTO authTokenResponseDTO = OAuthTokenRequest.getToken();
                 // JWT Implementation Ends
 
                 Map<String, Object> data = new HashMap<>();
                 data.put("customerId", customer.getId());
-                data.put("token", token);
-                data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
+                data.put("token", authTokenResponseDTO.getAccess_token());
+                data.put("expirationTimeInSec", authTokenResponseDTO.getExpires_in());
                 response = new CustomResponseEntity<>(data, "customer logged in successfully");
 
                 //set customer token
-                customer.setSessionToken(token);
-                AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
-                customer.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
+                customer.setSessionToken(authTokenResponseDTO.getAccess_token());
+                //AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
+
+                // Convert seconds to minutes
+                long expiresInMinutes = authTokenResponseDTO.getExpires_in() / 60;
+                customer.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), (int) expiresInMinutes))));
                 updateCustomer(customer);
                 return response;
             } else {
