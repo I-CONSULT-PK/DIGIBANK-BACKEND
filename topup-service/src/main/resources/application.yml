@@ -1,6 +1,6 @@
 # Server settings
-#server:
-#  port: 8088
+server:
+  port: 8089
 
 # Database configuration
 spring:
