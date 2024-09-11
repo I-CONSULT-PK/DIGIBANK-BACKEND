@@ -3,6 +3,7 @@ package com.iconsult.topup.controller;
 import com.iconsult.topup.model.dto.MobilePackageDTO;
 import com.iconsult.topup.service.MobilePackageService;
 import com.iconsult.topup.service.NetworkService;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +32,12 @@ public class MobilePackageController {
     @GetMapping("/network/{networkId}")
     public List<MobilePackageDTO> getMobilePackagesByNetworkId(@PathVariable Long networkId) {
         return mobilePackageService.getMobilePackagesByNetworkId(networkId);
+    }
+
+    @GetMapping("/getPackage")
+    public CustomResponseEntity getPackage(@RequestParam("networkId") Long networkId,
+                                           @RequestParam("packageId") Long packageId){
+        return mobilePackageService.getPackageDetails(networkId,packageId);
     }
 
     @PostMapping

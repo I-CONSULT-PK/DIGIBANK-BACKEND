@@ -7,10 +7,12 @@ import com.iconsult.topup.exception.ExceptionNotFound;
 import com.iconsult.topup.repo.MobilePackageRepository;
 import com.iconsult.topup.repo.NetworkRepository;
 import com.iconsult.topup.service.MobilePackageService;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +60,27 @@ public class MobilePackageServiceImpl implements MobilePackageService {
 
     public void deleteMobilePackage(Long id) {
         mobilePackageRepository.deleteById(id);
+    }
+
+    @Override
+    public CustomResponseEntity getPackageDetails(Long networkId, Long packageId) {
+
+        Optional<Network> network = networkRepository.findById(networkId);
+
+        if(!network.isPresent()){
+            return CustomResponseEntity.error("invalid network id");
+        }
+        List<MobilePackage> mobilePackages = network.get().getMobilePackages();
+
+        MobilePackageDTO mobilePackageDTO = mobilePackages.stream().filter(mobilePackage -> mobilePackage.getId().equals(packageId))
+                .findFirst()
+                .map(this::convertToDTO)
+                .orElse(null);
+        if(mobilePackageDTO==null){
+            return CustomResponseEntity.error("invalid package id");
+        }
+
+        return new CustomResponseEntity(mobilePackageDTO,"Package Details");
     }
 
     private MobilePackageDTO convertToDTO(MobilePackage mobilePackage) {
