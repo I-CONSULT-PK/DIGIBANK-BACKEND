@@ -36,8 +36,9 @@ public class MobilePackageController {
 
     @GetMapping("/getPackage")
     public CustomResponseEntity getPackage(@RequestParam("networkId") Long networkId,
-                                           @RequestParam("packageId") Long packageId){
-        return mobilePackageService.getPackageDetails(networkId,packageId);
+                                           @RequestParam("packageId") Long packageId,
+                                           @RequestParam("mobileNumber") String mobileNumber){
+        return mobilePackageService.getPackageDetails(mobileNumber,networkId,packageId);
     }
 
     @PostMapping

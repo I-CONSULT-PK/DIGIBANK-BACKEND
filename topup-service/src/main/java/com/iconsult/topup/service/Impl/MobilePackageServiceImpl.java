@@ -1,11 +1,17 @@
 package com.iconsult.topup.service.Impl;
 
+import com.iconsult.topup.constants.CarrierType;
+import com.iconsult.topup.constants.TopUpType;
 import com.iconsult.topup.model.dto.MobilePackageDTO;
 import com.iconsult.topup.model.entity.MobilePackage;
 import com.iconsult.topup.model.entity.Network;
 import com.iconsult.topup.exception.ExceptionNotFound;
+import com.iconsult.topup.model.entity.TopUpCustomer;
+import com.iconsult.topup.model.entity.TopUpTransaction;
 import com.iconsult.topup.repo.MobilePackageRepository;
 import com.iconsult.topup.repo.NetworkRepository;
+import com.iconsult.topup.repo.TopUpCustomerRepository;
+import com.iconsult.topup.repo.TopUpRepository;
 import com.iconsult.topup.service.MobilePackageService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +27,11 @@ public class MobilePackageServiceImpl implements MobilePackageService {
     @Autowired
     private MobilePackageRepository mobilePackageRepository;
 
+    @Autowired
+    private TopUpRepository topUpRepository;
+
+    @Autowired
+    private TopUpCustomerRepository topUpCustomerRepository;
     @Autowired
     private NetworkRepository networkRepository;
 
@@ -63,7 +74,13 @@ public class MobilePackageServiceImpl implements MobilePackageService {
     }
 
     @Override
-    public CustomResponseEntity getPackageDetails(Long networkId, Long packageId) {
+    public CustomResponseEntity getPackageDetails(String mobileNumber,Long networkId, Long packageId) {
+
+        Optional<TopUpCustomer> customer = topUpCustomerRepository.findByMobileNumber(mobileNumber);
+
+        if(!customer.isPresent()){
+            return CustomResponseEntity.error("customer not found, Make sure to enter correct mobileNumber!");
+        }
 
         Optional<Network> network = networkRepository.findById(networkId);
 
@@ -79,6 +96,14 @@ public class MobilePackageServiceImpl implements MobilePackageService {
         if(mobilePackageDTO==null){
             return CustomResponseEntity.error("invalid package id");
         }
+
+        TopUpTransaction transaction = new TopUpTransaction();
+        transaction.setTopUpCustomer(customer.get());
+        transaction.setMobileNumber(mobileNumber);
+        transaction.setAmount(mobilePackageDTO.getPrice());
+        transaction.setCarrierType(CarrierType.valueOf(network.get().getName()));
+        transaction.setType(TopUpType.MOBILE_PACKAGE);
+        topUpRepository.save(transaction);
 
         return new CustomResponseEntity(mobilePackageDTO,"Package Details");
     }

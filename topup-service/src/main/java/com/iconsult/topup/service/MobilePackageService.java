@@ -27,5 +27,5 @@ public interface MobilePackageService {
 
       void deleteMobilePackage(Long id);
 
-      CustomResponseEntity getPackageDetails(Long networkId, Long packageId);
+      CustomResponseEntity getPackageDetails(String mobileNumber,Long networkId, Long packageId);
 }
