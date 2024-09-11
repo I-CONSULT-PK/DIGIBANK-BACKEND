@@ -1,5 +1,7 @@
 package com.iconsult.userservice.model.dto.request;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Data
@@ -12,6 +14,9 @@ public class FundTransferDto {
     private String senderAccountNumber;
     private String bankName;
     private String purpose;
+
+    @NotNull(message = "Transaction amount required")
+    @DecimalMin(value = "1.0", inclusive = true, message = "Transaction amount must be at least 1")
     private Double transferAmount;
     private String localDate;
     private int successCode;

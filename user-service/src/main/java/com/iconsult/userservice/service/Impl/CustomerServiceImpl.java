@@ -687,6 +687,11 @@ public class CustomerServiceImpl implements CustomerService
                 accountRepository.save(checkAccount);
                 return new CustomResponseEntity(account, "Success");
             }
+            if(account.getDefaultAccount()){
+                return CustomResponseEntity.error("this account already set");
+            }
+            account.setDefaultAccount(true);
+            accountRepository.save(account);
         }
         LOGGER.info("Account not found");
         return CustomResponseEntity.error("Account not found");

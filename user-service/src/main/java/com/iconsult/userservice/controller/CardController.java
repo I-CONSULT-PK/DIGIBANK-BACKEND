@@ -6,13 +6,16 @@ import com.iconsult.userservice.model.dto.request.ChangePinDto;
 import com.iconsult.userservice.service.CardService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/v1/customer/card")
+@Validated
 public class CardController {
     @Autowired
     private CardService cardService;
@@ -39,7 +42,10 @@ public class CardController {
     }
 
     @PostMapping("/setPin")
-    public CustomResponseEntity setPinDigiBankAndMyDatabase(@Valid @RequestParam String pin, @RequestParam String card){
+    public CustomResponseEntity setPinDigiBankAndMyDatabase(@Valid @RequestParam
+        @Pattern(regexp = "\\d{4}", message = "Pin must be exactly 4 digits.")
+        String pin,
+        @Valid @RequestParam String card){
         return this.cardService.setPinDigiBankAndMyDatabase(pin,card);
     }
 
