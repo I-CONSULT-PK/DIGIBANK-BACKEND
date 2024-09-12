@@ -26,7 +26,7 @@ public class RouteValidator {
             "/api/devices/**",
             "/v1/settings/**",
             "/v1/customer/fund/**",
-            "/eureka"
+            "/eureka",
 //            "/v1/customer/fund/**",
             "/v1/billPayment/**",
             "/eureka",
