@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -31,6 +30,7 @@ public class TopUpCustomer {
     private Set<Subscription> subscriptions;
 
     @OneToMany(mappedBy = "topUpCustomer")
+    @JsonManagedReference
     private Set<TopUpTransaction> transactions;
     @Enumerated(EnumType.STRING)
     private CarrierType carrierType;

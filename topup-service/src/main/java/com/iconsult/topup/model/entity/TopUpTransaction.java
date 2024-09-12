@@ -1,5 +1,6 @@
 package com.iconsult.topup.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.iconsult.topup.constants.CarrierType;
 import com.iconsult.topup.constants.TopUpType;
 import jakarta.persistence.*;
@@ -26,6 +27,7 @@ public class TopUpTransaction {
     private Date transactionDate;
     @ManyToOne
     @JoinColumn(name = "customer_id")
+    @JsonBackReference
     private TopUpCustomer topUpCustomer;
     @Enumerated(EnumType.STRING)
     private CarrierType carrierType;
