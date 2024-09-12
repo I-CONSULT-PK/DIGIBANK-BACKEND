@@ -198,7 +198,7 @@ public class CustomerServiceImpl implements CustomerService
         accountCDDetailsRepository.save(accountCDDetails);// This will cascade and save the account
 
         // Return success response
-        return new CustomResponseEntity<>("Customer registered successfully");
+        return new CustomResponseEntity<>(customer,"Customer registered successfully");
     }
 
     private void checkExistingData(SignUpDto signUpDto) {
