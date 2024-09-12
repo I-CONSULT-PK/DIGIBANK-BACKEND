@@ -44,7 +44,7 @@ public class TopUpServiceImpl implements TopUpService {
     private String URL = "http://localhost:8089/v1/topup/topUpTransaction";
     private String PackageURL = "http://localhost:8089/v1/network";
 
-    private String BundleTransactionURL= "http://192.168.0.63:8089/v1/packages/subscribePackage";
+    private String BundleTransactionURL= "http://localhost:8089/v1/packages/subscribePackage";
 
 
     @Override
@@ -98,7 +98,7 @@ public class TopUpServiceImpl implements TopUpService {
             );
         } catch (Exception e) {
             LOGGER.error("Error making HTTP request: {}", e.getMessage());
-            return CustomResponseEntity.error("Error making HTTP request");
+            return CustomResponseEntity.error("External Service Response Error");
         }
 
         // Extract the response body
