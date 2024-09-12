@@ -8,7 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -21,13 +23,16 @@ public class TopUpCustomer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String cnic;
+    private String mobileNumber;
+    private String email;
+    private String CNIC;
+    private Date registrationDate;
+    @OneToMany(mappedBy = "topUpCustomer", cascade = CascadeType.ALL)
+    private Set<Subscription> subscriptions;
+
+    @OneToMany(mappedBy = "topUpCustomer")
+    private Set<TopUpTransaction> transactions;
     @Enumerated(EnumType.STRING)
     private CarrierType carrierType;
-    private String mobileNumber;
-
-    @OneToMany(mappedBy = "topUpCustomer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<TopUpTransaction> transactions;
 
 }

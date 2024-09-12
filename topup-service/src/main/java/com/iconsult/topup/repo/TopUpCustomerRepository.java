@@ -12,6 +12,10 @@ public interface TopUpCustomerRepository  extends JpaRepository<TopUpCustomer, L
 
     Optional<TopUpCustomer> findByMobileNumber(String mobileNumber);
 
+    Optional<TopUpCustomer> findByEmail(String email);
+
+    @Query("SELECT c FROM TopUpCustomer c WHERE c.CNIC = :cnic")
+    Optional<TopUpCustomer> findByCnic(@Param("cnic") String cnic);
     @Query("SELECT t FROM TopUpCustomer t WHERE t.mobileNumber = :mobileNumber AND t.carrierType = :carrierType")
     Optional<TopUpCustomer> findByMobileNumberAndCarrierType(@Param("mobileNumber") String mobileNumber, @Param("carrierType") CarrierType carrierType);
 

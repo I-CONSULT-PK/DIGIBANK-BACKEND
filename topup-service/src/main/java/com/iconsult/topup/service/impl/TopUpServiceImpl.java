@@ -1,12 +1,11 @@
-package com.iconsult.topup.service.impl;
+package com.iconsult.topup.service.Impl;
 
 import com.iconsult.topup.constants.CarrierType;
-import com.iconsult.topup.constants.TopUpStatus;
 import com.iconsult.topup.constants.TopUpType;
 import com.iconsult.topup.model.entity.TopUpCustomer;
 import com.iconsult.topup.model.entity.TopUpTransaction;
 import com.iconsult.topup.repo.TopUpCustomerRepository;
-import com.iconsult.topup.repo.TopUpRepository;
+import com.iconsult.topup.repo.TopUpTransactionRepository;
 import com.iconsult.topup.service.TopUpService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,14 +17,14 @@ import java.util.Optional;
 public class TopUpServiceImpl implements TopUpService {
 
     @Autowired
-    private TopUpRepository topUpRepository;
+    private TopUpTransactionRepository topUpTransactionRepository;
 
     @Autowired
     private  TopUpCustomerRepository topUpCustomerRepository;
 
     TopUpServiceImpl(){}
-    public TopUpServiceImpl (TopUpRepository topUpRepository) {
-        this.topUpRepository = topUpRepository;
+    public TopUpServiceImpl (TopUpTransactionRepository topUpTransactionRepository) {
+        this.topUpTransactionRepository = topUpTransactionRepository;
     }
 
 
@@ -51,13 +50,11 @@ public class TopUpServiceImpl implements TopUpService {
 
 
         transaction.setCarrierType(carrierType);
-        transaction.setMobileNumber(mobileNumber);
         transaction.setAmount(amount);
-        transaction.setType(topUpType);
+        transaction.setTopUpType(topUpType);
         transaction.setTopUpCustomer(customer.get());
         transaction.setTransactionDate(new Date());
-        transaction.setStatus(TopUpStatus.SUCCESSFUL);
-        TopUpTransaction savedTransaction = topUpRepository.save(transaction);
+        TopUpTransaction savedTransaction = topUpTransactionRepository.save(transaction);
 
         return new CustomResponseEntity(savedTransaction,"");
     }

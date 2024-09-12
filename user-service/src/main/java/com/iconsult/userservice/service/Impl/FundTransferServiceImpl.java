@@ -42,7 +42,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
-    private final String interBankFundTransferURL = "http://192.168.0.63:8080/api/v1/1link/creditTransaction";
+    private final String interBankFundTransferURL = "http://localhost:8084/api/v1/1link/creditTransaction";
 
     @Autowired
     private TransactionRepository transactionRepository;

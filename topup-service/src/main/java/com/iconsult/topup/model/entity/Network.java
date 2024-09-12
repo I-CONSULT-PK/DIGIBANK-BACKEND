@@ -22,11 +22,7 @@ public class Network {
     private Long id;
     private String name;
 
-//    @OneToMany(mappedBy = "network")
-//    @JsonManagedReference // Serialize this side of the relationship
-//    private List<MobilePackage> mobilePackages;
-
     @OneToMany(mappedBy = "network", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore // Prevent infinite recursion
+    @JsonIgnore
     private List<MobilePackage> mobilePackages = new ArrayList<>();
 }

@@ -74,10 +74,9 @@ public class NetworkServiceImpl implements NetworkService {
     private MobilePackageDTO convertToDTO(MobilePackage mobilePackage) {
         MobilePackageDTO dto = new MobilePackageDTO();
         dto.setId(mobilePackage.getId());
-        dto.setPkg_name(mobilePackage.getPkg_name());
+        dto.setPkg_name(mobilePackage.getName());
         dto.setDescription(mobilePackage.getDescription());
         dto.setPrice(mobilePackage.getPrice());
-        dto.setData_limit(mobilePackage.getData_limit());
         dto.setNetworkId(mobilePackage.getNetwork() != null ? mobilePackage.getNetwork().getId() : null);
 
         return dto;

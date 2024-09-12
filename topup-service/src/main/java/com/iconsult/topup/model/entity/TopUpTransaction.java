@@ -1,8 +1,6 @@
 package com.iconsult.topup.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.iconsult.topup.constants.CarrierType;
-import com.iconsult.topup.constants.TopUpStatus;
 import com.iconsult.topup.constants.TopUpType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -23,23 +21,17 @@ public class TopUpTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    private TopUpType type;
-
-    @Enumerated(EnumType.STRING)
-    private CarrierType carrierType;
-
-    private String mobileNumber;
-
-    @ManyToOne
-    @JoinColumn(name = "customer_id")
-    @JsonBackReference
-    private TopUpCustomer topUpCustomer;
-
     private Double amount;
 
     private Date transactionDate;
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private TopUpCustomer topUpCustomer;
+    @Enumerated(EnumType.STRING)
+    private CarrierType carrierType;
 
     @Enumerated(EnumType.STRING)
-    private TopUpStatus status;
+    private TopUpType topUpType;
+
+
 }

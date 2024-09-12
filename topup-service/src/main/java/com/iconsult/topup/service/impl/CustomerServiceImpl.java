@@ -1,48 +1,78 @@
-package com.iconsult.topup.service.impl;
+package com.iconsult.topup.service.Impl;
 
 import com.iconsult.topup.constants.CarrierType;
+import com.iconsult.topup.model.dto.TopUpCustomerDto;
 import com.iconsult.topup.model.dto.TopUpCustomerRequest;
 import com.iconsult.topup.model.entity.TopUpCustomer;
 import com.iconsult.topup.repo.TopUpCustomerRepository;
 import com.iconsult.topup.service.CustomerService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.Optional;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
-    private  TopUpCustomerRepository topUpCustomerRepository;
 
-    public CustomerServiceImpl (TopUpCustomerRepository topUpCustomerRepository) {
+    @Autowired
+    private TopUpCustomerRepository topUpCustomerRepository;
+
+    public CustomerServiceImpl(TopUpCustomerRepository topUpCustomerRepository) {
         this.topUpCustomerRepository = topUpCustomerRepository;
     }
+
     @Override
     public CustomResponseEntity addCustomer(TopUpCustomerRequest request) {
 
+        Optional<TopUpCustomer> customerExists = topUpCustomerRepository.findByEmail(request.getEmail());
+
+        if (customerExists.isPresent()) {
+            return CustomResponseEntity.error("customer with this email already registered : " + request.getEmail());
+        }
+
+        if (topUpCustomerRepository.findByMobileNumber(request.getMobileNumber()).isPresent()) {
+            return CustomResponseEntity.error("Customer with this mobile number already exists : " + request.getMobileNumber());
+        }
+
+        if (topUpCustomerRepository.findByCnic(request.getCnic()).isPresent()) {
+            return CustomResponseEntity.error("Customer with this cnic already exists : " + request.getCnic());
+        }
+
+
         if (!isValidMobileNumberLength(request.getMobileNumber())) {
-            return new CustomResponseEntity ("Mobile number must be 11 digits long");
+            return CustomResponseEntity.error("Mobile number must be 11 digits long");
         }
 
         if (!isValidMobileNumberForCarrier(request.getMobileNumber(), request.getCarrierType())) {
-            return new CustomResponseEntity ("Invalid mobile number for the selected carrier");
+            return CustomResponseEntity.error("Invalid mobile number for the selected carrier");
         }
-
-
-
-        if (topUpCustomerRepository.findByMobileNumber(request.getMobileNumber()).isPresent()) {
-          return  new CustomResponseEntity("Customer with this mobile number already exists");
-        }
-
 
         TopUpCustomer topUpCustomer = new TopUpCustomer();
         topUpCustomer.setName(request.getName());
-        topUpCustomer.setCnic(request.getCnic());
-        topUpCustomer.setCarrierType(request.getCarrierType());
+        topUpCustomer.setCNIC(request.getCnic());
+        topUpCustomer.setEmail(request.getEmail());
         topUpCustomer.setMobileNumber(request.getMobileNumber());
+        topUpCustomer.setRegistrationDate(new Date());
+        topUpCustomer.setCarrierType(request.getCarrierType());
+        topUpCustomerRepository.save(topUpCustomer);
 
-        TopUpCustomer savedCustomer = topUpCustomerRepository.save(topUpCustomer);
-        return new CustomResponseEntity(savedCustomer, "customer saved");
+        TopUpCustomerDto customerDto = customerJpeToDto(topUpCustomer);
+        return new CustomResponseEntity(customerDto, "customer saved");
     }
 
+    TopUpCustomerDto customerJpeToDto(TopUpCustomer customer) {
+
+        TopUpCustomerDto dto = new TopUpCustomerDto();
+        dto.setName(customer.getName());
+        dto.setCNIC(customer.getCNIC());
+        dto.setEmail(customer.getEmail());
+        dto.setRegistrationDate(customer.getRegistrationDate());
+        dto.setMobileNumber(customer.getMobileNumber());
+        dto.setCarrierType(customer.getCarrierType());
+        return dto;
+    }
 
     private boolean isValidMobileNumberForCarrier(String mobileNumber, CarrierType carrierType) {
         switch (carrierType) {

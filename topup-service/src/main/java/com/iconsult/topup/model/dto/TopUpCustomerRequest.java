@@ -13,4 +13,5 @@ public class TopUpCustomerRequest {
     private String cnic;
     private CarrierType carrierType;
     private String mobileNumber;
+    private String email;
 }

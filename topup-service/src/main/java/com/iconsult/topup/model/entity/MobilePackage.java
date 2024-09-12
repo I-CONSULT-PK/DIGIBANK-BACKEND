@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -17,24 +19,15 @@ public class MobilePackage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String pkg_name;
+    private String name;
     private String description;
-    private double price;
-    private int data_limit;
+    private Double price;
+    private Integer validityDays;
 
-//    @ManyToOne
-//    @JoinColumn(name = "network_id") // Foreign key column in the MobilePackage table
-//    @JsonBackReference // Avoid serializing the back-reference
-//    private Network network;
-
+    @OneToMany(mappedBy = "mobilePackage")
+    private Set<Subscription> subscriptions;
     @ManyToOne
     @JoinColumn(name = "network_id")
-    @JsonIgnore // Prevent infinite recursion
+    @JsonIgnore
     private Network network;
-
-//    // Custom getter for networkId
-//    @JsonGetter("networkId")
-//    public Long getNetworkId() {
-//        return network != null ? network.getId() : null;
-//    }
 }
