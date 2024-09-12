@@ -218,7 +218,11 @@ public class FundTransferServiceImpl implements FundTransferService {
                     Optional<Account> senderAccount = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
                     params.put("accountNumber", cbsTransferDto.getReceiverAccountNumber());
                     Optional<Account> receiverAccount = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
-
+                    if (senderAccount.isEmpty()){
+                        return CustomResponseEntity.error("Invalid Account Number");
+                    } else if (receiverAccount.isEmpty()) {
+                        return CustomResponseEntity.error("Invalid Receiver account");
+                    }
                     if (senderAccount.isPresent() && receiverAccount.isPresent()) {
                         if(senderAccount.get().getTransactionLimit() < cbsTransferDto.getTransferAmount()) {
                             return CustomResponseEntity.error("Account limit is lower than the transfer money");
@@ -357,7 +361,7 @@ public class FundTransferServiceImpl implements FundTransferService {
         // 1% of transaction
         double transactionFee = fundTransferDto.getAmount() * 0.01;
         double totalAmount = fundTransferDto.getAmount() + transactionFee;
-        if(account.getTransactionLimit() < totalAmount) {
+        if(account.get().getTransactionLimit() < totalAmount) {
             return CustomResponseEntity.error("Account limit is lower than the transfer money");
         }
 
@@ -367,7 +371,7 @@ public class FundTransferServiceImpl implements FundTransferService {
             map.put("currentBalance", account.get().getAccountBalance());
             return new CustomResponseEntity(map, "your account does not have a sufficient balance!");
         }
-        if (isTransactionAllowed(account.getAccountNumber(),totalAmount,account.getSingleDayLimit()) == false){
+        if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDayLimit()) == false){
             return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
         }
 
@@ -592,6 +596,12 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     @Override
     public CustomResponseEntity setOneDayLimit(String accountNumber,Long customerId, Double ondDayLimit) {
+        if(ondDayLimit > 1000000){
+            return CustomResponseEntity.error("The one-day limit cannot exceed one million");
+        }
+        if (ondDayLimit<1){
+            return CustomResponseEntity.error("The one-day limit can't be  less than 1");
+        }
         Customer customer = customerRepository.findById(customerId).orElse(null);
         String jpql = "SELECT a FROM Account a WHERE a.accountNumber = :accountNumber and a.customer= :customer";
         Map<String, Object> params = new HashMap<>();

@@ -31,7 +31,9 @@ public class FundTransferController {
     }
 
     @GetMapping("/getAccountTitle")
-    public CustomResponseEntity getAccountTitle(@RequestParam("senderAccountNumber") String senderAccountNumber) {
+    public CustomResponseEntity getAccountTitle(@RequestParam("senderAccountNumber")
+        @Pattern(regexp = "^zanbeel-\\w+$", message = "Account must be in the format 'zanbeel-xxxx', where xxxx is alphanumeric.")
+        String senderAccountNumber) {
         return this.fundTransferService.getAccountTitle(senderAccountNumber);
     }
 
@@ -47,7 +49,9 @@ public class FundTransferController {
 
     @GetMapping("/generateStatement")
     public CustomResponseEntity<Map<String, Object>> getTransactionsByAccountAndDateRange(
-            @RequestParam String accountNumber,
+            @RequestParam
+            @Pattern(regexp = "^zanbeel-\\w+$", message = "Account must be in the format 'zanbeel-xxxx', where xxxx is alphanumeric.")
+            String accountNumber,
             @RequestParam
             @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "Start date must be in the format YYYY-MM-DD")
             String startDate  ,
@@ -60,7 +64,9 @@ public class FundTransferController {
     }
 
     @PostMapping("/setOneDayLimit")
-    public CustomResponseEntity setOneDayLimit(@RequestParam String account ,@RequestParam Long customerId, @RequestParam Double ondDayLimit){
+    public CustomResponseEntity setOneDayLimit(@RequestParam
+        @Pattern(regexp = "^zanbeel-\\w+$", message = "Account must be in the format 'zanbeel-xxxx', where xxxx is alphanumeric.")
+        String account ,@RequestParam Long customerId, @RequestParam Double ondDayLimit){
         return fundTransferService.setOneDayLimit(account ,customerId, ondDayLimit);
     }
 }

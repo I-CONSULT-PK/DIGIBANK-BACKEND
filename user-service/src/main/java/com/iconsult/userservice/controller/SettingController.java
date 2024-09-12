@@ -6,11 +6,17 @@ import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.service.Impl.SettingServiceImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/settings")
+@Validated
 public class SettingController {
 
     @Autowired
@@ -28,9 +34,15 @@ public class SettingController {
     }
 
     @PostMapping("/setTransactionLimit")
-    public CustomResponseEntity setTransactionLimit(@RequestParam ("accountNumber") String accountNumber, @RequestParam ("userId") Long userId,@RequestParam ("transactionLimit") Double transactionLimit ) {
+    public CustomResponseEntity setTransactionLimit(@Valid @RequestParam ("accountNumber")
+    @Pattern(regexp = "^zanbeel-\\w+$", message = "Account must be in the format 'zanbeel-xxxx', where xxxx is alphanumeric.")
+    String accountNumber,
+    @RequestParam ("userId") Long userId,
+    @RequestParam  ("transactionLimit") @Min(value = 10000, message = "at least 10,000")
+    @Max(value = 1000000, message = "not exceed 1,000,000")
+    @Digits(integer = 7, fraction = 0, message = "must be a whole number")
+    Double transactionLimit ) {
         return this.settingService.setTransactionLimit(accountNumber, userId, transactionLimit);
-
     }
 
     @PostMapping("/changePassword")
