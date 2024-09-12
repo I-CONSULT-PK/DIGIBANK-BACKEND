@@ -24,6 +24,9 @@ public class RouteValidator {
             "/v1/customer/resetPassword",
             "/v1/customer/verifyForgetPasswordToken",
             "/api/devices/**",
+            "/v1/settings/**",
+            "/v1/customer/fund/**",
+            "/eureka"
 //            "/v1/customer/fund/**",
             "/v1/billPayment/**",
             "/eureka",

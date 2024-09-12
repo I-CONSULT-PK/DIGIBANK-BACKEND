@@ -22,5 +22,7 @@ public interface FundTransferService {
     CustomResponseEntity<Map<String, Object>> generateMiniStatement(String accountNumber);
 
     CustomResponseEntity<Map<String, Object>> generateStatement(String accountNumber, String startDate, String endDate, String statementType);
+
+    CustomResponseEntity setOneDayLimit(String account ,Long customerId, Double ondDayLimit);
 }
 
