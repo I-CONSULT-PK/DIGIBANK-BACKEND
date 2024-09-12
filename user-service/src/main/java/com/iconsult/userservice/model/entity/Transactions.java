@@ -19,7 +19,6 @@ public class Transactions implements Serializable {
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
-    private Customer customer;
     private String ibanCode;
     private String transactionId;
     private String transactionDate;
