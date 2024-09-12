@@ -16,6 +16,7 @@ import com.iconsult.userservice.repository.CardRequestRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.service.CardService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+//import com.zanbeel.otp_service.config.CustomApiResponse;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -531,6 +532,12 @@ public class CardServiceImpl implements CardService {
             Card card = optionalCard.get();
             if (!card.getPin().equals(changePinRequestDto.getOldPin())) {
                 return CustomResponseEntity.error("Old PIN is incorrect");
+            }
+
+            // Check if new PIN is the same as the old PIN
+            if (newPin.equals(changePinRequestDto.getOldPin())) {
+                LOGGER.error("New PIN matches the old PIN for card number {}", cardNumber);
+                return CustomResponseEntity.error("New PIN and old PIN matched. Try a different PIN other than the old PIN.");
             }
 
             card.setPin(newPin);

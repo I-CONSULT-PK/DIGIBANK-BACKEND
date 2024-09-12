@@ -1,6 +1,7 @@
 package com.iconsult.userservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -38,6 +39,12 @@ public class Account implements Serializable {
     private Date accountClosedDate;
     private String accountClosedReason;
     private String proofOfIncome;
+
+    @ManyToOne
+    @JoinColumn(name = "digi_Branch")
+//    @JsonBackReference
+    @JsonIgnore
+    private DigiBankBranch digiBranch;
 
     public Double getAccountBalance() {
         return accountBalance;
