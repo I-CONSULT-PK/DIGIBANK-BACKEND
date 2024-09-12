@@ -112,6 +112,7 @@ public class OAuthTokenRequest {
             LOGGER.error(e.getMessage());
 
         } catch (Exception e) {
+            LOGGER.error("WS02 may be Down!.........");
             LOGGER.error(e.getMessage());
         }
 

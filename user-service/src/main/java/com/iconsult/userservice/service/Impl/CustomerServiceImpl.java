@@ -190,7 +190,8 @@ public class CustomerServiceImpl implements CustomerService
         accountCDDetailsRepository.save(accountCDDetails);// This will cascade and save the account
 
         // WSO02 User Creation starts
-        if(!OAuthTokenRequest.createUser(customer.getUserName(), customer.getAccessUserPass(), customer.getEmail())) return CustomResponseEntity.error("Unable to Process!");
+        if(!OAuthTokenRequest.createUser(customer.getUserName(), customer.getAccessUserPass(), customer.getEmail())) throw new com.zanbeel.customUtility.exception.ServiceException("Unable to Process!"); // Exception throw islye karwaye hay, takay agar WS02 say koi bhi exception aye, to rollback hojaye sab
+        LOGGER.info("WS02 User Created Successfully....");
         // WSO02 User Creation ends
 
         // Return success response
