@@ -301,18 +301,18 @@ public class DeviceServiceImpl implements DeviceService {
                 dv.setDevicePin(settingDTO.getDevicePin());
                 deviceRepository.save(dv);
                 LOGGER.error("Device Registered with Customer successfully...");
-                return new CustomResponseEntity<>("Device Registered with Customer successfully...");
+                return new CustomResponseEntity<>(dv.getId(),"Device Registered with Customer successfully...");
             }
 
         }
         catch (EntityNotFoundException e) {
             // Handle case where the device is not found
             LOGGER.error("EntityNotFoundException occurred: ", e);
-            return new CustomResponseEntity<>(e.getMessage(), "Failed Register Device! ");
+            return CustomResponseEntity.error(e.getMessage()+" Failed Register Device! ");
         } catch (Exception e) {
             // Handle any other unexpected exceptions
             LOGGER.error("Exception occurred: ", e);
-            return new CustomResponseEntity<>(e.getMessage(),"Failed Register Device!");
+            return CustomResponseEntity.error(e.getMessage()+" Failed Register Device!");
         }
         return null;
     }
