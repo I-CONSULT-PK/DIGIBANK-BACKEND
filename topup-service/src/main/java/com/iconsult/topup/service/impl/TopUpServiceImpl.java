@@ -56,6 +56,6 @@ public class TopUpServiceImpl implements TopUpService {
         transaction.setTransactionDate(new Date());
         TopUpTransaction savedTransaction = topUpTransactionRepository.save(transaction);
 
-        return new CustomResponseEntity(savedTransaction,"");
+        return new CustomResponseEntity(savedTransaction,"Load Details");
     }
 }
