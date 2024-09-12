@@ -2,6 +2,7 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.Util.Util;
+import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.domain.OTP;
 import com.iconsult.userservice.dto.DefaultAccountDto;
 import com.iconsult.userservice.dto.EmailDto;
@@ -92,6 +93,8 @@ public class CustomerServiceImpl implements CustomerService
     private AccountCDDetailsRepository accountCDDetailsRepository;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    Regex regex;
 
 //    @Autowired
 //    private CustomerMapperImpl customerMapperImpl;
@@ -669,7 +672,10 @@ public class CustomerServiceImpl implements CustomerService
     }
 
     public CustomResponseEntity setDefaultAccount(Long customerId, String accountNumber, Boolean setDefaultAccount) {
-
+        CustomResponseEntity c = regex.checkAccountNumberFormat(accountNumber);
+        if (!c.isSuccess()){
+            return c;
+        }
         LOGGER.info("SetDefaultAccount Request Received...");
         Map<String, Object> param = new HashMap<>();
         param.put("accountNumber",accountNumber);
@@ -682,19 +688,26 @@ public class CustomerServiceImpl implements CustomerService
                     .filter(defaultAccount -> defaultAccount.getDefaultAccount() == true)
                     .findFirst()
                     .orElse(null);
+
             if(!Objects.isNull(checkAccount)) {
-                account.setDefaultAccount(true);
+                if(account.getAccountNumber().equals(checkAccount.getAccountNumber())){
+                    if(!setDefaultAccount){
+                        return CustomResponseEntity.error("At least one account must be the default");
+                    }
+                    return CustomResponseEntity.error("this account is already set");
+                }
                 checkAccount.setDefaultAccount(false);
+                account.setDefaultAccount(true);
+
                 LOGGER.info("Account found : ", account.getAccountNumber());
                 accountRepository.save(account);
                 accountRepository.save(checkAccount);
                 return new CustomResponseEntity(account, "Success");
             }
-            if(account.getDefaultAccount()){
-                return CustomResponseEntity.error("this account already set");
-            }
+
             account.setDefaultAccount(true);
             accountRepository.save(account);
+            return new CustomResponseEntity<>(account,"Success");
         }
         LOGGER.info("Account not found");
         return CustomResponseEntity.error("Account not found");

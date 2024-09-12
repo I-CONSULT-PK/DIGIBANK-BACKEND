@@ -13,6 +13,7 @@ public class FundTransferDto {
     private String receiverAccountNumber;
     private String senderAccountNumber;
     private String bankName;
+    @NotNull(message = "Purpose Required")
     private String purpose;
 
     @NotNull(message = "Transaction amount required")

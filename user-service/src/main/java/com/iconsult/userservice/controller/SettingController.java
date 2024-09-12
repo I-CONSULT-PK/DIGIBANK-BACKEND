@@ -35,7 +35,6 @@ public class SettingController {
 
     @PostMapping("/setTransactionLimit")
     public CustomResponseEntity setTransactionLimit(@Valid @RequestParam ("accountNumber")
-    @Pattern(regexp = "^zanbeel-\\w+$", message = "Account must be in the format 'zanbeel-xxxx', where xxxx is alphanumeric.")
     String accountNumber,
     @RequestParam ("userId") Long userId,
     @RequestParam  ("transactionLimit") @Min(value = 10000, message = "at least 10,000")

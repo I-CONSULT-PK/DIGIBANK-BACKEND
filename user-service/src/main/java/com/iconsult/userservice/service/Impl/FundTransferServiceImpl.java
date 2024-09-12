@@ -2,6 +2,7 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.constant.StatementType;
+import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
@@ -30,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Service
@@ -41,11 +43,12 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
-    private final String interBankFundTransferURL = "http://localhost:8084/api/v1/1link/creditTransaction";
+    private final String interBankFundTransferURL = "http://192.168.0.63:8080/api/v1/1link/creditTransaction";
 
     @Autowired
     private TransactionRepository transactionRepository;
-
+    @Autowired
+    Regex regex;
     @Autowired
     private GenericDao<Bank> bankGenericDao;
 
@@ -70,6 +73,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     @Autowired
     private AccountCDDetailsRepository accountCDDetailsRepository;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public CustomResponseEntity getAllBanks() {
@@ -179,6 +183,15 @@ public class FundTransferServiceImpl implements FundTransferService {
         return false;
     }
     public CustomResponseEntity fundTransfer(FundTransferDto cbsTransferDto) {
+            CustomResponseEntity sender =  regex.checkAccountNumberFormat(cbsTransferDto.getSenderAccountNumber());
+            CustomResponseEntity res =  regex.checkAccountNumberFormat(cbsTransferDto.getReceiverAccountNumber());
+            if(!sender.isSuccess()){
+                return sender;
+            }
+            if(!res.isSuccess()){
+                return res;
+            }
+
         try {
             // Build the URI for the POST request
             URI uri = UriComponentsBuilder.fromHttpUrl(fundTransferURL)
@@ -514,8 +527,6 @@ public class FundTransferServiceImpl implements FundTransferService {
     @Override
     public CustomResponseEntity<Map<String, Object>> generateMiniStatement(String accountNumber) {
 
-        DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
         LocalDate today = LocalDate.now();
         LocalDate lastThreeMonths = today.minusMonths(1);
 
@@ -563,8 +574,16 @@ public class FundTransferServiceImpl implements FundTransferService {
     }
 
     @Override
-    public CustomResponseEntity<Map<String, Object>> generateStatement(String accountNumber, String startDate, String endDate, String statementType) {
+    public CustomResponseEntity generateStatement(String accountNumber, String startDate, String endDate, String statementType) {
 
+        if (!regex.isValidDate(startDate)) {
+            return CustomResponseEntity.error("Start date must be in the format YYYY-MM-DD");
+        }
+
+        // Manual validation for endDate
+        if (!regex.isValidDate(endDate)) {
+            return CustomResponseEntity.error("End date must be in the format YYYY-MM-DD");
+        }
         StatementType statementTypeParam;
         try {
             statementTypeParam = StatementType.valueOf(statementType.toUpperCase());
@@ -594,8 +613,15 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     }
 
+    // Method to manually check if a date matches the format "yyyy-MM-dd"
+
+
     @Override
     public CustomResponseEntity setOneDayLimit(String accountNumber,Long customerId, Double ondDayLimit) {
+        CustomResponseEntity accountFormat = regex.checkAccountNumberFormat(accountNumber);
+        if (!accountFormat.isSuccess()){
+            return accountFormat;
+        }
         if(ondDayLimit > 1000000){
             return CustomResponseEntity.error("The one-day limit cannot exceed one million");
         }

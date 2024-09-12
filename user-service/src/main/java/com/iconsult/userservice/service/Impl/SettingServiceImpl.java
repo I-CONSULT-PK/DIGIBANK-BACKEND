@@ -2,6 +2,7 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.constant.PinStatus;
+import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.entity.Card;
 import com.iconsult.userservice.Util.EncryptionUtil;
@@ -41,6 +42,8 @@ public class SettingServiceImpl implements SettingService {
 
     @Autowired
     CustomResponseEntity customResponseEntity;
+    @Autowired
+    Regex regex;
 
     @Autowired
     AccountRepository accountRepository;
@@ -159,6 +162,10 @@ public class SettingServiceImpl implements SettingService {
 
     @Override
     public CustomResponseEntity setTransactionLimit(String accountNumber, Long customerId, Double transferLimit) {
+        CustomResponseEntity customResp = regex.checkAccountNumberFormat(accountNumber);
+        if(!customResp.isSuccess()){
+            return customResp;
+        }
         Customer customer = customerRepository.findById(customerId).orElse(null);
         String jpql = "SELECT a FROM Account a WHERE a.accountNumber = :accountNumber and a.customer= :customer";
         Map<String, Object> params = new HashMap<>();

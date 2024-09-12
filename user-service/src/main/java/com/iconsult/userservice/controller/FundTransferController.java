@@ -1,6 +1,7 @@
 package com.iconsult.userservice.controller;
 
 import com.iconsult.userservice.constant.StatementType;
+import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.service.FundTransferService;
@@ -21,7 +22,7 @@ import java.util.Map;
 @Validated
 public class FundTransferController {
     private static final Logger LOGGER = LoggerFactory.getLogger(FundTransferController.class);
-
+    @Autowired Regex regex;
     @Autowired
     private FundTransferService fundTransferService;
 
@@ -50,22 +51,22 @@ public class FundTransferController {
     @GetMapping("/generateStatement")
     public CustomResponseEntity<Map<String, Object>> getTransactionsByAccountAndDateRange(
             @RequestParam
-            @Pattern(regexp = "^zanbeel-\\w+$", message = "Account must be in the format 'zanbeel-xxxx', where xxxx is alphanumeric.")
             String accountNumber,
             @RequestParam
-            @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "Start date must be in the format YYYY-MM-DD")
             String startDate  ,
             @RequestParam
-            @Pattern(regexp = "\\d{4}-\\d{2}-\\d{2}", message = "End date must be in the format YYYY-MM-DD")
             String endDate,
             @RequestParam String statementType
             ){
+        CustomResponseEntity accountNumberFormat = regex.checkAccountNumberFormat(accountNumber);
+        if (!accountNumberFormat.isSuccess()) {
+            return accountNumberFormat;
+        }
         return  fundTransferService.generateStatement(accountNumber, startDate, endDate, statementType);
     }
 
     @PostMapping("/setOneDayLimit")
     public CustomResponseEntity setOneDayLimit(@RequestParam
-        @Pattern(regexp = "^zanbeel-\\w+$", message = "Account must be in the format 'zanbeel-xxxx', where xxxx is alphanumeric.")
         String account ,@RequestParam Long customerId, @RequestParam Double ondDayLimit){
         return fundTransferService.setOneDayLimit(account ,customerId, ondDayLimit);
     }

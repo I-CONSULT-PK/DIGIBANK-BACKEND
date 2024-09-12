@@ -1,6 +1,7 @@
 
 package com.iconsult.userservice.service.Impl;
 
+import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.AccountDto;
 import com.iconsult.userservice.model.dto.response.CbsAccountDto;
 import com.iconsult.userservice.model.entity.Account;
@@ -35,7 +36,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private AccountRepository accountRepository;
-
+    @Autowired
+    Regex regex;
     @Autowired
     AccountCDDetailsRepository accountCDDetailsRepository;
     @Autowired
@@ -90,6 +92,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     public CustomResponseEntity getAccount(Long customerId, String accountNumber) {
+        CustomResponseEntity accountFormat = regex.checkAccountNumberFormat(accountNumber);
+        if (!accountFormat.isSuccess()){
+            return accountFormat;
+        }
         CustomResponseEntity<CbsAccountDto> response = fetchAccountFromCbs(customerId, accountNumber);
         Optional<Customer> customer = customerRepository.findById(customerId);
         LOGGER.info("Customer is invalid with id:"+customer);
@@ -111,6 +117,10 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public CustomResponseEntity addAccount(CbsAccountDto cbsAccountDto) {
+        CustomResponseEntity accountFormat = regex.checkAccountNumberFormat(cbsAccountDto.getAccountNumber());
+        if (!accountFormat.isSuccess()){
+            return accountFormat;
+        }
         // Check if the account already exists by account number
         Optional<Account> existingAccount = Optional.ofNullable(accountRepository.findByAccountNumber(cbsAccountDto.getAccountNumber()));
         if(!existingAccount.get().getCustomer().getId().equals(cbsAccountDto.getCustomer().getId())){
