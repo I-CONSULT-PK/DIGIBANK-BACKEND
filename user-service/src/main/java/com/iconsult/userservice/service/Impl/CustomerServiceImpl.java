@@ -183,10 +183,15 @@ public class CustomerServiceImpl implements CustomerService
 
         // Create and save customer with account
         Customer customer = createCustomer(signUpDto, response.getBody());
+
         customerRepository.save(customer);
         Account account = accountRepository.findByAccountNumberAndCustomerCnic(signUpDto.getAccountDto().getAccountNumber(), signUpDto.getCnic());
         AccountCDDetails accountCDDetails = new AccountCDDetails(account, account.getAccountBalance(),0.0,accountDto.getLastCredit(),accountDto.getLastDebit());
         accountCDDetailsRepository.save(accountCDDetails);// This will cascade and save the account
+
+        // WSO02 User Creation starts
+        if(!OAuthTokenRequest.createUser(customer.getUserName(), customer.getAccessUserPass(), customer.getEmail())) return CustomResponseEntity.error("Unable to Process!");
+        // WSO02 User Creation ends
 
         // Return success response
         return new CustomResponseEntity<>("Customer registered successfully");
@@ -246,12 +251,14 @@ public class CustomerServiceImpl implements CustomerService
                 .orElseThrow(() -> new ServiceException("Image does not exist")).getName());
         }
 
-        customer.setStatus(signUpDto.getStatus());
+        customer.setStatus("00");
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
         if (customer.getAccountList() == null) {
             customer.setAccountList(new ArrayList<>());
         }
+        customer.setAccessUserName(signUpDto.getUserName());
+        customer.setAccessUserPass(OAuthTokenRequest.generateRandomPassword());
 
         // Create and add account
         Account account = new Account();
@@ -299,7 +306,7 @@ public class CustomerServiceImpl implements CustomerService
             if (customer.getPassword().equals(loginDto.getPassword()) &&
                     (loginDto.getSecurityImage() == null || customer.getSecurityPicture().equals(loginDto.getSecurityImage()))) {
                 // JWT Implementation Starts
-                OAuthTokenResponseDTO authTokenResponseDTO = OAuthTokenRequest.getToken();
+                OAuthTokenResponseDTO authTokenResponseDTO = OAuthTokenRequest.getToken(customer);
                 // JWT Implementation Ends
 
                 Map<String, Object> data = new HashMap<>();

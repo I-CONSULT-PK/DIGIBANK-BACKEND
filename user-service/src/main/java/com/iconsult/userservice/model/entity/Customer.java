@@ -39,6 +39,8 @@ public class Customer implements Serializable {
     private Long sessionTokenExpireTime;
     private String accountNumber;
     private String registeredAddress;
+    private String accessUserName;
+    private String accessUserPass;
 
     @JsonManagedReference
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)

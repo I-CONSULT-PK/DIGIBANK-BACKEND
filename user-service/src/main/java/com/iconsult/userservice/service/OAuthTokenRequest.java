@@ -1,6 +1,7 @@
 package com.iconsult.userservice.service;
 
 import com.iconsult.userservice.model.dto.response.OAuthTokenResponseDTO;
+import com.iconsult.userservice.model.entity.Customer;
 import com.zanbeel.customUtility.exception.ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,8 +19,12 @@ import java.util.Map;
 public class OAuthTokenRequest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuthTokenRequest.class);
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final int PASSWORD_LENGTH = 8;
 
-    public static OAuthTokenResponseDTO getToken() {
+
+
+    public static OAuthTokenResponseDTO getToken(Customer customer) {
         String clientId = "7QFfRuMBtyfn2x2f0em7MCU_FQIa";
         String clientSecret = "cvbtf0zdP0cff2sHOTJsE8BVguAa";
         String auth = clientId + ":" + clientSecret;
@@ -32,8 +38,10 @@ public class OAuthTokenRequest {
         // Set the body
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "password");
-        body.add("username", "admin");  // Use provided username
-        body.add("password", "admin");  // Use provided password
+        body.add("username", customer.getAccessUserName());  // Use provided username
+        //body.add("username", "admin");  // Use provided username
+        //body.add("password", "admin");  // Use provided password
+        body.add("password", customer.getAccessUserPass());  // Use provided password
 
         // Create the request entity
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
@@ -52,7 +60,7 @@ public class OAuthTokenRequest {
             throw new ServiceException("Unable to Process!");
         }
     }
-    public static boolean createUser() {
+    public static boolean createUser(String userName, String password, String userEmail) {
         // API URL
         String url = "https://localhost:9443/scim2/Users";
 
@@ -64,12 +72,12 @@ public class OAuthTokenRequest {
         // JSON payload for the user creation
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("schemas", new String[]{"urn:ietf:params:scim:schemas:core:2.0:User"});
-        requestBody.put("userName", "haseeb111");
-        requestBody.put("password", "user111password");
+        requestBody.put("userName", userName);
+        requestBody.put("password", password);
 
         Map<String, Object> email = new HashMap<>();
         email.put("primary", true);
-        email.put("value", "newuser@example.com");
+        email.put("value", userEmail);
         email.put("type", "home");
 
         requestBody.put("emails", new Map[]{email});
@@ -109,5 +117,16 @@ public class OAuthTokenRequest {
 
         // If we reach here, something went wrong
         return false;
+    }
+
+    public static String generateRandomPassword() {
+        SecureRandom random = new SecureRandom();
+        StringBuilder password = new StringBuilder(PASSWORD_LENGTH);
+
+        for (int i = 0; i < PASSWORD_LENGTH; i++) {
+            int index = random.nextInt(CHARACTERS.length());
+            password.append(CHARACTERS.charAt(index));
+        }
+        return password.toString();
     }
 }

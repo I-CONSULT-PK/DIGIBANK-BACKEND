@@ -184,9 +184,4 @@ public class CustomerController
     public CustomResponseEntity getAccount(@RequestParam ("accountNumber") String accountNumber){
         return this.customerServiceImpl.getUserAccount(accountNumber);
     }
-
-    @GetMapping("/createUser")
-    public boolean getToken() {
-        return OAuthTokenRequest.createUser();
-    }
 }
