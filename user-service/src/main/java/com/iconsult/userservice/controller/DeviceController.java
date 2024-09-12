@@ -8,6 +8,7 @@ import com.iconsult.userservice.service.Impl.DeviceServiceImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,9 +63,13 @@ public class DeviceController {
         return this.deviceService.deviceRegister(id, settingDTO);
     }
 
-    @GetMapping("/fetchDeviceRegister/{unique}")
-    public CustomResponseEntity fetchDeviceDetailsById(@PathVariable("unique") String unique){
-        return deviceService.fetchDeviceRegister(unique);
+    @GetMapping("/fetchDeviceRegister")
+    public CustomResponseEntity fetchDeviceDetailsById(@Valid @RequestBody SettingDTO settingDTO){
+
+        if(settingDTO.getUnique().isEmpty()){
+            return CustomResponseEntity.error("unique value can not be null");
+        }
+        return deviceService.fetchDeviceRegister(settingDTO);
     }
 }
 

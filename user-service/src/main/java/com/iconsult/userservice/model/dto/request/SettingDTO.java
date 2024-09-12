@@ -1,5 +1,6 @@
 package com.iconsult.userservice.model.dto.request;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ public class SettingDTO {
     private String oldPin;
 
     private String deviceType;
+//    @NotEmpty(message = "Unique value cannot be empty")
     private String unique;
     private String osv_osn;
     private String modelName;

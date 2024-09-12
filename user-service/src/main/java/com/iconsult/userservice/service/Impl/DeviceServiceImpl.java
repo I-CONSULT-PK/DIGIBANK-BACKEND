@@ -276,6 +276,18 @@ public class DeviceServiceImpl implements DeviceService {
             }
             if(device == null)
             {
+                String pin = settingDTO.getDevicePin();
+
+                if(!pin.matches("\\d{4}")){
+                    LOGGER.error("Pin must be exactly 4 digits");
+                    return CustomResponseEntity.error("Pin must be exactly 4 digits");
+                }
+                // Check if the pin is sequential (e.g., 1234, 2345, etc.)
+                if (isSequential(pin)) {
+                    LOGGER.error("Sequential pins are not allowed");
+                    return CustomResponseEntity.error("Sequential pins are not allowed");
+                }
+
                 Customer customer1 = customerRepository.findById(id).orElseThrow();
 
                 Device dv = new Device();
@@ -305,8 +317,22 @@ public class DeviceServiceImpl implements DeviceService {
         return null;
     }
 
+    private boolean isSequential(String pin) {
+        // Convert pin to a char array for easy manipulation
+        char[] digits = pin.toCharArray();
+
+        // Check for sequential increment (e.g., 1234, 2345, etc.)
+        for (int i = 1; i < digits.length; i++) {
+            if (digits[i] != digits[i - 1] + 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // fetch registerd device data with Unique value
     @Override
-    public CustomResponseEntity fetchDeviceRegister(String unique) {
+    public CustomResponseEntity fetchDeviceRegister(SettingDTO settingDTO) {
 
 //        Device device = deviceRepository.findById(unique).orElse(null);
 
@@ -314,12 +340,12 @@ public class DeviceServiceImpl implements DeviceService {
 //        String jpql = "SELECT d FROM Device d JOIN FETCH d.customer WHERE d.unique1 = :unique1";
         String jpql = "SELECT d FROM Device d WHERE d.unique1 = :unique1";
         Map<String, Object> params = new HashMap<>();
-        params.put("unique1", unique);
+        params.put("unique1", settingDTO.getUnique());
 
         Device device = cardGenericDao.findOneWithQuery(jpql, params);
 
         if(Objects.isNull(device)){
-            LOGGER.info("Error Receiving Device Details With Unique  : " + unique);
+            LOGGER.info("Error Receiving Device Details With Unique  : " + settingDTO.getUnique());
             return CustomResponseEntity.error("Device not found with given unique value" );
         }
 
