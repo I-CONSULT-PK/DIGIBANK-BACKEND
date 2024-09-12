@@ -44,6 +44,12 @@ spring:
         - id: USER-SERVICE
           uri: lb://USER-SERVICE
           predicates:
+            - Path=/api/chequebooks/**
+          filters:
+            - name: AuthenticationFilter
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
             - Path=/v1/billPayment/**
           filters:
             - name: AuthenticationFilter
@@ -57,6 +63,12 @@ spring:
           uri: lb://add-payee
           predicates:
             - Path=/v1/beneficiary/**
+          filters:
+            - name: AuthenticationFilter
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/v1/settings/**
           filters:
             - name: AuthenticationFilter
 

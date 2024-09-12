@@ -113,7 +113,9 @@ public class AccountServiceImpl implements AccountService {
     public CustomResponseEntity addAccount(CbsAccountDto cbsAccountDto) {
         // Check if the account already exists by account number
         Optional<Account> existingAccount = Optional.ofNullable(accountRepository.findByAccountNumber(cbsAccountDto.getAccountNumber()));
-
+        if(!existingAccount.get().getCustomer().getId().equals(cbsAccountDto.getCustomer().getId())){
+            return CustomResponseEntity.error("Invalid Customer Id");
+        }
         if (existingAccount.isPresent()) {
             return CustomResponseEntity.error("Account is already exists with account number: " + cbsAccountDto.getAccountNumber());
         }

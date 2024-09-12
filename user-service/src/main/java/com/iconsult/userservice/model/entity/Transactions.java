@@ -46,4 +46,11 @@ public class Transactions implements Serializable {
     private String natureOfAccount;
     private String currency;
 
+    public Double getDebitAmt() {
+        return debitAmt;
+    }
+
+    public void setDebitAmt(Double debitAmt) {
+        this.debitAmt = debitAmt;
+    }
 }

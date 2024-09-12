@@ -198,7 +198,7 @@ public class CustomerServiceImpl implements CustomerService
         accountCDDetailsRepository.save(accountCDDetails);// This will cascade and save the account
 
         // Return success response
-        return new CustomResponseEntity<>("Customer registered successfully");
+        return new CustomResponseEntity<>(customer,"Customer registered successfully");
     }
 
     private void checkExistingData(SignUpDto signUpDto) {
@@ -258,6 +258,8 @@ public class CustomerServiceImpl implements CustomerService
         customer.setStatus(signUpDto.getStatus());
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
+
+
         if (customer.getAccountList() == null) {
             customer.setAccountList(new ArrayList<>());
         }
@@ -275,6 +277,7 @@ public class CustomerServiceImpl implements CustomerService
         account.setCustomer(customer);
         account.setDefaultAccount(true);
 
+        account.setTransactionLimit(0.0);
         customer.getAccountList().add(account);
 
         return customer;
@@ -687,6 +690,11 @@ public class CustomerServiceImpl implements CustomerService
                 accountRepository.save(checkAccount);
                 return new CustomResponseEntity(account, "Success");
             }
+            if(account.getDefaultAccount()){
+                return CustomResponseEntity.error("this account already set");
+            }
+            account.setDefaultAccount(true);
+            accountRepository.save(account);
         }
         LOGGER.info("Account not found");
         return CustomResponseEntity.error("Account not found");

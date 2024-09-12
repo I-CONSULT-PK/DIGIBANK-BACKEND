@@ -40,6 +40,12 @@ public class Account implements Serializable {
     private String accountClosedReason;
     private String proofOfIncome;
 
+    @ManyToOne
+    @JoinColumn(name = "digi_Branch")
+//    @JsonBackReference
+    @JsonIgnore
+    private DigiBankBranch digiBranch;
+
     public Double getAccountBalance() {
         return accountBalance;
     }
@@ -77,6 +83,10 @@ public class Account implements Serializable {
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
     @JsonBackReference
     private AccountCDDetails accountCdDetails;
+    private Double transactionLimit;
+
+    @Column(name = "singleDayLimit")
+    private Double singleDayLimit;
 
     @Override
     public String toString() {
@@ -95,6 +105,7 @@ public class Account implements Serializable {
                 ", proofOfIncome='" + proofOfIncome + '\'' +
                 ", cardList=" + cardList +
                 ", accountCdDetails=" + accountCdDetails +
+                ", transactionLimit=" + transactionLimit +
                 '}';
     }
 
@@ -112,5 +123,13 @@ public class Account implements Serializable {
 
     public void setAccountType(String accountType) {
         this.accountType = accountType;
+    }
+
+    public Double getSingleDayLimit() {
+        return singleDayLimit;
+    }
+
+    public void setSingleDayLimit(Double singleDayLimit) {
+        this.singleDayLimit = singleDayLimit;
     }
 }

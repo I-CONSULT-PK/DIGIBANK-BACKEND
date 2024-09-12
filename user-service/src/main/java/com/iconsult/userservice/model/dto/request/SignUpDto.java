@@ -32,7 +32,7 @@ public class SignUpDto {
 
     @NotBlank(message = "Password is mandatory")
     @Size(min = 8, max = 16, message = "Password must be between 8 and 16 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9]*$", message = "Password must be alphanumeric and without spaces")
+    @Pattern(regexp = "^[a-zA-Z0-9@!]+$", message = "Password can only contain alphanumeric characters and @, !")
     private String password;
 
     private Long securityPictureId;

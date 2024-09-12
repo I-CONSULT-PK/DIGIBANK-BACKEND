@@ -1,5 +1,6 @@
 package com.iconsult.userservice.controller;
 import com.iconsult.userservice.model.dto.request.DeviceDto;
+import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.dto.request.SignUpDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.Customer;
@@ -7,6 +8,7 @@ import com.iconsult.userservice.service.Impl.DeviceServiceImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,11 +46,30 @@ public class DeviceController {
         return this.deviceService.signup(signUpDto);
     }
 
+//    @PostMapping("/loginWithPin")
+//    public CustomResponseEntity login(@Valid  @RequestParam Long customerId,
+//                                      @RequestParam String devicePin,  @RequestParam String uniquePin) {
+//        return this.deviceService.getPinHashByAccountNumberAndPinHash(customerId,devicePin,uniquePin);
+//    }
+
     @PostMapping("/loginWithPin")
-    public CustomResponseEntity login(@Valid  @RequestParam String accountNumber,
-                                      @RequestParam String pinHash) {
-        return this.deviceService.getPinHashByAccountNumberAndPinHash(accountNumber,pinHash);
+    public CustomResponseEntity loginWithPin(@Valid  @RequestParam Long customerId,
+                                      @RequestParam String devicePin,  @RequestParam String uniquePin) {
+        return this.deviceService.loginWithPin(customerId,devicePin,uniquePin);
     }
 
+    @PostMapping("/deviceRegister/{id}")
+    public CustomResponseEntity deviceRegister(@PathVariable("id") Long id, @RequestBody SettingDTO settingDTO) {
+        return this.deviceService.deviceRegister(id, settingDTO);
+    }
+
+    @GetMapping("/fetchDeviceRegister")
+    public CustomResponseEntity fetchDeviceDetailsById(@Valid @RequestBody SettingDTO settingDTO){
+
+        if(settingDTO.getUnique().isEmpty()){
+            return CustomResponseEntity.error("unique value can not be null");
+        }
+        return deviceService.fetchDeviceRegister(settingDTO);
+    }
 }
 

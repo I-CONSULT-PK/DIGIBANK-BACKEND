@@ -1,20 +1,20 @@
 package com.iconsult.userservice.service.Impl;
 
+import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.Util.Util;
+import com.iconsult.userservice.model.dto.request.DeviceDetailDto;
+import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.dto.request.SignUpDto;
 import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.DeviceMapper;
 import com.iconsult.userservice.exception.ServiceException;
-import com.iconsult.userservice.model.dto.request.DeviceDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
-import com.iconsult.userservice.repository.AccountRepository;
-import com.iconsult.userservice.repository.CustomerRepository;
-import com.iconsult.userservice.repository.DeviceRepository;
-import com.iconsult.userservice.repository.ImageVerificationRepository;
+import com.iconsult.userservice.repository.*;
 import com.iconsult.userservice.service.DeviceService;
 import com.iconsult.userservice.service.EmailService;
 import com.iconsult.userservice.service.JwtService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.hibernate.sql.ast.SqlTreeCreationLogger.LOGGER;
@@ -67,10 +66,16 @@ public class DeviceServiceImpl implements DeviceService {
     @Autowired
     private AppConfigurationImpl appConfigurationImpl;
 
+    @Autowired
+    private GenericDao<Device> cardGenericDao;
+
     private CustomResponseEntity response;
 
     @Autowired
     ImageVerificationRepository imageVerificationRepository;
+
+    @Autowired
+    private SettingRepository settingRepository;
 //    @Autowired
 //    DeviceRepository deviceRepository;
 
@@ -115,8 +120,10 @@ public class DeviceServiceImpl implements DeviceService {
         // Validate the image verification
 
         // Create and set the customer and device entities
-        Customer customer = createCustomerFromDto(signUpDto);
         Device device = createDeviceFromDto(signUpDto);
+
+        Customer customer = createCustomerFromDto(signUpDto);
+        customer.setDevices(Collections.singletonList(device));
         device.setCustomer(customer);
         // Save the customer (which will also save the device due to cascade settings)
 //        deviceRepository.save(device);
@@ -170,7 +177,6 @@ public class DeviceServiceImpl implements DeviceService {
         customer.setResetToken(signUpDto.getResetToken());
         customer.setResetTokenExpireTime(signUpDto.getResetTokenExpireTime());
         customer.setAccountNumber(signUpDto.getAccountDto().getAccountNumber());
-        customer.setDevice(signUpDto.getDevice());
 
         return customer;
     }
@@ -184,51 +190,168 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public CustomResponseEntity getPinHashByAccountNumberAndPinHash(String accountNumber, String pinHash) {
-        // Check if the customer exists
-        Customer customer = customerRepository.findByAccountNumber(accountNumber);
+    public CustomResponseEntity loginWithPin(Long customerId, String devicePin, String uniquePin) {
 
-        if (customer == null) {
-            throw new ServiceException("Account not found");
+//        Customer customer = customerRepository.findByAccountNumber(accountNumber);
+
+//        Customer customer = customerRepository.findCustomerByAccountNumber(accountNumber);
+
+//        Customer customer = customerRepository.findById(customerId).orElse();
+
+        try
+        {
+            // Check if the customer exists
+            Customer customer = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new ServiceException("Account not found"));
+
+//            if (customer == null) {
+//                throw new ServiceException("Account not found");
+//            }
+
+//            Long findByUnique1 = customer.getId();
+            Device device = deviceRepository.findDevicesByCustomerIdAndDevicePinAndUniquePin(customer.getId(), devicePin, uniquePin);
+
+            if (device == null) {
+                return CustomResponseEntity.error("Device not found for this customer");
+            }
+
+//            if (!device.getUnique1().equals(uniquePin)) {
+//                return CustomResponseEntity.error("Invalid pin hash");
+//            }
+
+
+
+            // JWT Implementation Starts
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(customer.getUserName(), customer.getPassword())
+            );
+            String email = authentication.getName();
+            String token = jwtService.generateToken(email);
+            LOGGER.info("Token = " + token);
+            LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("customerId", customer.getId());
+            data.put("token", token);
+            data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
+
+            // Update customer with session token and expiration time
+            customer.setSessionToken(token);
+            AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
+            customer.setSessionTokenExpireTime(
+                    Long.parseLong(Util.dateFormat.format(
+                            DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue()))
+                    ))
+            );
+            customerRepository.save(customer);
+
+            return new CustomResponseEntity<>(data, "Customer logged in successfully");
+
         }
 
-        // Check if the device exists and the pin hash matches
-        Device device = customer.getDevice();
-        if (device == null) {
-            throw new ServiceException("Device not found for this customer");
+        catch (ServiceException e) {
+            // Handle specific service exceptions
+            LOGGER.error("ServiceException occurred: ", e);
+            return CustomResponseEntity.error(e.getMessage());
+        } catch (Exception e) {
+            // Handle any other unexpected exceptions
+            LOGGER.error("Exception occurred: ", e);
+            return CustomResponseEntity.error(e.getMessage());
+        }
+    }
+
+    @Override
+    public CustomResponseEntity deviceRegister(Long id, SettingDTO settingDTO) {
+
+        try {
+
+            String jpql = "SELECT c FROM Device c WHERE c.unique1 = :unique1";
+            Map<String, Object> params = new HashMap<>();
+            params.put("unique1", settingDTO.getUnique());
+
+            Device device = cardGenericDao.findOneWithQuery(jpql, params);
+            if (Objects.nonNull(device)) {
+                LOGGER.error("Device already exists");
+                return CustomResponseEntity.error("Device already exists");
+            }
+            if(device == null)
+            {
+                String pin = settingDTO.getDevicePin();
+
+                if(!pin.matches("\\d{4}")){
+                    LOGGER.error("Pin must be exactly 4 digits");
+                    return CustomResponseEntity.error("Pin must be exactly 4 digits");
+                }
+                // Check if the pin is sequential (e.g., 1234, 2345, etc.)
+                if (isSequential(pin)) {
+                    LOGGER.error("Sequential pins are not allowed");
+                    return CustomResponseEntity.error("Sequential pins are not allowed");
+                }
+
+                Customer customer1 = customerRepository.findById(id).orElseThrow();
+
+                Device dv = new Device();
+                dv.setDeviceName(settingDTO.getDeviceName());
+                dv.setCustomer(customer1);
+                dv.setUnique1(settingDTO.getUnique());
+                dv.setDeviceType(settingDTO.getDeviceType());
+                dv.setManufacture(settingDTO.getManufacture());
+                dv.setModelName(settingDTO.getModelName());
+                dv.setOsv_osn(settingDTO.getOsv_osn());
+                dv.setDevicePin(settingDTO.getDevicePin());
+                deviceRepository.save(dv);
+                LOGGER.error("Device Registered with Customer successfully...");
+                return new CustomResponseEntity<>("Device Registered with Customer successfully...");
+            }
+
+        }
+        catch (EntityNotFoundException e) {
+            // Handle case where the device is not found
+            LOGGER.error("EntityNotFoundException occurred: ", e);
+            return new CustomResponseEntity<>(e.getMessage(), "Failed Register Device! ");
+        } catch (Exception e) {
+            // Handle any other unexpected exceptions
+            LOGGER.error("Exception occurred: ", e);
+            return new CustomResponseEntity<>(e.getMessage(),"Failed Register Device!");
+        }
+        return null;
+    }
+
+    private boolean isSequential(String pin) {
+        // Convert pin to a char array for easy manipulation
+        char[] digits = pin.toCharArray();
+
+        // Check for sequential increment (e.g., 1234, 2345, etc.)
+        for (int i = 1; i < digits.length; i++) {
+            if (digits[i] != digits[i - 1] + 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // fetch registerd device data with Unique value
+    @Override
+    public CustomResponseEntity fetchDeviceRegister(SettingDTO settingDTO) {
+
+//        Device device = deviceRepository.findById(unique).orElse(null);
+
+//        String jpql = "SELECT d FROM Device d WHERE d.unique1 = :unique1";
+//        String jpql = "SELECT d FROM Device d JOIN FETCH d.customer WHERE d.unique1 = :unique1";
+        String jpql = "SELECT d FROM Device d WHERE d.unique1 = :unique1";
+        Map<String, Object> params = new HashMap<>();
+        params.put("unique1", settingDTO.getUnique());
+
+        Device device = cardGenericDao.findOneWithQuery(jpql, params);
+
+        if(Objects.isNull(device)){
+            LOGGER.info("Error Receiving Device Details With Unique  : " + settingDTO.getUnique());
+            return CustomResponseEntity.error("Device not found with given unique value" );
         }
 
-        // Validate the provided pinHash against the stored pinHash
-        String storedPinHash = device.getPinHash();
-        if (!storedPinHash.equals(pinHash)) {
-            throw new ServiceException("Invalid pin hash");
-        }
+        DeviceDetailDto deviceDetailDto = new DeviceDetailDto(device);
 
-        // JWT Implementation Starts
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(customer.getUserName(), customer.getPassword())
-        );
-        String email = authentication.getName();
-        String token = jwtService.generateToken(email);
-        LOGGER.info("Token = " + token);
-        LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("customerId", customer.getId());
-        data.put("token", token);
-        data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
-
-        // Update customer with session token and expiration time
-        customer.setSessionToken(token);
-        AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
-        customer.setSessionTokenExpireTime(
-                Long.parseLong(Util.dateFormat.format(
-                        DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue()))
-                ))
-        );
-        customerRepository.save(customer);
-
-        return new CustomResponseEntity<>(data, "Customer logged in successfully");
+        return new CustomResponseEntity<>(deviceDetailDto, "Device Details");
     }
 }
 //    private void associateCustomerWithDevice(Customer customer, Device device) {
