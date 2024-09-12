@@ -40,6 +40,7 @@ public class Device implements Serializable {
     private String osv_osn;
     private String modelName;
     private String manufacture;
+    private String os_name;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "pin_status")
