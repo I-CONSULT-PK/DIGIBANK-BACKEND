@@ -890,6 +890,7 @@ public class CustomerServiceImpl implements CustomerService
         Optional<Customer> user = customerRepository.findByMobileNumberAndEmail(mobileNumber, email);
         return user.isPresent();
     }
+
     public CustomResponseEntity dashboard(Long customerId) {
         String jpql = "Select c from Customer c where c.id = :customerId";
         Map<String, Object> param = new HashMap<>();
@@ -932,5 +933,40 @@ public class CustomerServiceImpl implements CustomerService
         }
         return availableBalance;
     }
+
+    @Override
+    public CustomResponseEntity changeCustomerAddress(Long id, CustomerDto customerDto) {
+
+        Customer customer = customerRepository.findById(id).orElse(null);
+
+        if (customer != null) {
+                //if true then update changes
+                if(customer.getRegisteredAddress().equals(customerDto.getExistingAddress()))
+                {
+                    // Update the existing customer's address
+                    customer.setRegisteredAddress(customerDto.getNewAddress());
+                    customer.setMobileNumber(customerDto.getMobileNumber());
+                    customer.setCity(customerDto.getCity());
+                    customer.setProvince(customerDto.getProvince());
+
+
+                    // Save the updated customer
+                    customerRepository.save(customer);
+
+                    LOGGER.info("Changes Updated Successfully..."+customer.getRegisteredAddress());
+                    return new CustomResponseEntity("Changes Updated Successfully...", customer.getRegisteredAddress());
+                }
+                else
+                {
+                    LOGGER.info("Your Existing Address is wrong ..."+customer.getRegisteredAddress());
+                    return new CustomResponseEntity("Your Existing Address is wrong...", customer.getRegisteredAddress());
+                }
+
+        } else {
+            LOGGER.info("Customer Not Found...");
+            return new CustomResponseEntity("Customer Not Found...");
+        }
+    }
+
 
 }

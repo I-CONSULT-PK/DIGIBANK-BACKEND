@@ -40,6 +40,8 @@ public class Customer implements Serializable {
     private Long sessionTokenExpireTime;
     private String accountNumber;
     private String registeredAddress;
+    private String city;
+    private String province;
 
 //    @JsonManagedReference
 //    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)

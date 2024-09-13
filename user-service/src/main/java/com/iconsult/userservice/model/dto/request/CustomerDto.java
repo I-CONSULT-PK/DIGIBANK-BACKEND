@@ -45,6 +45,14 @@ public class CustomerDto {
 
     private String userName;
 
+    private String existingAddress;
+
+    private String newAddress;
+
+    private String city;
+
+    private String province;
+
     public long getClientNo() {
         return clientNo;
     }

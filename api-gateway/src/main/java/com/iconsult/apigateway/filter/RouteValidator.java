@@ -30,7 +30,8 @@ public class RouteValidator {
 //            "/v1/customer/fund/**",
             "/v1/billPayment/**",
             "/eureka",
-            "/v1/feedback/**"
+            "/v1/feedback/**",
+            "/v1/customer/**"
     );
 
     private final PathMatcher pathMatcher = new AntPathMatcher();

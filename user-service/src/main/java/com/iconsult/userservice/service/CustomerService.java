@@ -68,4 +68,6 @@ public interface CustomerService
     public CustomResponseEntity getUserAccount(String accountNumber);
 
     Boolean validateUser(String email, String mobileNumber);
+
+    CustomResponseEntity changeCustomerAddress(Long id, CustomerDto customerDto);
 }

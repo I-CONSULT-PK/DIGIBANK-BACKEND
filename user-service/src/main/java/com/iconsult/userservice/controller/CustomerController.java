@@ -180,5 +180,10 @@ public class CustomerController
     public CustomResponseEntity getAccount(@RequestParam ("accountNumber") String accountNumber){
         return this.customerServiceImpl.getUserAccount(accountNumber);
     }
+    @PatchMapping("/changeCustomerAddress/{id}")
+    public CustomResponseEntity changeCustomerAddress(@PathVariable ("id") Long id, @RequestBody CustomerDto customerDto)
+    {
+        return this.customerServiceImpl.changeCustomerAddress(id, customerDto);
+    }
 
 }
