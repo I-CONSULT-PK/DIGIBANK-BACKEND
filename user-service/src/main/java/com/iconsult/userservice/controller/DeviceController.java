@@ -53,9 +53,9 @@ public class DeviceController {
 //    }
 
     @PostMapping("/loginWithPin")
-    public CustomResponseEntity loginWithPin(@Valid  @RequestParam Long customerId,
+    public CustomResponseEntity loginWithPin(/*@Valid  @RequestParam Long customerId,*/
                                       @RequestParam String devicePin,  @RequestParam String uniquePin) {
-        return this.deviceService.loginWithPin(customerId,devicePin,uniquePin);
+        return this.deviceService.loginWithPin(/*customerId,*/devicePin,uniquePin);
     }
 
     @PostMapping("/deviceRegister/{id}")

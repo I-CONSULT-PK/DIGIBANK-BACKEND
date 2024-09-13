@@ -23,6 +23,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -190,7 +191,7 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public CustomResponseEntity loginWithPin(Long customerId, String devicePin, String uniquePin) {
+    public CustomResponseEntity loginWithPin(/*Long customerId,*/ String devicePin, String uniquePin) {
 
 //        Customer customer = customerRepository.findByAccountNumber(accountNumber);
 
@@ -200,20 +201,34 @@ public class DeviceServiceImpl implements DeviceService {
 
         try
         {
-            // Check if the customer exists
+           /* // Check if the customer exists
             Customer customer = customerRepository.findById(customerId)
-                    .orElseThrow(() -> new ServiceException("Account not found"));
+                    .orElseThrow(() -> new ServiceException("Account not found"));*/
 
 //            if (customer == null) {
 //                throw new ServiceException("Account not found");
 //            }
 
 //            Long findByUnique1 = customer.getId();
-            Device device = deviceRepository.findDevicesByCustomerIdAndDevicePinAndUniquePin(customer.getId(), devicePin, uniquePin);
+//            Device device = deviceRepository.findDevicesByCustomerIdAndDevicePinAndUniquePin(/*customer.getId(), */devicePin, uniquePin);
+            Device device;
+
+            if (StringUtils.hasText(devicePin)) {
+                // Query for both devicePin and uniquePin
+                device = deviceRepository.findByDevicePinAndUniquePin(devicePin, uniquePin);
+            } else {
+                // Query only by uniquePin
+                device = deviceRepository.findByUniquePin(uniquePin);
+            }
 
             if (device == null) {
-                return CustomResponseEntity.error("Device not found for this customer");
+                return CustomResponseEntity.error("Device not found for this pin");
             }
+
+            Long customerId = device.getCustomer().getId();
+            Customer customer = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new ServiceException("Account not found"));
+
 
 //            if (!device.getUnique1().equals(uniquePin)) {
 //                return CustomResponseEntity.error("Invalid pin hash");

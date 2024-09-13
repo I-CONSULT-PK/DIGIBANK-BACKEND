@@ -19,10 +19,29 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
 //    Device findByDeviceId(String deviceId);
 //    List<Device> findByCustomerIdAndVerified(Long customerId, Boolean verified);
 
-    @Query("SELECT d FROM Device d WHERE d.customer.id = :customerId AND d.devicePin = :devicePin AND d.unique1 = :uniquePin")
+/*    @Query("SELECT d FROM Device d WHERE d.customer.id = :customerId AND d.devicePin = :devicePin AND d.unique1 = :uniquePin")
     Device findDevicesByCustomerIdAndDevicePinAndUniquePin(
             @Param("customerId") Long customerId,
             @Param("devicePin") String devicePin,
+            @Param("uniquePin") String uniquePin
+    );*/
+
+//    @Query("SELECT d FROM Device d WHERE d.devicePin = :devicePin AND d.unique1 = :uniquePin")
+//    Device findDevicesByCustomerIdAndDevicePinAndUniquePin(
+//            @Param("devicePin") String devicePin,
+//            @Param("uniquePin") String uniquePin
+//    );
+
+    // Query when both devicePin and uniquePin are provided
+    @Query("SELECT d FROM Device d WHERE d.devicePin = :devicePin AND d.unique1 = :uniquePin")
+    Device findByDevicePinAndUniquePin(
+            @Param("devicePin") String devicePin,
+            @Param("uniquePin") String uniquePin
+    );
+
+    // Query when only uniquePin is provided
+    @Query("SELECT d FROM Device d WHERE d.unique1 = :uniquePin")
+    Device findByUniquePin(
             @Param("uniquePin") String uniquePin
     );
 
