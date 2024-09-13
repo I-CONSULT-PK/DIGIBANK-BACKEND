@@ -308,6 +308,7 @@ public class CustomerServiceImpl implements CustomerService
                     (loginDto.getSecurityImage() == null || customer.getSecurityPicture().equals(loginDto.getSecurityImage()))) {
                 // JWT Implementation Starts
                 OAuthTokenResponseDTO authTokenResponseDTO = OAuthTokenRequest.getToken(customer);
+                LOGGER.info("WS02 Token Generated Successfully......");
                 // JWT Implementation Ends
 
                 Map<String, Object> data = new HashMap<>();

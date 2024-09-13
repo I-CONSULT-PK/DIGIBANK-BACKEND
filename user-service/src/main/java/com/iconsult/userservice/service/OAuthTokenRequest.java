@@ -57,6 +57,7 @@ public class OAuthTokenRequest {
             if (response.getStatusCode().value() != 200) throw new ServiceException("Unable to Process!");
             return response.getBody();
         } catch (Exception e) {
+            LOGGER.error("WS02 may be Down!......... {}", e.getMessage());
             throw new ServiceException("Unable to Process!");
         }
     }
