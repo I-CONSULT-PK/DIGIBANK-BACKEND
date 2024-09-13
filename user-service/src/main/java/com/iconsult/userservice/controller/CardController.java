@@ -1,5 +1,6 @@
 package com.iconsult.userservice.controller;
 
+import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.CardDto;
 import com.iconsult.userservice.model.dto.request.CardRequestDto;
 import com.iconsult.userservice.model.dto.request.ChangePinDto;
@@ -15,10 +16,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/v1/customer/card")
-@Validated
 public class CardController {
     @Autowired
     private CardService cardService;
+    @Autowired
+    Regex regex;
 
 
     @PostMapping("/verifyCard")
@@ -42,10 +44,9 @@ public class CardController {
     }
 
     @PostMapping("/setPin")
-    public CustomResponseEntity setPinDigiBankAndMyDatabase(@Valid @RequestParam
-        @Pattern(regexp = "\\d{4}", message = "Pin must be exactly 4 digits.")
+    public CustomResponseEntity setPinDigiBankAndMyDatabase(@RequestParam
         String pin,
-        @Valid @RequestParam String card){
+        @RequestParam String card){
         return this.cardService.setPinDigiBankAndMyDatabase(pin,card);
     }
 
@@ -55,7 +56,7 @@ public class CardController {
     }
 
     @PostMapping("/changePin")
-    public CustomResponseEntity changePin(@Valid @RequestBody ChangePinDto changePinRequestDto) {
+    public CustomResponseEntity changePin(@RequestBody ChangePinDto changePinRequestDto) {
         return cardService.changePin(changePinRequestDto);
     }
 }

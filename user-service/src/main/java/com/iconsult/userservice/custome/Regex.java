@@ -1,6 +1,8 @@
 package com.iconsult.userservice.custome;
 
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -10,8 +12,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 @Component
 public class Regex {
+    private static final Logger logger = LoggerFactory.getLogger(Regex.class);
+    private static final String CARD_PIN_PATTERN = "^\\d{4}$";
     private static final String ACCOUNT_PATTERN = "^zanbeel-\\w+$";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    public boolean isValidPin(String pin) {
+        Pattern pattern = Pattern.compile(CARD_PIN_PATTERN);
+        Matcher matcher = pattern.matcher(pin);
+        boolean isValid = matcher.matches();
+        logger.info("PIN '{}' validation result: {}", pin, isValid);
+        return isValid;
+    }
+
+
     public boolean isValidAccount(String accountNumber) {
         Pattern pattern = Pattern.compile(ACCOUNT_PATTERN);
         Matcher matcher = pattern.matcher(accountNumber);

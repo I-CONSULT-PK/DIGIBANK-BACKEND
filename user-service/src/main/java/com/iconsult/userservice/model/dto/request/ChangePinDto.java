@@ -19,16 +19,10 @@ public class ChangePinDto {
     @NotNull(message = "Card Number Required")
     private String cardNumber;
     @NotNull(message = "Old PIN is required")
-    @Size(min = 4, max = 4, message = "PIN must be exactly 4 digits")
-    @Pattern(regexp = "^[0-9]+$", message = "PIN must contain only digits")
     private String oldPin;
     @NotNull(message = "New PIN is required")
-    @Size(min = 4, max = 4, message = "PIN must be exactly 4 digits")
-    @Pattern(regexp = "^[0-9]+$", message = "PIN must contain only digits")
     private String newPin;
     @NotNull(message = "Confirmation PIN is required")
-    @Size(min = 4, max = 4, message = "PIN must be exactly 4 digits")
-    @Pattern(regexp = "^[0-9]+$", message = "PIN must contain only digits")
     private String confirmNewPin;
 
 }

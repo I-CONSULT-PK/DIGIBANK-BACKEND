@@ -2,6 +2,7 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 
+import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.*;
 import com.iconsult.userservice.model.dto.response.CardApprovalResDto;
 import com.iconsult.userservice.model.entity.Account;
@@ -74,6 +75,8 @@ public class CardServiceImpl implements CardService {
     private final String URLL = "http://localhost:8081/cards/setPin";
     @Autowired
     private CardMapper cardMapper;
+    @Autowired
+    Regex regex;
 
     public CustomResponseEntity cardExist(CardDto cardDto) {
         try {
@@ -377,6 +380,11 @@ public class CardServiceImpl implements CardService {
     @Override
     public CustomResponseEntity setPinDigiBankAndMyDatabase(String pin, String card) {
 
+        if (!regex.isValidPin(pin)) {
+            LOGGER.warn("Invalid PIN format: '{}'", pin);
+            return CustomResponseEntity.error("Pin must be exactly 4 digits.");
+        }
+        LOGGER.info("Valid PIN format: '{}'", pin);
         try {
             TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
@@ -514,6 +522,11 @@ public class CardServiceImpl implements CardService {
     @Override
     public CustomResponseEntity changePin(ChangePinDto changePinRequestDto) {
         try {
+            if(!regex.isValidPin(changePinRequestDto.getNewPin()) || !regex.isValidPin(changePinRequestDto.getOldPin())){
+                LOGGER.warn("Invalid PIN format");
+                return CustomResponseEntity.error("Pin must be exactly 4 digits.");
+            }
+            LOGGER.info("Valid PIN format");
             String cardNumber = changePinRequestDto.getCardNumber();
             String newPin = changePinRequestDto.getNewPin();
             String confirmNewPin = changePinRequestDto.getConfirmNewPin();
