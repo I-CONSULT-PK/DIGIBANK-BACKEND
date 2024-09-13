@@ -3,6 +3,7 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.AccountDto;
+import com.iconsult.userservice.model.dto.request.CustomerAccountDto2;
 import com.iconsult.userservice.model.dto.response.CbsAccountDto;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AccountCDDetails;
@@ -176,5 +177,25 @@ public class AccountServiceImpl implements AccountService {
 
             return new CustomResponseEntity<>(save, "Success");
 //        return CustomResponseEntity.error("Invalid Customer Id");
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////
+    @Override
+    public CustomerAccountDto2 getCustomerAccountDetails(Long customerId, String accountNumber) {
+        Account account = accountRepository.findByCustomerIdAndAccountNumber(customerId, accountNumber);
+
+        if (account == null) {
+            throw new RuntimeException("Account not found");
+        }
+
+        CustomerAccountDto2 dto = new CustomerAccountDto2();
+        dto.setCustomerName(account.getCustomer().getFirstName() + " " + account.getCustomer().getLastName());
+        dto.setAccountBalance(account.getAccountBalance());
+        dto.setAccountNumber(account.getAccountNumber());
+        dto.setIbanCode(account.getIbanCode());
+        dto.setBranchName(account.getDigiBranch().getBranchName());
+        dto.setBranchCode(account.getDigiBranch().getBranchCode());
+
+        return dto;
+
     }
 }

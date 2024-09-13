@@ -31,4 +31,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Account findByAccountNumber(@Param("accountNumber") String accountNumber);
 
 
+    // Custom query to find account based on customer ID and account number
+    Account findByCustomerIdAndAccountNumber(Long customerId, String accountNumber);
+
+
 }

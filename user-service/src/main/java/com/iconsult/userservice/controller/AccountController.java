@@ -1,5 +1,6 @@
 package com.iconsult.userservice.controller;
 
+import com.iconsult.userservice.model.dto.request.CustomerAccountDto2;
 import com.iconsult.userservice.model.dto.response.CbsAccountDto;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.service.AccountService;
@@ -32,4 +33,13 @@ public class AccountController {
     CustomResponseEntity<?> addAccount(@RequestBody CbsAccountDto cbsAccountDto) {
         return accountService.addAccount(cbsAccountDto);
     }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    @GetMapping("/{customerId}/{accountNumber}")
+    public CustomerAccountDto2 getAccountDetails(
+            @PathVariable Long customerId,
+            @PathVariable String accountNumber) {
+        return accountService.getCustomerAccountDetails(customerId, accountNumber);
+    }
+
 }
