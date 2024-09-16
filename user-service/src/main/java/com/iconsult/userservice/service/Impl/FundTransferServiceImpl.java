@@ -474,7 +474,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                     userActivity.setActivityDate(LocalDateTime.now());
                     userActivity.setCustomerId(senderAccountCDDetails.getAccount().getCustomer());
             //        userActivity.setCustomerId(String.valueOf(senderAccountCDDetails.getAccount().getCustomer().getId()));
-                    userActivity.setUserActivity("User did the IBFT Transaction");
+                    userActivity.setUserActivity("From : "+fundTransferDto.getFromAccountNumber()+" To : "+fundTransferDto.getToAccountNumber()
+                            +" Amount : "+fundTransferDto.getAmount());
                     userActivityService.saveUserActivity(userActivity);
                     return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
                 } else {
