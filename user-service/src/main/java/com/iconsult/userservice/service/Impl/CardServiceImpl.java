@@ -2,13 +2,11 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 
+import com.iconsult.userservice.dto.UserActivityRequest;
 import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.*;
 import com.iconsult.userservice.model.dto.response.CardApprovalResDto;
-import com.iconsult.userservice.model.entity.Account;
-import com.iconsult.userservice.model.entity.Card;
-import com.iconsult.userservice.model.entity.CardRequest;
-import com.iconsult.userservice.model.entity.Customer;
+import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.CardMapper;
 import com.iconsult.userservice.model.mapper.CardRequestMapper;
 import com.iconsult.userservice.repository.AccountRepository;
@@ -16,6 +14,7 @@ import com.iconsult.userservice.repository.CardRepository;
 import com.iconsult.userservice.repository.CardRequestRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.service.CardService;
+import com.iconsult.userservice.service.UserActivityService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 //import com.zanbeel.otp_service.config.CustomApiResponse;
 import org.apache.commons.lang.RandomStringUtils;
@@ -51,6 +50,8 @@ public class CardServiceImpl implements CardService {
     @Autowired
     private GenericDao<Customer> customerGenericDao;
 
+    @Autowired
+    private UserActivityService userActivityService;
     @Autowired
     private GenericDao<Account> accountGenericDao;
 
@@ -238,6 +239,11 @@ public class CardServiceImpl implements CardService {
 
             if (card != null) {
                 LOGGER.info("Card Status has been Updated with Id: {}", card.getCardId());
+                UserActivityRequest userActivity = new UserActivityRequest();
+                userActivity.setActivityDate(LocalDateTime.now());
+                userActivity.setUserId(String.valueOf(card.getAccount().getCustomer().getId()));
+                userActivity.setUserActivity("User Updated Card Status");
+                userActivityService.saveUserActivity(userActivity);
                 return new CustomResponseEntity<>("Card Status Updated Successfully");
             }
         } catch (Exception e) {
@@ -374,6 +380,12 @@ public class CardServiceImpl implements CardService {
         String outputDate = dateTime.format(outputFormatter);
         cardDetail.setExpiryDate(outputDate);
         cardDetail = cardRepository.save(cardDetail);
+        UserActivityRequest userActivity = new UserActivityRequest();
+        userActivity.setActivityDate(LocalDateTime.now());
+        userActivity.setUserId(String.valueOf(account.getCustomer().getId()));
+        userActivity.setUserActivity("User Requested For The Card");
+        userActivityService.saveUserActivity(userActivity);
+
         return cardDetail;
     }
 

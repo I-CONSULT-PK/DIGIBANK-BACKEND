@@ -6,6 +6,7 @@ import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.domain.OTP;
 import com.iconsult.userservice.dto.DefaultAccountDto;
 import com.iconsult.userservice.dto.EmailDto;
+import com.iconsult.userservice.dto.UserActivityRequest;
 import com.iconsult.userservice.enums.AccountStatusCode;
 import com.iconsult.userservice.enums.CustomerStatus;
 import com.iconsult.userservice.enums.ResponseCodes;
@@ -25,6 +26,7 @@ import com.iconsult.userservice.repository.*;
 import com.iconsult.userservice.service.CustomerService;
 import com.iconsult.userservice.service.EmailService;
 import com.iconsult.userservice.service.JwtService;
+import com.iconsult.userservice.service.UserActivityService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
@@ -47,6 +49,7 @@ import javax.net.ssl.*;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -80,6 +83,9 @@ public class CustomerServiceImpl implements CustomerService
 
     @Autowired
     CustomerMapper customerMapper;
+
+    @Autowired
+    UserActivityService userActivityService;
 
     @Autowired
     GenericDao<Customer> customerGenericDao;
@@ -327,12 +333,17 @@ public class CustomerServiceImpl implements CustomerService
                 data.put("token", token);
                 data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
                 response = new CustomResponseEntity<>(data, "customer logged in successfully");
+                UserActivityRequest userActivity = new UserActivityRequest();
 
                 //set customer token
                 customer.setSessionToken(token);
                 AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
                 customer.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
                 updateCustomer(customer);
+                userActivity.setActivityDate(LocalDateTime.now());
+                userActivity.setUserId(String.valueOf(customer.getId()));
+                userActivity.setUserActivity("User Logged In");
+                userActivityService.saveUserActivity(userActivity);
                 return response;
             } else {
                 throw new ServiceException("Invalid Password or Security Image");

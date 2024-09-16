@@ -3,6 +3,7 @@ package com.iconsult.userservice.service.Impl;
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.constant.StatementType;
 import com.iconsult.userservice.custome.Regex;
+import com.iconsult.userservice.dto.UserActivityRequest;
 import com.iconsult.userservice.feignClient.BeneficiaryServiceClient;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
@@ -16,6 +17,7 @@ import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.FundTransferService;
+import com.iconsult.userservice.service.UserActivityService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +45,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
-    private final String interBankFundTransferURL = "http://192.168.0.63:8080/api/v1/1link/creditTransaction";
+    private final String interBankFundTransferURL = "http://localhost:8084/api/v1/1link/creditTransaction";
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -60,6 +62,9 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     @Autowired
     GenericDao<Account> accountGenericDao;
+
+    @Autowired
+    UserActivityService userActivityService;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -333,7 +338,11 @@ public class FundTransferServiceImpl implements FundTransferService {
                         transactionsGenericDao.saveOrUpdate(fundsTransferReceiver);
 
                         beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount), receiverAccount.get().getCustomer().getId());
-
+                        UserActivityRequest userActivity = new UserActivityRequest();
+                        userActivity.setActivityDate(LocalDateTime.now());
+                        userActivity.setUserId(String.valueOf(senderAccount.get().getCustomer().getId()));
+                        userActivity.setUserActivity("User did the FT Transaction");
+                        userActivityService.saveUserActivity(userActivity);
 
                         // Return success message
                         return new CustomResponseEntity<>(responseDto, "Transaction successful.");
@@ -459,6 +468,11 @@ public class FundTransferServiceImpl implements FundTransferService {
 
                     account.get().setAccountBalance(account.get().getAccountBalance() - totalAmount);
                     accountRepository.save(account.get());
+                    UserActivityRequest userActivity = new UserActivityRequest();
+                    userActivity.setActivityDate(LocalDateTime.now());
+                    userActivity.setUserId(String.valueOf(senderAccountCDDetails.getAccount().getCustomer().getId()));
+                    userActivity.setUserActivity("User did the IBFT Transaction");
+                    userActivityService.saveUserActivity(userActivity);
                     return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
                 } else {
                     return new CustomResponseEntity("The recipient accountNumber is incorrect. " +
@@ -480,6 +494,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
         LocalDate startDt = LocalDate.parse(startDate);
         LocalDate endDt = LocalDate.parse(endDate);
+        Account account = accountRepository.findByAccountNumber(accountNumber);
 
         if(startDt.isAfter(endDt)){
             return new CustomResponseEntity<>("Start date cannot be after end date.");
@@ -518,6 +533,12 @@ public class FundTransferServiceImpl implements FundTransferService {
         if (!transactionDTOs.isEmpty()) {
             response.setSuccess(true);
             response.setMessage("Transactions fetched successfully.");
+            UserActivityRequest userActivity = new UserActivityRequest();
+            userActivity.setActivityDate(LocalDateTime.now());
+            userActivity.setUserId(String.valueOf(account.getCustomer().getId()));
+            userActivity.setUserActivity("User Generated The Account Statements");
+            userActivityService.saveUserActivity(userActivity);
+
         } else {
             response.setMessage("No transactions found for the given criteria.");
         }
@@ -532,6 +553,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
         String start = lastThreeMonths.format(DATE_FORMATTER);
         String end = today.format(DATE_FORMATTER);
+        Account account = accountRepository.findByAccountNumber(accountNumber);
 
         List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, start, end);
         if(transactions.isEmpty()) {
@@ -567,6 +589,11 @@ public class FundTransferServiceImpl implements FundTransferService {
         if (!transactionDTOs.isEmpty()) {
             response.setSuccess(true);
             response.setMessage("Transactions fetched successfully.");
+            UserActivityRequest userActivity = new UserActivityRequest();
+            userActivity.setActivityDate(LocalDateTime.now());
+            userActivity.setUserId(String.valueOf(account.getCustomer().getId()));
+            userActivity.setUserActivity("User Generated The Account Statements");
+            userActivityService.saveUserActivity(userActivity);
         } else {
             response.setMessage("No transactions found for the given criteria.");
         }

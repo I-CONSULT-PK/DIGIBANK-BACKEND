@@ -4,6 +4,7 @@ import com.example.AddPayeeService.Util.EncrpytionUtil;
 import com.example.AddPayeeService.model.dto.BanksDto;
 import com.example.AddPayeeService.model.dto.CbsAccountDto;
 import com.example.AddPayeeService.model.dto.request.AddPayeeRequestDto;
+import com.example.AddPayeeService.model.dto.request.UserActivityRequest;
 import com.example.AddPayeeService.model.dto.response.AddPayeeResponseDto;
 import com.example.AddPayeeService.model.dto.response.FetchAccountDto;
 import com.example.AddPayeeService.model.entity.AddPayee;
@@ -25,6 +26,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.net.ssl.*;
 import java.net.URI;
 import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -39,6 +41,8 @@ public class AddPayeeServiceImpl implements AddPayeeService {
 
     private final String GetBankBranchCode = "http://localhost:8081/";
 
+    private final String userActivityURL = "http://localhost:8088/v1/userActivity/saveUserActivity";
+
     @Autowired
     private AddPayeeRepository addPayeeRepository;
 
@@ -52,7 +56,11 @@ public class AddPayeeServiceImpl implements AddPayeeService {
 
     @Override
     public CustomResponseEntity createBeneficiary(AddPayeeRequestDto addPayeeRequestDto) throws Exception {
-
+        URI uri = UriComponentsBuilder.fromHttpUrl(userActivityURL)
+                .queryParam("userId", addPayeeRequestDto.getCustomerId())
+                .queryParam("activity", "Adding Beneficiary")
+                .build()
+                .toUri();
         if (addPayeeRequestDto == null) {
 
             return CustomResponseEntity.error("Beneficiary Data Cannot be null");
@@ -93,6 +101,7 @@ public class AddPayeeServiceImpl implements AddPayeeService {
         addPayeeRepository.save(addPayee);
 
         Map<String, Object> data = new HashMap<>();
+
         response = new CustomResponseEntity<>(addPayeeMapper.jpeToDto(addPayee), "Beneficiary added successfully");
         return response;
     }
