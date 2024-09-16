@@ -878,6 +878,7 @@ public class CustomerServiceImpl implements CustomerService
             defaultAccountDto.setAccountType(defaultAccount.get().getAccountType());
             defaultAccountDto.setBankImage(bank.getBankLogo());
             defaultAccountDto.setBankName(bank.getBankName());
+            defaultAccountDto.setEmail(customer.getEmail());
         }
         return new CustomResponseEntity<>(defaultAccountDto , "Default Account Retrieved Successfully");
     }

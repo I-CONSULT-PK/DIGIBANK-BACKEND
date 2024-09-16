@@ -16,6 +16,8 @@ public class DefaultAccountDto {
 
     private String bankName;
 
+    private String email ;
+
     public String getBankImage() {
         return bankImage;
     }
@@ -70,5 +72,13 @@ public class DefaultAccountDto {
 
     public void setAccountType(String accountType) {
         this.accountType = accountType;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
