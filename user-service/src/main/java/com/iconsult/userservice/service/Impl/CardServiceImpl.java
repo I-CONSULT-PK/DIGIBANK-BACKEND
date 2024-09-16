@@ -241,7 +241,8 @@ public class CardServiceImpl implements CardService {
                 LOGGER.info("Card Status has been Updated with Id: {}", card.getCardId());
                 UserActivityRequest userActivity = new UserActivityRequest();
                 userActivity.setActivityDate(LocalDateTime.now());
-                userActivity.setUserId(String.valueOf(card.getAccount().getCustomer().getId()));
+                userActivity.setCustomerId(card.getAccount().getCustomer());
+      //          userActivity.setCustomerId(String.valueOf(card.getAccount().getCustomer().getId()));
                 userActivity.setUserActivity("User Updated Card Status");
                 userActivityService.saveUserActivity(userActivity);
                 return new CustomResponseEntity<>("Card Status Updated Successfully");
@@ -382,7 +383,7 @@ public class CardServiceImpl implements CardService {
         cardDetail = cardRepository.save(cardDetail);
         UserActivityRequest userActivity = new UserActivityRequest();
         userActivity.setActivityDate(LocalDateTime.now());
-        userActivity.setUserId(String.valueOf(account.getCustomer().getId()));
+     //   userActivity.setCustomerId(String.valueOf(account.getCustomer().getId()));
         userActivity.setUserActivity("User Requested For The Card");
         userActivityService.saveUserActivity(userActivity);
 

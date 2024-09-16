@@ -22,7 +22,7 @@ public class UserActivityController {
     UserActivityImpl userActivityService;
 
     @PostMapping("/saveUserActivity")
-    public CustomResponseEntity saveUserActivity(@RequestParam String userId , @RequestParam String activity){
-        return userActivityService.saveUserActivity(userId,activity);
+    public CustomResponseEntity saveUserActivity(@RequestParam String customerId , @RequestParam String activity){
+        return userActivityService.saveUserActivity(customerId,activity);
     }
 }

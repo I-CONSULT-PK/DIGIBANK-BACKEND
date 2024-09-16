@@ -2,6 +2,7 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.dto.UserActivityRequest;
+import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.model.entity.UserActivity;
 import com.iconsult.userservice.service.UserActivityService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class UserActivityImpl implements UserActivityService {
@@ -29,8 +31,8 @@ public class UserActivityImpl implements UserActivityService {
 
         UserActivity userActivity = new UserActivity();
         userActivity.setActivity(activity);
+        LocalDateTime dateTime = LocalDateTime.now();
         userActivity.setActivityDate(LocalDateTime.now());
-        userActivity.setUserId(usedId);
         genericDao.saveOrUpdate(userActivity);
         customResponseEntity.setData(userActivity);
 
@@ -41,11 +43,10 @@ public class UserActivityImpl implements UserActivityService {
 
     public CustomResponseEntity saveUserActivity(UserActivityRequest userActivityRequest)
     {
-
         UserActivity userActivity = new UserActivity();
         userActivity.setActivity(userActivityRequest.getUserActivity());
         userActivity.setActivityDate(LocalDateTime.now());
-        userActivity.setUserId(userActivity.getUserId());
+        userActivity.setCustomerId(userActivityRequest.getCustomerId());
         genericDao.saveOrUpdate(userActivity);
         customResponseEntity.setData(userActivity);
         genericDao.saveOrUpdate(userActivity);

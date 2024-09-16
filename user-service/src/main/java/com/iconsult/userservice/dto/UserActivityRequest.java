@@ -1,5 +1,6 @@
 package com.iconsult.userservice.dto;
 
+import com.iconsult.userservice.model.entity.Customer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,9 +17,7 @@ public class UserActivityRequest {
 
     private Long id;
 
-    private String userId;
-
-
+    private Customer customerId;
     private String userActivity;
 
 

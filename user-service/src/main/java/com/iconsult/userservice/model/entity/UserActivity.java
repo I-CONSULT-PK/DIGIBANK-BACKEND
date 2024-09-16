@@ -1,6 +1,7 @@
 package com.iconsult.userservice.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,15 +16,9 @@ import java.util.List;
 @Setter
 @Table(name = "userActivity")
 public class UserActivity implements Serializable {
-
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column (name = "userId")
-    private String userId;
-
     @Column(name = "user_Activity")
     private String activity;
 
@@ -31,7 +26,8 @@ public class UserActivity implements Serializable {
     private LocalDateTime activityDate;
 
     @JsonBackReference
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id")
-    private List<Customer> customer_id = new ArrayList<>();
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "customer_id")
+    private Customer customerId;
 }

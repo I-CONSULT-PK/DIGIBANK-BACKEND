@@ -333,17 +333,17 @@ public class CustomerServiceImpl implements CustomerService
                 data.put("token", token);
                 data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
                 response = new CustomResponseEntity<>(data, "customer logged in successfully");
-                UserActivityRequest userActivity = new UserActivityRequest();
-
                 //set customer token
                 customer.setSessionToken(token);
                 AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
                 customer.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
                 updateCustomer(customer);
+                UserActivityRequest userActivity = new UserActivityRequest();
                 userActivity.setActivityDate(LocalDateTime.now());
-                userActivity.setUserId(String.valueOf(customer.getId()));
+                userActivity.setCustomerId(customer);
                 userActivity.setUserActivity("User Logged In");
                 userActivityService.saveUserActivity(userActivity);
+                LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
                 return response;
             } else {
                 throw new ServiceException("Invalid Password or Security Image");
@@ -428,8 +428,14 @@ public class CustomerServiceImpl implements CustomerService
         // Creating and returning the response
         CustomResponseEntity<ForgetUserAndPasswordResponse> response = new CustomResponseEntity<>("Username sent successfully");
         response.setData(forgetUserAndPasswordResponse);
-        return response;
 
+        UserActivityRequest userActivity = new UserActivityRequest();
+        userActivity.setActivityDate(LocalDateTime.now());
+        userActivity.setCustomerId(customer);
+        userActivity.setUserActivity("Forget user name ");
+        userActivityService.saveUserActivity(userActivity);
+        LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
+        return response;
     }
 
     @Override
@@ -451,6 +457,12 @@ public class CustomerServiceImpl implements CustomerService
         forgetUserAndPasswordResponse.setEmail(customer.getEmail());
         forgetUserAndPasswordResponse.setMobileNumber(customer.getMobileNumber());
 
+        UserActivityRequest userActivity = new UserActivityRequest();
+        userActivity.setActivityDate(LocalDateTime.now());
+        userActivity.setCustomerId(customer);
+        userActivity.setUserActivity("Forget email ");
+        userActivityService.saveUserActivity(userActivity);
+        LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
         return new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Customer Detail");
     }
 
@@ -484,6 +496,12 @@ public class CustomerServiceImpl implements CustomerService
 
         emailService.sendPasswordResetNotification(customer.getEmail());
 
+        UserActivityRequest userActivity = new UserActivityRequest();
+        userActivity.setActivityDate(LocalDateTime.now());
+        userActivity.setCustomerId(customer);
+        userActivity.setUserActivity("Forget password ");
+        userActivityService.saveUserActivity(userActivity);
+        LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
         // Return a successful response
         return new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Password reset successfully");
     }

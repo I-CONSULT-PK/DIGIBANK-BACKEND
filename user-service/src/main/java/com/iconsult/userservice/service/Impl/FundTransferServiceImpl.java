@@ -340,7 +340,9 @@ public class FundTransferServiceImpl implements FundTransferService {
                         beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount), receiverAccount.get().getCustomer().getId());
                         UserActivityRequest userActivity = new UserActivityRequest();
                         userActivity.setActivityDate(LocalDateTime.now());
-                        userActivity.setUserId(String.valueOf(senderAccount.get().getCustomer().getId()));
+                        userActivity.setCustomerId(senderAccount.get().getCustomer());
+
+                        //     userActivity.setCustomerId(String.valueOf(senderAccount.get().getCustomer().getId()));
                         userActivity.setUserActivity("User did the FT Transaction");
                         userActivityService.saveUserActivity(userActivity);
 
@@ -470,7 +472,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                     accountRepository.save(account.get());
                     UserActivityRequest userActivity = new UserActivityRequest();
                     userActivity.setActivityDate(LocalDateTime.now());
-                    userActivity.setUserId(String.valueOf(senderAccountCDDetails.getAccount().getCustomer().getId()));
+                    userActivity.setCustomerId(senderAccountCDDetails.getAccount().getCustomer());
+            //        userActivity.setCustomerId(String.valueOf(senderAccountCDDetails.getAccount().getCustomer().getId()));
                     userActivity.setUserActivity("User did the IBFT Transaction");
                     userActivityService.saveUserActivity(userActivity);
                     return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
@@ -535,7 +538,8 @@ public class FundTransferServiceImpl implements FundTransferService {
             response.setMessage("Transactions fetched successfully.");
             UserActivityRequest userActivity = new UserActivityRequest();
             userActivity.setActivityDate(LocalDateTime.now());
-            userActivity.setUserId(String.valueOf(account.getCustomer().getId()));
+            userActivity.setCustomerId(account.getCustomer());
+      //      userActivity.setCustomerId(String.valueOf(account.getCustomer().getId()));
             userActivity.setUserActivity("User Generated The Account Statements");
             userActivityService.saveUserActivity(userActivity);
 
@@ -591,7 +595,9 @@ public class FundTransferServiceImpl implements FundTransferService {
             response.setMessage("Transactions fetched successfully.");
             UserActivityRequest userActivity = new UserActivityRequest();
             userActivity.setActivityDate(LocalDateTime.now());
-            userActivity.setUserId(String.valueOf(account.getCustomer().getId()));
+            userActivity.setCustomerId(account.getCustomer());
+//            userActivity.setCustomerId(String.valueOf(account.getCustomer());
+            //userActivity.setCustomerId(String.valueOf(account.getCustomer().getId()));
             userActivity.setUserActivity("User Generated The Account Statements");
             userActivityService.saveUserActivity(userActivity);
         } else {
