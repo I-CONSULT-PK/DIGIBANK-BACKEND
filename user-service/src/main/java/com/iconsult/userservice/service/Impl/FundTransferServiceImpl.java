@@ -376,7 +376,7 @@ public class FundTransferServiceImpl implements FundTransferService {
         Optional<Account> account  = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
 //        Account account = accountRepository.getAccountByAccountNumber(fundTransferDto.getFromAccountNumber());
         if (!account.isPresent()) {
-            return new CustomResponseEntity("sender account not found within DiGi Bank!");
+            return CustomResponseEntity.error("sender account not found within DiGi Bank!");
         }
 
 
@@ -388,10 +388,10 @@ public class FundTransferServiceImpl implements FundTransferService {
         }
 
         if (totalAmount > account.get().getAccountBalance()) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("accountNumber", account.get().getAccountNumber());
-            map.put("currentBalance", account.get().getAccountBalance());
-            return new CustomResponseEntity(map, "your account does not have a sufficient balance!");
+//            Map<String, Object> map = new HashMap<>();
+//            map.put("accountNumber", account.get().getAccountNumber());
+//            map.put("currentBalance", account.get().getAccountBalance());
+            return CustomResponseEntity.error("Insufficient balance!");
         }
         if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDayLimit()) == false){
             return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
@@ -475,11 +475,11 @@ public class FundTransferServiceImpl implements FundTransferService {
                     userActivityService.saveUserActivity(userActivity);
                     return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
                 } else {
-                    return new CustomResponseEntity("The recipient accountNumber is incorrect. " +
+                    return CustomResponseEntity.error("The Bank Code or Recipient Account Number is invalid. " +
                             "Please verify and try again.");
                 }
             } else {
-                throw new RuntimeException("Failed to call API: " + response.getStatusCode());
+                return CustomResponseEntity.error("Failed to call API: " + response.getStatusCode());
             }
         } catch (RestClientException e) {
             LOGGER.error("Exception occurred: ", e);
