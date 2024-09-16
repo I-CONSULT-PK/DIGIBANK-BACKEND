@@ -83,8 +83,7 @@ public class CustomerController
     }
 
     @PostMapping("/login")
-    public CustomResponseEntity login(@Valid @RequestBody LoginDto loginDto)
-    {
+    public CustomResponseEntity login(@Valid @RequestBody LoginDto loginDto) throws Exception {
         return this.customerServiceImpl.login(loginDto);
     }
 

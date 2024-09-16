@@ -1,11 +1,24 @@
 package com.iconsult.userservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.security.Key;
 import java.util.Date;
@@ -62,4 +75,40 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+
+
+    String AUTH_URL = "https://localhost:9443/oauth2/token";
+    private final ObjectMapper objectMapper = new ObjectMapper();
+//    private static final String AUTH_URL = "https://localhost:9443/oauth2/token";
+
+        public HashMap<String, String > getBearerToken(String username, String password) throws Exception {
+            String url = "https://localhost:9443/oauth2/token";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED);
+            headers.set("Authorization", "Basic SDloUUVOV0tNUzJ5MjFZNjFWM0RwWnppVW1jYTpoMFdHYWpQaVp4SnI1eTJWNGNCZE5nMGYzcE1h");
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("grant_type", "password");
+            body.add("username", "admin");
+            body.add("password", "admin");
+
+            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                HashMap<String, String> result = objectMapper.readValue(response.getBody(), HashMap.class);
+
+                // Extract the Bearer token from the response
+//                String accessToken = (String) result.get("access_token");
+                return result;
+            } else {
+                throw new RuntimeException("Failed to get token. HTTP error code : " + response.getStatusCode());
+            }
+        }
 }

@@ -3,6 +3,7 @@ package com.iconsult.userservice.service.Impl;
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.Util.Util;
 import com.iconsult.userservice.custome.Regex;
+import com.iconsult.userservice.config.AuthConfig;
 import com.iconsult.userservice.domain.OTP;
 import com.iconsult.userservice.dto.DefaultAccountDto;
 import com.iconsult.userservice.dto.EmailDto;
@@ -120,7 +121,9 @@ public class CustomerServiceImpl implements CustomerService
 
     @Autowired
     AccountServiceImpl accountService;
+
     private AccountStatusCode accountStatusCode;
+
     public CustomResponseEntity register(SignUpResponse customerDto, OTPLogImpl otpLogImpl) {
         LOGGER.info("Sign up Request received");
 
@@ -293,7 +296,7 @@ public class CustomerServiceImpl implements CustomerService
 
 
     @Override
-    public CustomResponseEntity login(LoginDto loginDto) {
+    public CustomResponseEntity login(LoginDto loginDto) throws Exception {
         ImageVerification imageVerification = null;
         if(loginDto.getImageVerificationId() != null) {
             imageVerification = imageVerificationRepository.findById(loginDto.getImageVerificationId()).orElse(null);
@@ -317,19 +320,20 @@ public class CustomerServiceImpl implements CustomerService
                 Authentication authentication =
                         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmailorUsername(), loginDto.getPassword()));
                 String email = authentication.getName();
-                String token = jwtService.generateToken(email);
+                AuthConfig authConfig = new AuthConfig();
+                HashMap<String, String > token = jwtService.getBearerToken("admin", "admin");
                 LOGGER.info("Token = " + token);
-                LOGGER.info("Expiration = " + jwtService.getTokenExpireTime(token).getTime());
+                LOGGER.info("Expiration = " +token.get("access_token"));
                 // JWT Implementation Ends
 
                 Map<String, Object> data = new HashMap<>();
                 data.put("customerId", customer.getId());
                 data.put("token", token);
-                data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
+                data.put("expirationTime", (Long.valueOf(token.get("expires_in"))/60));
                 response = new CustomResponseEntity<>(data, "customer logged in successfully");
 
                 //set customer token
-                customer.setSessionToken(token);
+                customer.setSessionToken(token.get("access_token"));
                 AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
                 customer.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
                 updateCustomer(customer);
