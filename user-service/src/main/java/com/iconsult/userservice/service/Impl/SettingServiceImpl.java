@@ -177,21 +177,32 @@ public class SettingServiceImpl implements SettingService {
         CustomResponseEntity customResponse = new CustomResponseEntity<>( "Transaction limit set to : " + transferLimit);
         return customResponse;
     }
-
-    public CustomResponseEntity changePassword(String oldPassword,String newPassword, Long id) throws Exception {
+    @Override
+    public CustomResponseEntity changePassword(Long id, String oldPassword,String newPassword) throws Exception {
         try{
             String newEncryptedPassword;
             Customer customer = customerRepository.findById(id).orElse(null);
+            //**
+            //*  NOTE: Here password should be encrypted in DB.
+            //*
             if(Objects.isNull(customer)){
                 LOGGER.error("customer does not exist");
                 return CustomResponseEntity.error("customer does not exist");
+            }
+            if(newPassword == null || newPassword.isEmpty()){
+                return CustomResponseEntity.error("New password cannot be null or empty.");
+            }
+            if(oldPassword == null || oldPassword.isEmpty()){
+                return CustomResponseEntity.error("Old password cannot be null or empty.");
             }
             String decryptedSavedPassword = EncryptionUtil.decrypt(customer.getPassword(),"t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
             if(!decryptedSavedPassword.equals(oldPassword)){
                 LOGGER.error("password does not exist");
                 return CustomResponseEntity.error("password does not match");
             }
-//            newEncryptedPassword = EncryptionUtil.decrypt(newPassword ,"t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
+            if (decryptedSavedPassword.equals(newPassword)){
+                return CustomResponseEntity.error("Password can not be same as old, Pleae try new one!");
+            }
             newEncryptedPassword = EncryptionUtil.encrypt("t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=",newPassword);
             customer.setPassword(newEncryptedPassword);
             customerRepository.save(customer);
@@ -204,7 +215,6 @@ public class SettingServiceImpl implements SettingService {
         }
         return CustomResponseEntity.builder().message("Password Change Successfully").success(true).build();
     }
-
     @Override
     public CustomResponseEntity updateProfile(CustomerDto customerDto) {
         Customer customer = customerRepository.findById(customerDto.getClientNo()).orElse(null);
@@ -212,12 +222,25 @@ public class SettingServiceImpl implements SettingService {
             LOGGER.error("customer does not exist");
             return CustomResponseEntity.error("customer does not exist");
         }
-        if(!customerDto.getMobileNumber().isEmpty() || !customerDto.getEmail().isEmpty()){
-            customer.setMobileNumber(customer.getMobileNumber());
-            customer.setEmail(customer.getEmail());
-            customerRepository.save(customer);
+        if (customerDto.getMobileNumber() == null || customerDto.getMobileNumber().isEmpty()) {
+            return CustomResponseEntity.error("Mobile number cannot be null or empty.");
         }
-        return CustomResponseEntity.builder().message("Profile Updated Successfully").success(true).build();
+        if (customerDto.getEmail() == null || customerDto.getEmail().isEmpty()) {
+            return CustomResponseEntity.error("Email cannot be null or empty.");
+        }
+        if (customerDto.getEmail().equals(customer.getEmail()) || customerDto.getMobileNumber().equals(customer.getMobileNumber())) {
+            return CustomResponseEntity.error("Mobile Number or Email cannot be the same as the old.");
+        }
+        // Update customer details
+            customer.setMobileNumber(customerDto.getMobileNumber());
+            customer.setEmail(customerDto.getEmail());
+            customerRepository.save(customer);
+
+        return CustomResponseEntity.builder()
+                .message("Profile Updated Successfully")
+                .success(true)
+                .build();
+
     }
     @Override
     public CustomResponseEntity deactivatePin(Long customerId, String unique) {

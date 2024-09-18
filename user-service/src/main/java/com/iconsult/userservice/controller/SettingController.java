@@ -45,12 +45,15 @@ public class SettingController {
     }
 
     @PostMapping("/changePassword")
-    public CustomResponseEntity changePassword (@RequestParam Long customerId , @RequestParam String oldPassword , @RequestParam String newPassword) throws Exception {
-        return this.settingService.changePassword(oldPassword,newPassword,customerId);
+    public CustomResponseEntity changePassword (@RequestParam("customerId") Long id,
+                                                @RequestParam("oldPassword") String oldPassword ,
+                                                @RequestParam("newPassword") String newPassword)
+            throws Exception {
+        return this.settingService.changePassword(id,oldPassword,newPassword);
     }
 
     @PostMapping("/updateProfile")
-    public CustomResponseEntity updateProfile(CustomerDto customerDto){
+    public CustomResponseEntity updateProfile(@RequestBody CustomerDto customerDto){
         return this.settingService.updateProfile(customerDto);
     }
 

@@ -10,7 +10,7 @@ public interface SettingService {
 
     CustomResponseEntity setTransactionLimit(String accountNumber, Long userId, Double transferLimit);
 
-    CustomResponseEntity changePassword(String oldPassword,String newPassword, Long id) throws Exception;
+    CustomResponseEntity changePassword(Long id, String oldPassword,String newPassword) throws Exception;
 
     CustomResponseEntity updateProfile(CustomerDto customerDto);
     CustomResponseEntity setDevicePin(Long id, SettingDTO settingDTO);
