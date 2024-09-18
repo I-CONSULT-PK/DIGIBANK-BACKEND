@@ -22,4 +22,6 @@ public class EmailOTPSendDto {
     private String email;
     @NotNull
     private String reason;
+
+    private String deliveryPreference;
 }

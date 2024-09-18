@@ -57,11 +57,10 @@ public class OTPServiceImpl implements OTPService {
 
     private CustomApiResponse response;
 
+    private EmailOTPSendDto emailOTPSendDto;
+
     @Autowired
     private OTPRepository otpRepository;
-
-
-    String deliveryPreference = DeliveryPreference.EMAIL.getValue();
 
 
     public OTPServiceImpl(EmailService emailService) {
@@ -118,11 +117,29 @@ public class OTPServiceImpl implements OTPService {
         Map<String, Object> data = new HashMap<>();
         data.put("expirationTime", otp.getExpiryDateTime());
 
-        response = new CustomApiResponse<>(data, "OTP has been sent to your registered email '" + OTPDto.getEmail() + "'");
+        String deliveryMessage = "";
+        switch (DeliveryPreference.valueOf(OTPDto.getDeliveryPreference())) {
+            case EMAIL:
+                deliveryMessage = "OTP has been sent to your registered email '" + OTPDto.getEmail() + "'";
+                break;
+            case SMS:
+                deliveryMessage = "OTP has been sent to your registered mobile number '" + OTPDto.getMobileNumber() + "'";
+                break;
+            case BOTH:
+                deliveryMessage = "OTPs have been sent to your registered email and mobile number.";
+                break;
+            default:
+                deliveryMessage = "OTP delivery preference not recognized.";
+                break;
+        }
+
+        // Construct and return the response
+        CustomApiResponse response = new CustomApiResponse<>(data, deliveryMessage);
         return response;
     }
 
     public OTP createAndSendOTP(EmailOTPSendDto emailOTPSendDto) {
+        DeliveryPreference deliveryPreference = DeliveryPreference.valueOf(emailOTPSendDto.getDeliveryPreference());
         LOGGER.info("Generating OTP...");
         long expirationTime = System.currentTimeMillis() + 300000;
 
@@ -145,7 +162,7 @@ public class OTPServiceImpl implements OTPService {
 
         // Sending email with OTP
         try {
-            if (deliveryPreference.equals(DeliveryPreference.EMAIL.getValue())) {
+            if (deliveryPreference == DeliveryPreference.EMAIL ) {
                 otp.setSmsMessage("Dear Customer, your OTP to complete your request is " + emailOtp);
                 otp.setEmailOtp(emailOtp);
                 sendOtpEmail(emailOTPSendDto.getEmail(), emailOTPSendDto.getReason(), emailOtp);
@@ -157,10 +174,10 @@ public class OTPServiceImpl implements OTPService {
                     return otp;
                 }
             }
-            if (deliveryPreference == DeliveryPreference.SMS.getValue()) {
+            if (deliveryPreference == DeliveryPreference.SMS) {
                 otp.setSmsOtp(smsOtp);
                 otp.setSmsMessage("Dear Customer, your OTP to complete your request is " + smsOtp);
-                //  sendOtpSms(OTPDto.getMobileNumber(), OTPDto.getReason(), smsOtp);
+                sendOtpSms(emailOTPSendDto.getMobileNumber(), emailOTPSendDto.getReason(), smsOtp);
                 LOGGER.info("Sms sent successfully to [{}]", emailOTPSendDto.getMobileNumber());
 
                 // Save OTP log
@@ -170,7 +187,7 @@ public class OTPServiceImpl implements OTPService {
                 }
             }
 
-            if (deliveryPreference == DeliveryPreference.BOTH.getValue()) {
+            if (deliveryPreference == DeliveryPreference.BOTH) {
                 otp.setSmsOtp(smsOtp);
                 otp.setEmailOtp(emailOtp);
                 otp.setSmsMessage("Dear Customer, your OTPs to complete your request are : email " + emailOtp + " sms " + smsOtp);
@@ -265,14 +282,16 @@ public class OTPServiceImpl implements OTPService {
     }
 
     private boolean isValidOTP(OTP otp, EmailOTPVerifyDto EmailOTPVerifyDto) {
+
+        DeliveryPreference deliveryPreference = DeliveryPreference.valueOf(emailOTPSendDto.getDeliveryPreference());
 //        if (OTPDto.getDeliveryPreference() == DeliveryPreference.EMAIL) {
-        if (deliveryPreference.equals(DeliveryPreference.EMAIL.getValue())) {
+        if (deliveryPreference.equals(DeliveryPreference.EMAIL)) {
             return otp.getEmailOtp().equals(EmailOTPVerifyDto.getEmailOtp()) && !otp.getIsVerified();
         }
-        if (deliveryPreference == DeliveryPreference.SMS.getValue()) {
+        if (deliveryPreference == DeliveryPreference.SMS) {
             return otp.getSmsOtp().equals(EmailOTPVerifyDto.getSmsOtp()) && !otp.getIsVerified();
         }
-        if (deliveryPreference == DeliveryPreference.BOTH.getValue()) {
+        if (deliveryPreference == DeliveryPreference.BOTH) {
             return otp.getEmailOtp().equals(EmailOTPVerifyDto.getEmailOtp()) &&
                     otp.getSmsOtp().equals(EmailOTPVerifyDto.getSmsOtp()) &&
                     !otp.getIsVerified();
