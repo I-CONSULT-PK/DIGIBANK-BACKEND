@@ -29,5 +29,6 @@ public class CbsAccountDto {
     private String branchCode;
     private Customer customer;
     private String ibanCode;
+    private String mobileNumber;
 //    String bankName;
 }
