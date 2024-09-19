@@ -342,6 +342,7 @@ public class CustomerServiceImpl implements CustomerService
                 userActivity.setActivityDate(LocalDateTime.now());
                 userActivity.setCustomerId(customer);
                 userActivity.setUserActivity("User Logged In");
+                userActivity.setPkr(0.0);
                 userActivityService.saveUserActivity(userActivity);
                 LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
                 return response;
@@ -433,6 +434,7 @@ public class CustomerServiceImpl implements CustomerService
         userActivity.setActivityDate(LocalDateTime.now());
         userActivity.setCustomerId(customer);
         userActivity.setUserActivity("Forget user name ");
+        userActivity.setPkr(0.0);
         userActivityService.saveUserActivity(userActivity);
         LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
         return response;
@@ -461,6 +463,7 @@ public class CustomerServiceImpl implements CustomerService
         userActivity.setActivityDate(LocalDateTime.now());
         userActivity.setCustomerId(customer);
         userActivity.setUserActivity("Forget email ");
+        userActivity.setPkr(0.0);
         userActivityService.saveUserActivity(userActivity);
         LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
         return new CustomResponseEntity<>(forgetUserAndPasswordResponse, "Customer Detail");
@@ -500,6 +503,7 @@ public class CustomerServiceImpl implements CustomerService
         userActivity.setActivityDate(LocalDateTime.now());
         userActivity.setCustomerId(customer);
         userActivity.setUserActivity("Forget password ");
+        userActivity.setPkr(0.0);
         userActivityService.saveUserActivity(userActivity);
         LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
         // Return a successful response

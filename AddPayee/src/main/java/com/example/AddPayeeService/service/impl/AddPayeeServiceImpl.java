@@ -4,7 +4,6 @@ import com.example.AddPayeeService.Util.EncrpytionUtil;
 import com.example.AddPayeeService.model.dto.BanksDto;
 import com.example.AddPayeeService.model.dto.CbsAccountDto;
 import com.example.AddPayeeService.model.dto.request.AddPayeeRequestDto;
-import com.example.AddPayeeService.model.dto.request.UserActivityRequest;
 import com.example.AddPayeeService.model.dto.response.AddPayeeResponseDto;
 import com.example.AddPayeeService.model.dto.response.FetchAccountDto;
 import com.example.AddPayeeService.model.entity.AddPayee;
@@ -58,7 +57,8 @@ public class AddPayeeServiceImpl implements AddPayeeService {
     public CustomResponseEntity createBeneficiary(AddPayeeRequestDto addPayeeRequestDto) throws Exception {
         URI uri = UriComponentsBuilder.fromHttpUrl(userActivityURL)
                 .queryParam("userId", addPayeeRequestDto.getCustomerId())
-                .queryParam("activity", "Adding Beneficiary")
+                .queryParam("activity", addPayeeRequestDto.getBeneficiaryAlias()+" has been created")
+                .queryParam("pkr",0.0)
                 .build()
                 .toUri();
         if (addPayeeRequestDto == null) {

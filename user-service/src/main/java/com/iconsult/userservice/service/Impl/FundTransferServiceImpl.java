@@ -336,14 +336,14 @@ public class FundTransferServiceImpl implements FundTransferService {
                         // Save both transfer logs
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
                         transactionsGenericDao.saveOrUpdate(fundsTransferReceiver);
-
                         beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount), receiverAccount.get().getCustomer().getId());
                         UserActivityRequest userActivity = new UserActivityRequest();
                         userActivity.setActivityDate(LocalDateTime.now());
                         userActivity.setCustomerId(senderAccount.get().getCustomer());
-
-                        //     userActivity.setCustomerId(String.valueOf(senderAccount.get().getCustomer().getId()));
-                        userActivity.setUserActivity("User did the FT Transaction");
+                        userActivity.setUserActivity("Transferred an amount of Rs. "+cbsTransferDto.getTransferAmount()
+                            +" from Account No: "+cbsTransferDto.getSenderAccountNumber()
+                            +" To Account No :"+receiverAccount.get().getAccountNumber());
+                        userActivity.setPkr(cbsTransferDto.getTransferAmount());
                         userActivityService.saveUserActivity(userActivity);
 
                         // Return success message
@@ -473,9 +473,9 @@ public class FundTransferServiceImpl implements FundTransferService {
                     UserActivityRequest userActivity = new UserActivityRequest();
                     userActivity.setActivityDate(LocalDateTime.now());
                     userActivity.setCustomerId(senderAccountCDDetails.getAccount().getCustomer());
-            //        userActivity.setCustomerId(String.valueOf(senderAccountCDDetails.getAccount().getCustomer().getId()));
                     userActivity.setUserActivity("From : "+fundTransferDto.getFromAccountNumber()+" To : "+fundTransferDto.getToAccountNumber()
                             +" Amount : "+fundTransferDto.getAmount());
+                    userActivity.setPkr(fundTransferDto.getAmount());
                     userActivityService.saveUserActivity(userActivity);
                     return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
                 } else {
@@ -542,6 +542,7 @@ public class FundTransferServiceImpl implements FundTransferService {
             userActivity.setCustomerId(account.getCustomer());
       //      userActivity.setCustomerId(String.valueOf(account.getCustomer().getId()));
             userActivity.setUserActivity("User Generated The Account Statements");
+            userActivity.setPkr(0.0);
             userActivityService.saveUserActivity(userActivity);
 
         } else {
@@ -600,6 +601,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 //            userActivity.setCustomerId(String.valueOf(account.getCustomer());
             //userActivity.setCustomerId(String.valueOf(account.getCustomer().getId()));
             userActivity.setUserActivity("User Generated The Account Statements");
+            userActivity.setPkr(0.0);
             userActivityService.saveUserActivity(userActivity);
         } else {
             response.setMessage("No transactions found for the given criteria.");

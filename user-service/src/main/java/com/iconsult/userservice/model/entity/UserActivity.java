@@ -30,4 +30,17 @@ public class UserActivity implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "customer_id")
     private Customer customerId;
+    @Column(name = "pkr")
+    private Double pkr;
+
+    @Override
+    public String toString() {
+        return "UserActivity{" +
+                "id=" + id +
+                ", activity='" + activity + '\'' +
+                ", activityDate=" + activityDate +
+                ", customerId=" + customerId +
+                ", pkr=" + pkr +
+                '}';
+    }
 }

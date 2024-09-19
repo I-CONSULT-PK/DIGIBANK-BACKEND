@@ -12,13 +12,8 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserActivityRequest {
-
-
-    private Long id;
-
-    private Customer customerId;
+public class ActivityRecordResponse {
     private String userActivity;
     private Double pkr;
-    private LocalDateTime activityDate;
+    private String activityDate;
 }

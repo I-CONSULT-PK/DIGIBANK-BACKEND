@@ -242,8 +242,9 @@ public class CardServiceImpl implements CardService {
                 UserActivityRequest userActivity = new UserActivityRequest();
                 userActivity.setActivityDate(LocalDateTime.now());
                 userActivity.setCustomerId(card.getAccount().getCustomer());
-      //          userActivity.setCustomerId(String.valueOf(card.getAccount().getCustomer().getId()));
+                userActivity.setPkr(0.0);
                 userActivity.setUserActivity("User Updated Card Status");
+
                 userActivityService.saveUserActivity(userActivity);
                 return new CustomResponseEntity<>("Card Status Updated Successfully");
             }
@@ -383,7 +384,8 @@ public class CardServiceImpl implements CardService {
         cardDetail = cardRepository.save(cardDetail);
         UserActivityRequest userActivity = new UserActivityRequest();
         userActivity.setActivityDate(LocalDateTime.now());
-     //   userActivity.setCustomerId(String.valueOf(account.getCustomer().getId()));
+        userActivity.setCustomerId(customer);
+        userActivity.setPkr(0.0);
         userActivity.setUserActivity("User Requested For The Card");
         userActivityService.saveUserActivity(userActivity);
 
