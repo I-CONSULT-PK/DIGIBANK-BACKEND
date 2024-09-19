@@ -1,6 +1,7 @@
 package com.iconsult.topup.service;
 
 import com.iconsult.topup.model.dto.NetworkDTO;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 
 import java.util.List;
 
@@ -10,7 +11,7 @@ public interface NetworkService {
 
      Network saveNetwork(Network network);*/
 
-      List<NetworkDTO> getAllNetworks();
+      CustomResponseEntity<List<NetworkDTO>> getAllNetworks();
 
       NetworkDTO getNetworkById(Long id);
 

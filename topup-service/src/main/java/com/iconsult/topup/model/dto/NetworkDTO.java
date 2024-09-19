@@ -14,6 +14,7 @@ import java.util.List;
 public class NetworkDTO {
     private Long id;
     private String name;
-    private List<MobilePackageDTO> mobilePackages;
+    private String iconUrl;
+//    private List<MobilePackageDTO> mobilePackages;
 }
 

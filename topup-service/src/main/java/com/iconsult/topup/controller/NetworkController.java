@@ -2,6 +2,7 @@ package com.iconsult.topup.controller;
 
 import com.iconsult.topup.model.dto.NetworkDTO;
 import com.iconsult.topup.service.NetworkService;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,8 +15,8 @@ public class NetworkController {
     @Autowired
     private NetworkService networkService;
 
-    @GetMapping
-    public List<NetworkDTO> getAllNetworks() {
+    @GetMapping("/all")
+    public CustomResponseEntity<List<NetworkDTO>> getAllNetworks() {
         return networkService.getAllNetworks();
     }
 

@@ -22,6 +22,8 @@ public class Network {
     private Long id;
     private String name;
 
+    private String iconUrl;
+
     @OneToMany(mappedBy = "network", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<MobilePackage> mobilePackages = new ArrayList<>();

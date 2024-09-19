@@ -326,7 +326,11 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
                         fundsTransferReceiver.setTransactionDate(formattedDate);
-                        fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
+
+                        fundsTransferReceiver.setTransactionId(
+                                map.get("paymentReference") != null ? map.get("paymentReference") : null );
+
+//                        fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
                         fundsTransferReceiver.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferReceiver.setSenderAccount(senderAccount.get().getAccountNumber());

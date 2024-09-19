@@ -13,7 +13,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-#      ddl-auto: update
+      ddl-auto: update
     show-sql: false
 
   mail:
@@ -27,14 +27,14 @@ spring:
           auth: true
           starttls:
             enable: true
-#eureka:
-#  client:
-#    service-url:
-#      defaultZone: http://localhost:8772/eureka/
-#    fetch-registry: true
-#    register-with-eureka: true
-#  instance:
-#    prefer-ip-address: true
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8772/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
 
 
 

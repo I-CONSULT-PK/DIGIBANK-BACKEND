@@ -7,6 +7,7 @@ import com.iconsult.topup.model.entity.Network;
 import com.iconsult.topup.repo.MobilePackageRepository;
 import com.iconsult.topup.repo.NetworkRepository;
 import com.iconsult.topup.service.NetworkService;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,10 +26,15 @@ public class NetworkServiceImpl implements NetworkService {
     private MobilePackageRepository mobilePackageRepository;
 
     @Override
-    public List<NetworkDTO> getAllNetworks() {
-        return networkRepository.findAll().stream()
+    public CustomResponseEntity<List<NetworkDTO>> getAllNetworks() {
+        List<NetworkDTO> response = networkRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+        if(response.isEmpty()){
+            return CustomResponseEntity.error("No Network Found!");
+        }
+
+        return new CustomResponseEntity<>(response,"Networks");
     }
 
     @Override
@@ -58,6 +64,7 @@ public class NetworkServiceImpl implements NetworkService {
         NetworkDTO dto = new NetworkDTO();
         dto.setId(network.getId());
         dto.setName(network.getName());
+        dto.setIconUrl(network.getIconUrl());
 
         // Convert MobilePackage entities to DTOs
         List<MobilePackageDTO> mobilePackageDTOs = Optional.ofNullable(network.getMobilePackages())
@@ -66,7 +73,7 @@ public class NetworkServiceImpl implements NetworkService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
 
-        dto.setMobilePackages(mobilePackageDTOs);
+//        dto.setMobilePackages(mobilePackageDTOs);
 
         return dto;
     }

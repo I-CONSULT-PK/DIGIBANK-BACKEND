@@ -89,6 +89,24 @@ spring:
             - Path=/v1/settings/**
           filters:
             - name: AuthenticationFilter
+        - id: TOPUP-SERVICE
+          uri: lb://TOPUP-SERVICE
+          predicates:
+            - Path=/v1/topup/**
+          filters:
+            - name: AuthenticationFilter
+        - id: TOPUP-SERVICE
+          uri: lb://TOPUP-SERVICE
+          predicates:
+            - Path=/v1/network/**
+          filters:
+            - name: AuthenticationFilter
+        - id: TOPUP-SERVICE
+          uri: lb://TOPUP-SERVICE
+          predicates:
+            - Path=/v1/packages/**
+          filters:
+            - name: AuthenticationFilter
 
 
 eureka:
