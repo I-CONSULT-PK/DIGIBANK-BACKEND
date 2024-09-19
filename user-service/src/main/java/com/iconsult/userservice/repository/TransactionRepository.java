@@ -13,7 +13,7 @@ public interface TransactionRepository extends JpaRepository<Transactions, Long>
             "JOIN t.account a " +
             "JOIN a.customer c " +
             "WHERE a.accountNumber = :accountNumber " +
-            "AND t.transactionDate BETWEEN :startDate AND :endDate")
+            "AND t.transactionDate BETWEEN :startDate AND :endDate ORDER BY t.transactionDate DESC")
     List<Transactions> findTransactionsByAccountNumberAndDateRange(
             @Param("accountNumber") String accountNumber,
             @Param("startDate") String startDate,
