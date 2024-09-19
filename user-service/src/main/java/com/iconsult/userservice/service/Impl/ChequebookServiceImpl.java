@@ -1,15 +1,11 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.model.dto.response.ChequebookDto;
-import com.iconsult.userservice.model.entity.Account;
-import com.iconsult.userservice.model.entity.Cheque;
-import com.iconsult.userservice.model.entity.Chequebook;
-import com.iconsult.userservice.model.entity.DigiBankBranch;
+import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.repository.*;
 import com.iconsult.userservice.service.ChequeService;
 import com.iconsult.userservice.service.ChequebookService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
-import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,9 +43,7 @@ public class ChequebookServiceImpl implements ChequebookService {
 
     @Autowired
     private CustomerRepository customerRepository;
-
     Random random = new Random();
-
 
     @Override
     public CustomResponseEntity<ChequebookDto> createChequebookRequest(ChequebookDto chequebookDto, String accountNumber) {
@@ -67,8 +61,12 @@ public class ChequebookServiceImpl implements ChequebookService {
             return CustomResponseEntity.error("Chequebook request already exists for this account.");
         }
 
-        Chequebook chequebook = modelMapper.map(chequebookDto, Chequebook.class);
-        chequebook.setBranch(account.getDigiBranch());
+        Chequebook chequebook = modelMapper.typeMap(ChequebookDto.class, Chequebook.class)
+                .addMappings(mapper -> {
+                    mapper.skip(Chequebook::setCustomer);
+                })
+                .map(chequebookDto);
+
         chequebook.setBranch(account.getDigiBranch());
         chequebook.setAccount(account);
         chequebook.setCustomer(account.getCustomer());
@@ -81,6 +79,7 @@ public class ChequebookServiceImpl implements ChequebookService {
             return CustomResponseEntity.error("Cheque Pages must be either 15 or 25");
         }
 
+        // Generate cheques for the chequebook
         List<Cheque> cheques = IntStream.range(0, chequebook.getChequePages())
                 .mapToObj(i -> {
                     Cheque cheque = new Cheque();
@@ -93,19 +92,21 @@ public class ChequebookServiceImpl implements ChequebookService {
 
         chequebook.setCheques(cheques);
 
+        // Save the chequebook
         try {
             Chequebook savedChequebook = chequebookRepository.save(chequebook);
             return new CustomResponseEntity<>(modelMapper.map(savedChequebook, ChequebookDto.class), "Success");
         } catch (Exception e) {
             e.printStackTrace();
-            return CustomResponseEntity.error("Error request chequebook: " + e.getMessage());
+            return CustomResponseEntity.error("Error requesting chequebook: " + e.getMessage());
         }
     }
+
     private String generateRandomChequeNumber() {
         Long number = 10000000000000L + random.nextLong(90000000000000L);
-        // Format the number to ensure it's 14 digits long with leading zeros
         return String.format("%014d", number);
     }
+
 
     @Override
     public CustomResponseEntity<String> cancelChequebookRequest(String accountNumber) {
@@ -120,7 +121,7 @@ public class ChequebookServiceImpl implements ChequebookService {
         if (!chequebookRequest.isPresent()) {
             return CustomResponseEntity.error("No active chequebook request found to cancel.");
         }
-        if (!chequebookRequest.get().getStatus().equals("Requested")) {
+        if (!chequebookRequest.get().getStatus().equalsIgnoreCase("Requested")) {
             return CustomResponseEntity.error("The chequebook request cannot be canceled as it is already processed.");
         }
         chequebookRequest.get().setStatus("Cancelled");
@@ -144,68 +145,118 @@ public class ChequebookServiceImpl implements ChequebookService {
     }
 
 
+//    @Override
+//    public CustomResponseEntity<List<ChequebookDto>> getAllChequebooks() {
+//        List<ChequebookDto> chequebookList = chequebookRepository.findAll().stream()
+//                .filter(chequebook -> chequebook.getCheques().stream()
+//                        .anyMatch(cheque -> cheque.getStatus().equalsIgnoreCase("Issued")))
+//                .map(chequebook -> {
+//                    ChequebookDto chequebookDto = new ChequebookDto();
+//                    chequebookDto.setId(chequebook.getId());
+//                    chequebookDto.setCheckType(chequebook.getCheckType());
+//                    chequebookDto.setStatus(chequebook.getStatus());
+//                    chequebookDto.setRequestDate(chequebook.getRequestDate());
+//                    chequebookDto.setChequePages(chequebook.getChequePages());
+//
+//                    // Populate branchCode and accountNumber from associated entities
+//                    DigiBankBranch branch = chequebook.getBranch();
+//                    if (branch != null) {
+//                        chequebookDto.setBranchCode(branch.getBranchCode());
+//                    }
+//
+//                    Account account = chequebook.getAccount();
+//                    if (account != null) {
+//                        chequebookDto.setAccountNumber(account.getAccountNumber());
+//                    }
+//
+//                    // Populate customer details
+//                    Customer customer = chequebook.getCustomer();
+//                    if (customer != null) {
+//                        chequebookDto.setFirstName(customer.getFirstName()); // Assuming there's a getFirstName method
+//                        chequebookDto.setLastName(customer.getLastName());   // Assuming there's a getLastName method
+//                    }
+//
+//                    // Map cheques to ChequeDto if needed
+//                    List<ChequeDto> chequeDtos = chequebook.getCheques().stream()
+//                            .map(cheque -> modelMapper.map(cheque, ChequeDto.class))
+//                            .collect(Collectors.toList());
+//                    chequebookDto.setCheques(chequeDtos);
+//
+//                    return chequebookDto;
+//                })
+//                .collect(Collectors.toList());
+//
+//        if (chequebookList.isEmpty()) {
+//            return CustomResponseEntity.error("No chequebooks available with issued cheques");
+//        }
+//
+//        return new CustomResponseEntity<>(chequebookList, "Success");
+//    }
+
+
     @Override
     public CustomResponseEntity<List<ChequebookDto>> getAllChequebooks() {
-        List<ChequebookDto> chequebookList = chequebookRepository.findAll().stream().map(chequebook -> modelMapper.map(chequebook, ChequebookDto.class)).collect(Collectors.toList());
-
+        // Fetch all chequebooks and filter based on cheque status being "Issued"
+        List<ChequebookDto> chequebookList = chequebookRepository.findAll().stream()
+                .filter(chequebook -> chequebook.getCheques().stream()
+                        .anyMatch(cheque -> cheque.getStatus().equalsIgnoreCase("Issued")))
+                .map(chequebook -> modelMapper.map(chequebook, ChequebookDto.class))
+                .collect(Collectors.toList());
         if (chequebookList.isEmpty()) {
-            return CustomResponseEntity.error("Chequebooks not available");
+            return CustomResponseEntity.error("No chequebooks available with issued cheques");
         }
         return new CustomResponseEntity<List<ChequebookDto>>(chequebookList, "Success");
     }
 
-
     @Override
-    public CustomResponseEntity<ChequebookDto> updateChequebookRequest(ChequebookDto chequebookDto, String accountNumber){
-        // Find the account by account number
-        Account account = accountRepository.findByAccountNumber(accountNumber);
+    public CustomResponseEntity<ChequebookDto> updateChequebookRequest(ChequebookDto chequebookDto, Long chequebookId) {
 
-        if (account==null) {
-            return CustomResponseEntity.error("Account not found!");
-        }
-
-        // Check if the chequebook exists by ID or some identifier
-        Optional<Chequebook> existingChequebook = chequebookRepository.findById(chequebookDto.getId());
-        if (existingChequebook.isEmpty()) {
+        Optional<Chequebook> existingChequebookOptional = chequebookRepository.findById(chequebookId);
+        if (existingChequebookOptional.isEmpty()) {
             return CustomResponseEntity.error("Chequebook not found!");
         }
 
-        // Update the existing chequebook's fields
-        Chequebook chequebook = existingChequebook.get();
+        Chequebook chequebook = existingChequebookOptional.get();
+
+        if (!chequebook.getStatus().equals("Requested")) {
+            return CustomResponseEntity.error("The chequebook request cannot be updated as it is not in a 'Requested' state.");
+        }
+
         chequebook.setChequePages(chequebookDto.getChequePages());
-
-        // Ensure the branch is still valid and belongs to the account
-        chequebook.setBranch(account.getDigiBranch());
-        chequebook.setAccount(account);
-        chequebook.setCustomer(account.getCustomer());
-
-        // Update request date and status
         chequebook.setRequestDate(LocalDate.now());
         chequebook.setStatus("Requested");
+        chequebook.setCheckType("Personal");
 
-        // Validate cheque pages and update or generate cheques accordingly
         if (chequebook.getChequePages() != 15 && chequebook.getChequePages() != 25) {
             return CustomResponseEntity.error("Cheque Pages must be either 15 or 25");
         }
 
-        // If cheque pages were updated, regenerate cheques
+        List<Cheque> existingCheques = chequebook.getCheques();
         List<Cheque> updatedCheques = IntStream.range(0, chequebook.getChequePages())
                 .mapToObj(i -> {
-                    Cheque cheque = new Cheque();
+                    Cheque cheque;
+                    if (i < existingCheques.size()) {
+                        // Reuse existing cheques if possible
+                        cheque = existingCheques.get(i);
+                    } else {
+                        // Create new cheques if needed
+                        cheque = new Cheque();
+                    }
                     cheque.setChequeNumber(generateRandomChequeNumber());
                     cheque.setChequebook(chequebook);
                     cheque.setIssueDate(LocalDate.now());
-                    cheque.setStatus("Unissued");
+                    cheque.setStatus("Issued");
                     return cheque;
                 }).collect(Collectors.toList());
-
-        chequebook.setCheques(updatedCheques);
-
-        // Save the updated chequebook
-        Chequebook updatedChequebook = chequebookRepository.save(chequebook);
-
-        // Return the updated response
-        return new CustomResponseEntity<>(modelMapper.map(updatedChequebook, ChequebookDto.class), "Update Success");
+        // Clear existing cheques and set updated cheques
+        chequebook.getCheques().clear();
+        chequebook.getCheques().addAll(updatedCheques);
+        try {
+            Chequebook updatedChequebook = chequebookRepository.save(chequebook);
+            return new CustomResponseEntity<>(modelMapper.map(updatedChequebook, ChequebookDto.class), "Update Success");
+        } catch (Exception e) {
+            return CustomResponseEntity.error("Error updating chequebook request: " + e.getMessage());
+        }
     }
 
     @Override
@@ -218,5 +269,4 @@ public class ChequebookServiceImpl implements ChequebookService {
         chequebookRepository.deleteById(id);
         return new CustomResponseEntity<>(modelMapper.map(chequebookOptional.get(), ChequebookDto.class), "Chequebook deleted successfully");
     }
-
 }

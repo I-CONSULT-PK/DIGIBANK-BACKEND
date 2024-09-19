@@ -17,5 +17,4 @@ public class ChequeDto {
     private LocalDate issueDate;
     private String status;
     private String chequeNumber;
-//    private Long chequebookId;
 }

@@ -10,25 +10,27 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/chequebooks")
+@RequestMapping("/v1/chequebooks")
 public class ChequebookController {
 
     @Autowired
     private ChequebookService chequebookService;
 
+    //Create Chequebook request with account number
     @PostMapping("/request")
-    public CustomResponseEntity<ChequebookDto> createChequebookRequest(@RequestBody ChequebookDto chequebookDto,@RequestParam("accountNumber")String accountNumber) {
+    public CustomResponseEntity<ChequebookDto> createChequebookRequest(@RequestBody ChequebookDto chequebookDto, @RequestParam("accountNumber") String accountNumber) {
         chequebookDto.setAccountNumber(accountNumber);
-        return chequebookService.createChequebookRequest(chequebookDto,accountNumber);
+        return chequebookService.createChequebookRequest(chequebookDto, accountNumber);
     }
 
+    //Cancel Chequebook request with account number
     @PostMapping("/cancel")
     public CustomResponseEntity<?> cancelChequebookRequest(@RequestParam("accountNumber") String accountNumber) {
         CustomResponseEntity<String> response = chequebookService.cancelChequebookRequest(accountNumber);
         if (response.isSuccess()) {
             return new CustomResponseEntity<>(response.getMessage());
         } else {
-            return  CustomResponseEntity.error(response.getMessage());
+            return CustomResponseEntity.error(response.getMessage());
         }
     }
 
@@ -44,13 +46,14 @@ public class ChequebookController {
         return chequebookService.getAllChequebooks();
     }
 
-    // Update chequebook by ID
-    @PutMapping("/updateChequebook")
+    // Update chequebook by id
+    @PutMapping("/updateChequebook/{id}")
     public CustomResponseEntity<ChequebookDto> updateChequebookRequest(
             @RequestBody ChequebookDto chequebookDto,
-            @RequestParam("accountNumber") String accountNumber) {
-        return chequebookService.updateChequebookRequest(chequebookDto, accountNumber);
+            @PathVariable Long id) {
+        return chequebookService.updateChequebookRequest(chequebookDto, id);
     }
+
     // Delete chequebook by ID
     @DeleteMapping("/deleteChequebook/{id}")
     public CustomResponseEntity<ChequebookDto> deleteChequebook(@PathVariable Long id) {

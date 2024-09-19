@@ -1,5 +1,8 @@
 package com.iconsult.userservice.model.dto.response;
 
+import com.iconsult.userservice.model.dto.request.CustomerDto;
+import com.iconsult.userservice.model.entity.Account;
+import com.iconsult.userservice.model.entity.Customer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,9 +25,12 @@ public class ChequebookDto {
 
     private String branchCode;
     private String accountNumber;
-
     private List<ChequeDto> cheques;
+
+//    private String firstName;
+//    private String lastName;
+//    private Account account;
 //    private Customer customer;
 
-//    Long customerId;
+
 }

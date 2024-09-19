@@ -9,11 +9,15 @@ import java.util.List;
 public interface ChequeService {
 
     CustomResponseEntity<ChequeDto> createCheque(ChequeDto chequeDto);
-    CustomResponseEntity<ChequeDto> getChequeById(Long id);
+
+    CustomResponseEntity<ChequeDto> getCheque(String chequeNumber);
+
     CustomResponseEntity<List<ChequeDto>> getAllCheques();
-    CustomResponseEntity<ChequeDto> updateCheque(Long id, ChequeDto chequeDto);
-    CustomResponseEntity<ChequeDto> deleteCheque(Long id);
 
+    CustomResponseEntity<ChequeDto> updateCheque(String chequeNumber, ChequeDto chequeDto);
 
+    CustomResponseEntity<ChequeDto> deleteCheque(String chequeNumber);
+
+    CustomResponseEntity<ChequeDto> cancelCheque(ChequeDto chequeDto, String chequeNumber);
 
 }

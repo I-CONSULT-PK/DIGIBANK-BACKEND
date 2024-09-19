@@ -50,7 +50,13 @@ spring:
         - id: USER-SERVICE
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/chequebooks/**
+            - Path=/v1/chequebooks/**
+          filters:
+            - name: AuthenticationFilter
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/v1/cheques/**
           filters:
             - name: AuthenticationFilter
         - id: USER-SERVICE

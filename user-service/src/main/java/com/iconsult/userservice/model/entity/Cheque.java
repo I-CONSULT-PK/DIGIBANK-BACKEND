@@ -24,6 +24,8 @@ public class Cheque {
 
     private LocalDate issueDate;
 
+    private LocalDate cancelledDate;
+
     private String status;
 
     @ManyToOne
