@@ -18,6 +18,8 @@ public class DefaultAccountDto {
 
     private String email ;
 
+    private String mobileNumber;
+
     public String getBankImage() {
         return bankImage;
     }
@@ -80,5 +82,13 @@ public class DefaultAccountDto {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
     }
 }
