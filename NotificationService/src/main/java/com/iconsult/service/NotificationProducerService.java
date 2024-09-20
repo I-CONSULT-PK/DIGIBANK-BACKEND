@@ -3,7 +3,8 @@ package com.iconsult.service;
 import com.iconsult.model.NotificationEvent;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 
-public interface NotificationConsumerService {
+public interface NotificationProducerService {
 
-    CustomResponseEntity consumeNotification (NotificationEvent event);
+
+    CustomResponseEntity sendNotification (NotificationEvent event);
 }

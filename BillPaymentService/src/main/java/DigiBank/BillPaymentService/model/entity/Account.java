@@ -23,7 +23,7 @@ public class Account {
     private String accountNumber;
     @Enumerated(EnumType.STRING)
     private UtilityType utilityType;
-    private Double balance;
+//    private Double balance;
     private String billingCycle; // monthly
     @ManyToOne
     @JoinColumn(name = "customer_id")

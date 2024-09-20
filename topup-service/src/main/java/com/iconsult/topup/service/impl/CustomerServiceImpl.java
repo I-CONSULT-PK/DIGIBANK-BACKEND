@@ -77,13 +77,13 @@ public class CustomerServiceImpl implements CustomerService {
     private boolean isValidMobileNumberForCarrier(String mobileNumber, CarrierType carrierType) {
         switch (carrierType) {
             case JAZZ:
-                return mobileNumber.startsWith("030") || mobileNumber.startsWith("031");
+                return mobileNumber.startsWith("030") || mobileNumber.startsWith("032");
             case UFONE:
                 return mobileNumber.startsWith("033");
             case TELENOR:
                 return mobileNumber.startsWith("034");
             case ZONG:
-                return mobileNumber.startsWith("032");
+                return mobileNumber.startsWith("031");
             default:
                 return false;
         }
