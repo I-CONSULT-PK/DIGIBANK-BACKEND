@@ -23,9 +23,9 @@ public class UserActivitiesImpl implements UserActivitiesService {
     private EntityManager entityManager;
 
 
-    @Scheduled(cron = "*/10 * * * * ?") // Every 10 seconds for testing
+//    @Scheduled(cron = "*/10 * * * * ?") // Every 10 seconds for testing
 //    @Scheduled(cron = "0 * * * * ?") // Every minute
-//    @Scheduled(cron = "0 0 0 * * ?")  // Runs daily at midnight
+    @Scheduled(cron = "0 0 0 * * ?")  // Runs daily at midnight
     public void deleteOldUserActivityRecordsAfterThirtyDays() {
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         LOGGER.info(String.valueOf(LocalDateTime.now().minusDays(30)));
