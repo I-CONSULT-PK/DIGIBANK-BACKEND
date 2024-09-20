@@ -19,10 +19,10 @@ public class NotificationProducerServiceImpl implements NotificationProducerServ
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificationProducerServiceImpl.class);
 
     private NewTopic topic;
-    private KafkaTemplate<String, NotificationRequest> kafkaTemplate;
+    private KafkaTemplate<String, NotificationEvent> kafkaTemplate;
 
 
-    public NotificationProducerServiceImpl(NewTopic topic, KafkaTemplate<String, NotificationRequest> kafkaTemplate) {
+    public NotificationProducerServiceImpl(NewTopic topic, KafkaTemplate<String, NotificationEvent> kafkaTemplate) {
         this.topic = topic;
         this.kafkaTemplate = kafkaTemplate;
     }
