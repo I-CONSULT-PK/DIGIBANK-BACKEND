@@ -308,7 +308,7 @@ public class TopUpServiceImpl implements TopUpService {
         if (!responseBody.isSuccess()) {
             String errorMessage = responseBody.getMessage(); // Get error message from response body
             LOGGER.error("Error from response: {}", errorMessage);
-            return CustomResponseEntity.error("Error from response: " + errorMessage);
+            return CustomResponseEntity.error(errorMessage);
         }
 
         // Extract amount from response data
