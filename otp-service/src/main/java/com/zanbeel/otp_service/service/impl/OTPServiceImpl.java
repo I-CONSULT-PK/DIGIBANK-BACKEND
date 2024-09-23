@@ -283,7 +283,7 @@ public class OTPServiceImpl implements OTPService {
 
     private boolean isValidOTP(OTP otp, EmailOTPVerifyDto EmailOTPVerifyDto) {
 
-        DeliveryPreference deliveryPreference = DeliveryPreference.valueOf(emailOTPSendDto.getDeliveryPreference());
+        DeliveryPreference deliveryPreference = EmailOTPVerifyDto.getDeliveryPreference();
 //        if (OTPDto.getDeliveryPreference() == DeliveryPreference.EMAIL) {
         if (deliveryPreference.equals(DeliveryPreference.EMAIL)) {
             return otp.getEmailOtp().equals(EmailOTPVerifyDto.getEmailOtp()) && !otp.getIsVerified();
