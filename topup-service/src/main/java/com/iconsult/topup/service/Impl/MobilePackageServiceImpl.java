@@ -9,10 +9,11 @@ import com.iconsult.topup.repo.NetworkRepository;
 import com.iconsult.topup.repo.TopUpCustomerRepository;
 import com.iconsult.topup.repo.TopUpTransactionRepository;
 import com.iconsult.topup.service.MobilePackageService;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,8 +53,8 @@ public class MobilePackageServiceImpl implements MobilePackageService {
                 .orElseThrow(() -> new RuntimeException("Network not found"));
 
         MobilePackage mobilePackage = new MobilePackage();
-        mobilePackage.setName(dto.getPkg_name());
-        mobilePackage.setDescription(dto.getDescription());
+       // mobilePackage.setName(dto.getPkg_name());
+       // mobilePackage.setDescription(dto.getDescription());
         mobilePackage.setPrice(dto.getPrice());
         mobilePackage.setNetwork(network);
 
@@ -66,43 +67,74 @@ public class MobilePackageServiceImpl implements MobilePackageService {
         mobilePackageRepository.deleteById(id);
     }
 
+    @Override
+    public CustomResponseEntity createPackage(MobilePackageDTO packageDTO) {
+
+        if (packageDTO.getNetworkId() != null) {
+            if (!networkRepository.existsById(packageDTO.getNetworkId())) {
+                return CustomResponseEntity.error("Network not found with ID: " + packageDTO.getNetworkId());
+            }
+        }
+
+//        Optional<MobilePackage> existingPkg = mobilePackageRepository.findByPkgNameAndNetwork_Id(packageDTO.getPkgName(), packageDTO.getNetworkId());
+        Optional<MobilePackage> existingPkg = mobilePackageRepository.findByPkgNameAndNetwork_IdAndBundleCategory(
+                packageDTO.getPkgName(),
+                packageDTO.getNetworkId(),
+                packageDTO.getBundleCategory()
+        );
+        if (existingPkg.isPresent()) {
+            return CustomResponseEntity.error("Package with name '" + packageDTO.getPkgName() +
+                    "' for network ID " + packageDTO.getNetworkId() +
+                    " and category '" + packageDTO.getBundleCategory() + "' already exists.");
+        }
+
+        MobilePackage mobilePackage = convertToEntity(packageDTO, networkRepository);
+        mobilePackageRepository.save(mobilePackage);
+
+        Map<String , Object> map = new HashMap<>();
+        map.put("package",packageDTO);
+        map.put("networkName", mobilePackage.getNetwork().getName());
+        return new CustomResponseEntity(map,"package created!");
+
+    }
+
     private MobilePackageDTO convertToDTO(MobilePackage mobilePackage) {
         MobilePackageDTO dto = new MobilePackageDTO();
-        dto.setId(mobilePackage.getId());
-        dto.setPkg_name(mobilePackage.getName());
-        dto.setDescription(mobilePackage.getDescription());
-        dto.setPrice(mobilePackage.getPrice());
-        dto.setValidityDays(mobilePackage.getValidityDays());
-        dto.setNetworkId(mobilePackage.getNetwork() != null ? mobilePackage.getNetwork().getId() : null);
 
+        dto.setPkgName(mobilePackage.getPkgName());
+        dto.setPrice(mobilePackage.getPrice());
+        dto.setTotalGBs(mobilePackage.getGBs());
+        dto.setSocialGBs(mobilePackage.getSocialGBs());
+        dto.setBundleCategory(mobilePackage.getBundleCategory());
+        dto.setValidityDays(mobilePackage.getValidityDays());
+        dto.setOffNetMints(mobilePackage.getOffNetMints());
+        dto.setOnNetMints(mobilePackage.getOnNetMints());
+        dto.setSmsCount(mobilePackage.getSmsCount());
+        dto.setNetworkId(mobilePackage.getNetwork() != null ? mobilePackage.getNetwork().getId() : null);
         return dto;
     }
 
+    private MobilePackage convertToEntity(MobilePackageDTO packageDTO, NetworkRepository networkRepository) {
+        MobilePackage pkg = new MobilePackage();
 
-   /* @Override
-    public List<MobilePackage> getAllPackages() {
-        return mobilePackageRepository.findAll();
+        pkg.setPkgName(packageDTO.getPkgName());
+        pkg.setPrice(packageDTO.getPrice());
+
+        pkg.setGBs(packageDTO.getTotalGBs());
+        pkg.setSocialGBs(packageDTO.getSocialGBs());
+        pkg.setBundleCategory(packageDTO.getBundleCategory());
+        pkg.setValidityDays(packageDTO.getValidityDays());
+        pkg.setOffNetMints(packageDTO.getOffNetMints());
+        pkg.setOnNetMints(packageDTO.getOnNetMints());
+        pkg.setSmsCount(packageDTO.getSmsCount());
+
+        if (packageDTO.getNetworkId() != null) {
+           Network network = networkRepository.findById(packageDTO.getNetworkId()).orElse(null);
+            pkg.setNetwork(network);
+        }
+
+        return pkg;
     }
-
-    @Override
-    public Optional<MobilePackage> getPackageById(Long id) {
-        return mobilePackageRepository.findById(id);
-    }
-
-    @Override
-    public MobilePackage savePackage(MobilePackage mobilePackage) {
-        return mobilePackageRepository.save(mobilePackage);
-    }
-
-    @Override
-    public void deletePackage(Long id) {
-        mobilePackageRepository.deleteById(id);
-    }
-
-    @Override
-    public List<MobilePackage> getPackagesByNetworkId(Long networkId) {
-        return mobilePackageRepository.findAllByNetworkId(networkId);
-    }*/
 
 
 }

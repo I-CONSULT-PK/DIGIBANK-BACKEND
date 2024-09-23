@@ -19,11 +19,15 @@ public class MobilePackage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-    private String description;
+    private String pkgName;
+    private String onNetMints;
+    private String offNetMints;
+    private String smsCount;
+    private String GBs;
+    private String socialGBs;
+    private String bundleCategory;
     private Double price;
     private Integer validityDays;
-
     @OneToMany(mappedBy = "mobilePackage")
     private Set<Subscription> subscriptions;
     @ManyToOne

@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -58,8 +60,7 @@ public class SubscribeServiceImpl implements SubscribeService {
                 customer.getId(), packageId, thirtyDaysAgo);
 
         if (existingSubscription.isPresent()) {
-            return CustomResponseEntity.error("You are already subscribed to this package within the last 30 days. " +
-                    "Please wait until the current subscription expires or contact support for assistance");
+            return CustomResponseEntity.error("You are already subscribed to this package");
         }
 
         // Create and save new subscription
@@ -81,13 +82,21 @@ public class SubscribeServiceImpl implements SubscribeService {
         topUpTransactionRepository.save(topUpTransaction);
 
         MobilePackageDTO dto = new MobilePackageDTO();
-        dto.setValidityDays(mobilePackage.getValidityDays());
-        dto.setId(packageId);
-        dto.setDescription(mobilePackage.getDescription());
+        dto.setPkgName(mobilePackage.getPkgName());
         dto.setPrice(mobilePackage.getPrice());
-        dto.setNetworkId(mobilePackage.getNetwork().getId());
-        dto.setPkg_name(mobilePackage.getName());
+        dto.setTotalGBs(mobilePackage.getGBs());
+        dto.setSocialGBs(mobilePackage.getSocialGBs());
+        dto.setBundleCategory(mobilePackage.getBundleCategory());
+        dto.setValidityDays(mobilePackage.getValidityDays());
+        dto.setOffNetMints(mobilePackage.getOffNetMints());
+        dto.setOnNetMints(mobilePackage.getOnNetMints());
+        dto.setSmsCount(mobilePackage.getSmsCount());
+        dto.setNetworkId(mobilePackage.getNetwork() != null ? mobilePackage.getNetwork().getId() : null);
 
-        return new CustomResponseEntity(dto,"Subscription successful. Package belongs to network: " + network.getName());
+        Map<String,Object> map = new HashMap<>();
+        map.put("Network Name ", network.getName());
+        map.put("package details",dto);
+
+        return new CustomResponseEntity(map,"Subscription successful");
     }
 }

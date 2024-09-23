@@ -1,6 +1,7 @@
 package com.iconsult.topup.service;
 
 import com.iconsult.topup.model.dto.MobilePackageDTO;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 
 import java.util.List;
 
@@ -26,4 +27,5 @@ public interface MobilePackageService {
 
       void deleteMobilePackage(Long id);
 
+    CustomResponseEntity createPackage(MobilePackageDTO packageDTO);
 }

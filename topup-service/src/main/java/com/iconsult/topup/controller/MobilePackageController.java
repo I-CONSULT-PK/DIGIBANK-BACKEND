@@ -33,6 +33,10 @@ public class MobilePackageController {
         return mobilePackageService.getMobilePackageById(id);
     }
 
+    @PostMapping("/createPackage")
+    public CustomResponseEntity createPackage(@RequestBody MobilePackageDTO packageDTO){
+        return mobilePackageService.createPackage(packageDTO);
+    }
     @GetMapping("/network/{networkId}")
     public List<MobilePackageDTO> getMobilePackagesByNetworkId(@PathVariable Long networkId) {
         return mobilePackageService.getMobilePackagesByNetworkId(networkId);
