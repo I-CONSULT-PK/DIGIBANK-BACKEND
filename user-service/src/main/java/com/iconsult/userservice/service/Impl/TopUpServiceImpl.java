@@ -42,7 +42,7 @@ public class TopUpServiceImpl implements TopUpService {
     AccountCDDetailsRepository accountCDDetailsRepository;
 
     private String URL = "http://localhost:8089/v1/topup/topUpTransaction";
-    private String PackageURL = "http://localhost:8089/v1/network";
+    private String PackageURL = "http://localhost:8089/v1/packages/all";
 
     private String BundleTransactionURL= "http://localhost:8089/v1/packages/subscribePackage";
 

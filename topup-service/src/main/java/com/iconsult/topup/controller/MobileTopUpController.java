@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/topup")
-public class Controller {
+public class MobileTopUpController {
 
 
     @Autowired

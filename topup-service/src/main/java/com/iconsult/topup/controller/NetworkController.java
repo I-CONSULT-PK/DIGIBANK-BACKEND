@@ -41,9 +41,4 @@ public class NetworkController {
         networkService.deleteNetwork(id);
     }
 
-    /*@PostMapping
-    public ResponseEntity createNetwork(@RequestBody Network createDTO) {
-        Network createdNetwork = networkService.saveNetwork(createDTO);
-        return ResponseEntity.ok(createdNetwork);
-    }*/
 }
