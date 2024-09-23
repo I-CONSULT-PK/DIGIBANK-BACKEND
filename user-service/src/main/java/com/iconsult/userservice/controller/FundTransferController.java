@@ -4,10 +4,12 @@ import com.iconsult.userservice.constant.StatementType;
 import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
+import com.iconsult.userservice.model.dto.request.ScheduleFundTransferDto;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,5 +71,11 @@ public class FundTransferController {
     public CustomResponseEntity setOneDayLimit(@RequestParam
         String account ,@RequestParam Long customerId, @RequestParam Double ondDayLimit){
         return fundTransferService.setOneDayLimit(account ,customerId, ondDayLimit);
+    }
+
+
+    @PostMapping("/scheduleFundTransfer")
+    public CustomResponseEntity getAllBanks(@Valid @RequestBody ScheduleFundTransferDto fundTransferDto) throws SchedulerException {
+        return this.fundTransferService.scheduleFundTransfer(fundTransferDto);
     }
 }

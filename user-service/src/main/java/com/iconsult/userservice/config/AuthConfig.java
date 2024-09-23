@@ -39,6 +39,7 @@ public class AuthConfig {
                                 .requestMatchers("/api/chequebooks/**").permitAll()
                                 .requestMatchers("/v1/complaint/**").permitAll()
                                 .requestMatchers("/v1/topup/**").permitAll()
+//                                .requestMatchers("/v1/topup/**").permitAll()
                 ).build();
     }
 
