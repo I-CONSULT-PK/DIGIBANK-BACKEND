@@ -1,14 +1,12 @@
 package com.iconsult.userservice.service;
 
 
-
 import com.iconsult.userservice.model.dto.request.*;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.service.Impl.OTPLogImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.servlet.http.HttpSession;
-import org.apache.kafka.common.protocol.types.Field;
 
 public interface CustomerService
 {

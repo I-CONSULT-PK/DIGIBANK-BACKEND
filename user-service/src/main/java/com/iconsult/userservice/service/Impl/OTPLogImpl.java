@@ -4,27 +4,21 @@ import com.iconsult.userservice.Util.Util;
 import com.iconsult.userservice.enums.SMSCategory;
 import com.iconsult.userservice.exception.ServiceException;
 import com.iconsult.userservice.model.dto.request.OTPDto;
-import com.iconsult.userservice.model.dto.response.KafkaMessageDto;
 import com.iconsult.userservice.model.entity.AppConfiguration;
 import com.iconsult.userservice.model.entity.OTPLog;
 import com.iconsult.userservice.repository.OTPLogRepository;
 import com.iconsult.userservice.service.OTPLogSerivce;
-//import com.twilio.Twilio;
-//import com.twilio.type.PhoneNumber;
-//import com.twilio.rest.api.v2010.account.Message;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class OTPLogImpl implements OTPLogSerivce {
@@ -41,11 +35,6 @@ public class OTPLogImpl implements OTPLogSerivce {
 
     @Autowired
     private AppConfigurationImpl appConfigurationImpl;
-
-    private KafkaMessageDto kafkaMessage;
-
-    @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
 
 
     // Twilio credentials

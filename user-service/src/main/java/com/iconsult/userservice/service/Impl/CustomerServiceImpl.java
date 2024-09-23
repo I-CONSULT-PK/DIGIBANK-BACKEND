@@ -14,12 +14,7 @@ import com.iconsult.userservice.exception.ServiceException;
 import com.iconsult.userservice.model.dto.request.*;
 import com.iconsult.userservice.model.dto.response.DashBoardResponseDto;
 import com.iconsult.userservice.model.dto.response.ForgetUserAndPasswordResponse;
-import com.iconsult.userservice.model.dto.response.KafkaMessageDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
-import com.iconsult.userservice.model.entity.*;
-import com.iconsult.userservice.repository.AccountRepository;
-import com.iconsult.userservice.repository.CustomerRepository;
-import com.iconsult.userservice.repository.ImageVerificationRepository;
 import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.CustomerMapper;
 import com.iconsult.userservice.repository.*;
@@ -35,26 +30,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.http.MediaType;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.net.ssl.*;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class CustomerServiceImpl implements CustomerService
@@ -67,9 +56,10 @@ public class CustomerServiceImpl implements CustomerService
 
     private final String accountURL = "http://localhost:8081/account/getAccount";
 
+    private final String notificationUrl = "http://localhost:8085/v1/notification/process-notification";
+
     @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
-    private KafkaMessageDto kafkaMessage;
+    private RestTemplate restTemplate;
 
     @Autowired
     BankRepository bankRepository;
@@ -107,9 +97,6 @@ public class CustomerServiceImpl implements CustomerService
 
     //    @Autowired
 //    private final PasswordEncoder passwordEncoder;
-    @Autowired
-    private RestTemplate restTemplate;
-
     @Autowired
     private AppConfigurationImpl appConfigurationImpl;
 
@@ -345,6 +332,44 @@ public class CustomerServiceImpl implements CustomerService
                 userActivity.setPkr(0.0);
                 userActivityService.saveUserActivity(userActivity);
                 LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
+
+                URI uri = UriComponentsBuilder.fromHttpUrl(notificationUrl)
+                        .build()
+                        .toUri();
+
+                // Log the full request URL
+                LOGGER.info("Request URL: " + uri);
+
+                // Set headers
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+                NotificationEvent notificationEvent = new NotificationEvent();
+                notificationEvent.setNotificationType("LOGIN");
+                notificationEvent.setMessage("customer logged in successfully!");
+                notificationEvent.setRecipientId(customer.getId());
+                notificationEvent.setChannel("EMAIL");
+                notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+                notificationEvent.setEmail(customer.getEmail());
+
+                // Create HttpEntity with Cbs_TransferDto as the body and headers
+                HttpEntity<NotificationEvent> entity = new HttpEntity<>(notificationEvent, headers);
+
+                // Make HTTP POST request
+
+                try{
+                 restTemplate.exchange(
+                        uri,
+                        HttpMethod.POST,
+                        entity,
+                        CustomResponseEntity.class
+                );}
+                catch (Exception e){
+                    LOGGER.info("Notification Service is down!");
+                    System.out.println("Notification Request failed: " + e.getMessage());
+                }
+
                 return response;
             } else {
                 throw new ServiceException("Invalid Password or Security Image");
@@ -746,18 +771,18 @@ public class CustomerServiceImpl implements CustomerService
         return CustomResponseEntity.error("Account not found");
 
     }
-    public void sendMessage(Object message, String topicName) {
-        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(topicName, message);
-        future.whenComplete((result, ex) -> {
-            if (ex == null) {
-                LOGGER.info("Sent message=[" + message +
-                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
-            } else {
-                LOGGER.error("Unable to send message=[" +
-                        message + "] due to : " + ex.getMessage());
-            }
-        });
-    }
+//    public void sendMessage(Object message, String topicName) {
+//        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(topicName, message);
+//        future.whenComplete((result, ex) -> {
+//            if (ex == null) {
+//                LOGGER.info("Sent message=[" + message +
+//                        "] with offset=[" + result.getRecordMetadata().offset() + "]");
+//            } else {
+//                LOGGER.error("Unable to send message=[" +
+//                        message + "] due to : " + ex.getMessage());
+//            }
+//        });
+//    }
 
     public boolean setCustomerStatus(String email, String mobileNumber) {
         Customer customer = findByEmailAddress(email);
