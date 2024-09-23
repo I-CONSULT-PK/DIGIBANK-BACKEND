@@ -317,10 +317,12 @@ public class TopUpServiceImpl implements TopUpService {
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> data = (Map<String, Object>) responseBody.getData();
-            Object billObject = data.get("price");
+            Object billObject = data.get("package details");
 
-            if (billObject instanceof Number) {
-                billAmount = ((Number) billObject).doubleValue();
+            if (billObject instanceof Map) {
+                Map<String,Object> topUpMap = (Map<String,Object>) billObject;
+                Object priceObject = topUpMap.get("price");
+                billAmount = ((Number) priceObject).doubleValue();
             } else {
                 LOGGER.error("Invalid amount received in response: {}", billObject);
                 return CustomResponseEntity.error("Invalid amount received in response");
