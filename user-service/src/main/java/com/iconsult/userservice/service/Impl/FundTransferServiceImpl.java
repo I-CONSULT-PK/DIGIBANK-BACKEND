@@ -29,6 +29,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -46,6 +47,8 @@ public class FundTransferServiceImpl implements FundTransferService {
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
     private final String interBankFundTransferURL = "http://localhost:8084/api/v1/1link/creditTransaction";
+
+    private final String notificationUrl = "http://localhost:8085/v1/notification/process-notification";
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -349,6 +352,47 @@ public class FundTransferServiceImpl implements FundTransferService {
                             +" To Account No :"+receiverAccount.get().getAccountNumber());
                         userActivity.setPkr(cbsTransferDto.getTransferAmount());
                         userActivityService.saveUserActivity(userActivity);
+
+                        URI notificUrl = UriComponentsBuilder.fromHttpUrl(notificationUrl)
+                                .build()
+                                .toUri();
+
+                        // Log the full request URL
+                        LOGGER.info("Request URL: " + notificUrl);
+
+                        // Set headers
+                        HttpHeaders notificHeaders = new HttpHeaders();
+                        notificHeaders.setContentType(MediaType.APPLICATION_JSON);
+                        notificHeaders.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+                        NotificationEvent notificationEvent = new NotificationEvent();
+                        notificationEvent.setNotificationType("Funds Transfer");
+                        notificationEvent.setMessage("An amount of "+cbsTransferDto.getTransferAmount()+
+                                " has been successfully transferred from your account '"+
+                                cbsTransferDto.getSenderAccountNumber()+"' to account '" +
+                                cbsTransferDto.getReceiverAccountNumber()+"'.");
+                        notificationEvent.setRecipientId(senderAccount.get().getCustomer().getId());
+                        notificationEvent.setChannel("EMAIL");
+                        notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+                        notificationEvent.setEmail(senderAccount.get().getCustomer().getEmail());
+
+                        // Create HttpEntity with Cbs_TransferDto as the body and headers
+                        HttpEntity<NotificationEvent> notificEntity = new HttpEntity<>(notificationEvent, notificHeaders);
+
+                        // Make HTTP POST request
+
+                        try{
+                            restTemplate.exchange(
+                                    notificUrl,
+                                    HttpMethod.POST,
+                                    notificEntity,
+                                    CustomResponseEntity.class
+                            );}
+                        catch (Exception e){
+                            LOGGER.info("Notification Service is down!");
+                            System.out.println("Notification Request failed: " + e.getMessage());
+                        }
+
 
                         // Return success message
                         return new CustomResponseEntity<>(responseDto, "Transaction successful.");
