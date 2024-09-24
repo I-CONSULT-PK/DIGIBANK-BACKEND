@@ -68,20 +68,7 @@ public class SubscribeServiceImpl implements SubscribeService {
         if (network == null) {
             return CustomResponseEntity.error("Network not found for the mobile package.");
         }
-
-
-//        LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
-//        Optional<Subscription> existingSubscription = subscriptionRepository.findByCustomerIdAndMobilePackageIdAndStartDateAfter(
-//                customer.getId(), packageId, thirtyDaysAgo);
-//
-//        if (existingSubscription.isPresent()) {
-//            return CustomResponseEntity.error("You are already subscribed to this package");
-//        }
-//        LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
-//        Optional<Subscription> existingSubscription = subscriptionRepository.findByCustomerIdAndMobilePackageIdAndStartDateAfter(
-//                customer.getId(), packageId, thirtyDaysAgo);
-
-
+        
         LocalDate today = LocalDate.now();
         List<Subscription> activeSubscription = subscriptionRepository.findActiveSubscription(customerId,packageId,today);
 
