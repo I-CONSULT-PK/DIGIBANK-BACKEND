@@ -9,6 +9,7 @@ import com.iconsult.userservice.model.entity.Transactions;
 import com.iconsult.userservice.model.mapper.BillPaymentTransactionMapper;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.BillPaymentService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
@@ -23,10 +24,7 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class BillPaymentServiceImpl implements BillPaymentService {
@@ -46,6 +44,9 @@ public class BillPaymentServiceImpl implements BillPaymentService {
     private AccountCDDetailsRepository accountCDDetailsRepository;
 
     private final String URL = "http://localhost:8078/v1/billpayment/getBillDetails";
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     @Override
     public CustomResponseEntity<Object> getUtilityDetails(String consumerNumber, String serviceCode, String utilityType, BillPaymentDto billPaymentDto) {
@@ -116,6 +117,17 @@ public class BillPaymentServiceImpl implements BillPaymentService {
 
                     if (account != null) {
                         Double accountBalance = account.getAccountBalance();
+                        Double singleDayBillPayLimit = account.getSingleDayBillPayLimit();
+                        // 1. Fetch today's transactions and sum their debit amounts
+//                        LocalDate today2 = LocalDate.now();
+                        Double totalDebitToday = calculateTodayTotalDebit(account.getId());
+
+                        // 2. Check if the new transaction amount plus today's total exceeds the limit
+                        if (totalDebitToday + amount > singleDayBillPayLimit) {
+                            LOGGER.warn("Daily transaction limit exceeded for account number: {}", billPaymentDto.getAccountNumber());
+                            return new CustomResponseEntity<>(1002, "Daily transaction limit exceeded");
+                        }
+
 
                         // Check if account balance is sufficient
                         if (amount <= accountBalance) {
@@ -130,9 +142,10 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                                 }
                             }
 
-                            // Deduct amount from account balance
-                            Double previousBalance = accountBalance; // Save the previous balance
-                            accountBalance -= amount;
+                            if(accountBalance >= amount) {
+                                // Deduct amount from account balance
+                                Double previousBalance = accountBalance; // Save the previous balance
+                                accountBalance -= amount;
 
                             // Update account balance
                             account.setAccountBalance(accountBalance);
@@ -147,6 +160,7 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                             transactionDto.setTransactionDate(formatter.format(date));
                             transactionDto.setIbanCode(account.getCustomer().getAccountNumber());
                             transactionDto.setTransactionNarration("Bill Payment Against Consumer Number " + data.get("accountNumber"));
+                            transactionDto.setTransactionType("BILL");
 
                             // Convert DTO to entity
                             Transactions transaction = BillPaymentTransactionMapper.toEntity(transactionDto, account);
@@ -183,8 +197,11 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                             processedData.put("date", formatter.format(date));
                             processedData.put("consumerNumber", consumerNumber);
 
-                            // Return the successful response body
-                            return new CustomResponseEntity<>(processedData, "Utility Bill processed successfully");
+                                // Return the successful response body
+                                return new CustomResponseEntity<>(processedData, "Utility Bill processed successfully");
+                            }else {
+                                return CustomResponseEntity.error("Insufficient balance for the transaction..");
+                            }
                         } else {
                             // Handle case where account balance is not sufficient
                             LOGGER.warn("Insufficient balance for account number: {}", billPaymentDto.getAccountNumber());
@@ -220,6 +237,18 @@ public class BillPaymentServiceImpl implements BillPaymentService {
         }
         return null;
     }
+
+    private Double calculateTodayTotalDebit(Long accountId) {
+        LocalDate today = LocalDate.now();
+        List<Transactions> todayTransactions = transactionRepository.findByAccount_IdAndTransactionTypeAndTransactionDateContaining(accountId, "BILL", today.toString());
+        return todayTransactions.stream()
+                .mapToDouble(Transactions::getDebitAmt)
+                .sum();
+    }
+
+/*    private boolean isTransactionLimitExceeded(Double currentTotal, Double transactionAmount, Double limit) {
+        return currentTotal + transactionAmount > limit;
+    }*/
 
 
 }

@@ -177,6 +177,51 @@ public class SettingServiceImpl implements SettingService {
         CustomResponseEntity customResponse = new CustomResponseEntity<>( "Transaction limit set to : " + transferLimit);
         return customResponse;
     }
+
+    @Override
+    public CustomResponseEntity setDailyLimit(String accountNumber, Long customerId, Double limitValue, String limitType) {
+        CustomResponseEntity accountFormat = regex.checkAccountNumberFormat(accountNumber);
+        if (!accountFormat.isSuccess()) {
+            return accountFormat;
+        }
+
+        if (limitValue > 1000000) {
+            return CustomResponseEntity.error("The limit cannot exceed one million");
+        }
+        if (limitValue < 1) {
+            return CustomResponseEntity.error("The limit can't be less than 1");
+        }
+
+        Customer customer = customerRepository.findById(customerId).orElse(null);
+        if (customer == null) {
+            return CustomResponseEntity.error("Customer does not exist");
+        }
+
+        String jpql = "SELECT a FROM Account a WHERE a.accountNumber = :accountNumber and a.customer= :customer";
+        Map<String, Object> params = new HashMap<>();
+        params.put("accountNumber", accountNumber);
+        params.put("customer", customer);
+        Account account = accountGenericDao.findOneWithQuery(jpql, params);
+
+        if (account == null) {
+            return CustomResponseEntity.error("Account does not exist");
+        }
+
+        switch (limitType.toLowerCase()) {
+            case "billpay":
+                account.setSingleDayBillPayLimit(limitValue);
+                break;
+            case "topup":
+                account.setSingleDayTopUpLimit(limitValue);
+                break;
+            default:
+                return CustomResponseEntity.error("Invalid limit type specified. Use 'billpay' or 'topup'.");
+        }
+
+        accountGenericDao.saveOrUpdate(account);
+        return new CustomResponseEntity<>("Limit set to: " + limitValue + " for " + limitType);
+    }
+
     @Override
     public CustomResponseEntity changePassword(Long id, String oldPassword,String newPassword) throws Exception {
         try{

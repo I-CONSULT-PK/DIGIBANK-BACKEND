@@ -37,6 +37,7 @@ public class TopUpPackageTransactionMapper {
         transaction.setSenderAccount(null);
         transaction.setNatureOfAccount(account.getAccountType()); // Assuming Account has a type
         transaction.setCurrency("DEFAULT_CURRENCY");
+        transaction.setTransactionType("TOPUP");
 
         return transaction;
     }
@@ -51,6 +52,7 @@ public class TopUpPackageTransactionMapper {
         dto.setTransactionDate(transaction.getTransactionDate());
         dto.setIbanCode(transaction.getIbanCode());
         dto.setTransactionNarration(transaction.getTransactionNarration());
+        dto.setTransactionType("TOPUP");
 
         return dto;
     }

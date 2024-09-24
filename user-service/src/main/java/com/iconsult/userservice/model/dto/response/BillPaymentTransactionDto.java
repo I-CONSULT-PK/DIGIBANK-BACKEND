@@ -18,4 +18,5 @@ public class BillPaymentTransactionDto {
     private String transactionDate;
     private String ibanCode;
     private String transactionNarration;
+    private String transactionType;
 }

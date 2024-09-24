@@ -5,6 +5,7 @@ import feign.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transactions, Long> {
@@ -18,6 +19,15 @@ public interface TransactionRepository extends JpaRepository<Transactions, Long>
             @Param("accountNumber") String accountNumber,
             @Param("startDate") String startDate,
             @Param("endDate") String endDate);
+
+//    List<Transactions> findByAccount_IdAndTransactionDateContaining(Long accountId, String transactionDate);
+//@Query("SELECT SUM(t.debitAmt) FROM Transactions t WHERE t.account.id = :accountId AND DATE(t.transactionDate) = :date")
+//Double sumDebitAmountByAccountAndDate(@Param("accountId") Long accountId, @Param("date") LocalDate date);
+List<Transactions> findByAccount_IdAndTransactionTypeAndTransactionDateContaining(Long accountId, String transactionType, String transactionDate);
+
+    // find all transactions for a specific date without the type
+    List<Transactions> findByAccount_IdAndTransactionDateContaining(Long accountId, String transactionDate);
+
 }
 
 

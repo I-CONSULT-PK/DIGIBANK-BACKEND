@@ -22,6 +22,7 @@ public class BillPaymentTransactionMapper {
         transaction.setIbanCode(dto.getIbanCode());
         transaction.setTransactionNarration(dto.getTransactionNarration());
         transaction.setNatureOfAccount(account.getAccountType());
+        transaction.setTransactionType("BILL");
         return transaction;
     }
 
@@ -35,6 +36,7 @@ public class BillPaymentTransactionMapper {
         dto.setTransactionDate(transaction.getTransactionDate());
         dto.setIbanCode(transaction.getIbanCode());
         dto.setTransactionNarration(transaction.getTransactionNarration());
+        dto.setTransactionType("BILL");
         return dto;
     }
 }

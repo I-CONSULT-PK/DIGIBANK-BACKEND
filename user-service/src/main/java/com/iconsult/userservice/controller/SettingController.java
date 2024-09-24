@@ -44,6 +44,17 @@ public class SettingController {
         return this.settingService.setTransactionLimit(accountNumber, userId, transactionLimit);
     }
 
+    @PutMapping("/setDailyLimit")
+    public CustomResponseEntity setDailyLimit(
+            @Valid @RequestParam("accountNumber") String accountNumber,
+            @RequestParam("customerId") Long customerId,
+            @RequestParam("limitValue")
+            @Digits(integer = 7, fraction = 0, message = "must be a whole number") Double limitValue,
+            @RequestParam("limitType") String limitType) {
+
+        return this.settingService.setDailyLimit(accountNumber, customerId, limitValue, limitType);
+    }
+
     @PostMapping("/changePassword")
     public CustomResponseEntity changePassword (@RequestParam("customerId") Long id,
                                                 @RequestParam("oldPassword") String oldPassword ,

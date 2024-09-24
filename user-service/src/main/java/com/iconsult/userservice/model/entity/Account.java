@@ -88,6 +88,9 @@ public class Account implements Serializable {
     @Column(name = "singleDayLimit")
     private Double singleDayLimit;
 
+    private Double singleDayBillPayLimit;
+    private Double singleDayTopUpLimit;
+
     @Override
     public String toString() {
         return "Account{" +

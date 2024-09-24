@@ -9,6 +9,7 @@ public interface SettingService {
 
 
     CustomResponseEntity setTransactionLimit(String accountNumber, Long userId, Double transferLimit);
+    CustomResponseEntity setDailyLimit(String accountNumber, Long customerId, Double limitValue, String limitType);
 
     CustomResponseEntity changePassword(Long id, String oldPassword,String newPassword) throws Exception;
 

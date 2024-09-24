@@ -44,6 +44,7 @@ public class Transactions implements Serializable {
     private String senderAccount;
     private String natureOfAccount;
     private String currency;
+    private String transactionType;
 
     public Double getDebitAmt() {
         return debitAmt;

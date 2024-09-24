@@ -10,6 +10,7 @@ import com.iconsult.userservice.model.mapper.TopUpPackageTransactionMapper;
 import com.iconsult.userservice.model.mapper.TopUpTransactionMapper;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.TopUpService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.json.JSONArray;
@@ -24,6 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -40,6 +42,9 @@ public class TopUpServiceImpl implements TopUpService {
 
     @Autowired
     AccountCDDetailsRepository accountCDDetailsRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     private String URL = "http://localhost:8089/v1/topup/topUpTransaction";
     private String PackageURL = "http://localhost:8089/v1/packages/all";
@@ -337,6 +342,17 @@ public class TopUpServiceImpl implements TopUpService {
         if (accountBalance == null) {
             accountBalance = 0.0;
         }
+//        Double singleDayTopUpLimit = account.getSingleDayBillPayLimit();
+        Double singleDayTopUpLimit = account.getSingleDayTopUpLimit();
+        // 1. Fetch today's transactions and sum their debit amounts
+//                        LocalDate today2 = LocalDate.now();
+        Double totalDebitToday = calculateTodayTotalDebit(account.getId());
+
+        // 2. Check if the new transaction amount plus today's total exceeds the limit
+        if (totalDebitToday + billAmount > singleDayTopUpLimit) {
+            LOGGER.warn("Daily transaction limit exceeded for account number: {}", account.getAccountNumber());
+            return new CustomResponseEntity<>(1002, "Daily transaction limit exceeded ....");
+        }
 
         if (accountBalance < billAmount) {
             LOGGER.error("Insufficient balance. Current balance: {}, Required amount: {}", accountBalance, billAmount);
@@ -359,6 +375,7 @@ public class TopUpServiceImpl implements TopUpService {
         transactionDto.setTransactionDate(formatter.format(new Date()));
         transactionDto.setIbanCode(account.getIbanCode());
         transactionDto.setTransactionNarration("Top-up transaction");
+        transactionDto.setTransactionType("TOPUP");
 
         Transactions transaction;
         try {
@@ -446,6 +463,18 @@ public class TopUpServiceImpl implements TopUpService {
         }
         return reference.toString();
     }
+
+    private Double calculateTodayTotalDebit(Long accountId) {
+        LocalDate today = LocalDate.now();
+        List<Transactions> todayTransactions = transactionRepository.findByAccount_IdAndTransactionTypeAndTransactionDateContaining(accountId,"TOPUP", today.toString());
+        return todayTransactions.stream()
+                .mapToDouble(Transactions::getDebitAmt)
+                .sum();
+    }
+
+/*    private boolean isTransactionLimitExceeded(Double currentTotal, Double transactionAmount, Double limit) {
+        return currentTotal + transactionAmount > limit;
+    }*/
 
 
 }
