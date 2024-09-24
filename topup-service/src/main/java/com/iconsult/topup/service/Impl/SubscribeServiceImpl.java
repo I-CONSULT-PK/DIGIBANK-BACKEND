@@ -51,7 +51,7 @@ public class SubscribeServiceImpl implements SubscribeService {
             return CustomResponseEntity.error("Mobile package not found for the given package ID.");
         }
 
-        
+
         MobilePackage mobilePackage = mobilePackageOptional.get();
 
         String networkName = mobilePackage.getNetwork().getName();
@@ -70,6 +70,13 @@ public class SubscribeServiceImpl implements SubscribeService {
         }
 
 
+//        LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
+//        Optional<Subscription> existingSubscription = subscriptionRepository.findByCustomerIdAndMobilePackageIdAndStartDateAfter(
+//                customer.getId(), packageId, thirtyDaysAgo);
+//
+//        if (existingSubscription.isPresent()) {
+//            return CustomResponseEntity.error("You are already subscribed to this package");
+//        }
 //        LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
 //        Optional<Subscription> existingSubscription = subscriptionRepository.findByCustomerIdAndMobilePackageIdAndStartDateAfter(
 //                customer.getId(), packageId, thirtyDaysAgo);
