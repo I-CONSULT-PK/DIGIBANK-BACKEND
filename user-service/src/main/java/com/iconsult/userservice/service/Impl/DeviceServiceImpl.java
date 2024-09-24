@@ -314,6 +314,7 @@ public class DeviceServiceImpl implements DeviceService {
                 dv.setModelName(settingDTO.getModelName());
                 dv.setOsv_osn(settingDTO.getOsv_osn());
                 dv.setDevicePin(settingDTO.getDevicePin());
+                dv.setPublic_key(settingDTO.getPublicKey());
                 deviceRepository.save(dv);
                 LOGGER.error("Device Registered with Customer successfully...");
                 return new CustomResponseEntity<>(dv.getId(),"Device Registered with Customer successfully...");
@@ -348,6 +349,7 @@ public class DeviceServiceImpl implements DeviceService {
     // fetch registerd device data with Unique value
     @Override
     public CustomResponseEntity fetchDeviceRegister(SettingDTO settingDTO) {
+
 
 //        Device device = deviceRepository.findById(unique).orElse(null);
 

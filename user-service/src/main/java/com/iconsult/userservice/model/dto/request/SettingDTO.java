@@ -27,4 +27,5 @@ public class SettingDTO {
     private String osv_osn;
     private String modelName;
     private String manufacture;
+    private String publicKey;
 }
