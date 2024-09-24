@@ -18,10 +18,7 @@ import com.iconsult.userservice.model.dto.response.SignUpResponse;
 import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.CustomerMapper;
 import com.iconsult.userservice.repository.*;
-import com.iconsult.userservice.service.CustomerService;
-import com.iconsult.userservice.service.EmailService;
-import com.iconsult.userservice.service.JwtService;
-import com.iconsult.userservice.service.UserActivityService;
+import com.iconsult.userservice.service.*;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
@@ -56,7 +53,8 @@ public class CustomerServiceImpl implements CustomerService
 
     private final String accountURL = "http://localhost:8081/account/getAccount";
 
-    private final String notificationUrl = "http://localhost:8085/v1/notification/process-notification";
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -333,18 +331,6 @@ public class CustomerServiceImpl implements CustomerService
                 userActivityService.saveUserActivity(userActivity);
                 LOGGER.info(userActivity.getUserActivity()+ " on date : "+userActivity.getActivityDate());
 
-                URI uri = UriComponentsBuilder.fromHttpUrl(notificationUrl)
-                        .build()
-                        .toUri();
-
-                // Log the full request URL
-                LOGGER.info("Request URL: " + uri);
-
-                // Set headers
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
                 NotificationEvent notificationEvent = new NotificationEvent();
                 notificationEvent.setNotificationType("LOGIN");
                 notificationEvent.setMessage("customer logged in successfully!");
@@ -353,22 +339,7 @@ public class CustomerServiceImpl implements CustomerService
                 notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
                 notificationEvent.setEmail(customer.getEmail());
 
-                // Create HttpEntity with Cbs_TransferDto as the body and headers
-                HttpEntity<NotificationEvent> entity = new HttpEntity<>(notificationEvent, headers);
-
-                // Make HTTP POST request
-
-                try{
-                 restTemplate.exchange(
-                        uri,
-                        HttpMethod.POST,
-                        entity,
-                        CustomResponseEntity.class
-                );}
-                catch (Exception e){
-                    LOGGER.info("Notification Service is down!");
-                    System.out.println("Notification Request failed: " + e.getMessage());
-                }
+                notificationService.sendNotification(notificationEvent);
 
                 return response;
             } else {

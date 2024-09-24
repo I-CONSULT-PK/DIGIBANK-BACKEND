@@ -4,15 +4,13 @@ import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.constant.PinStatus;
 import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
-import com.iconsult.userservice.model.entity.Card;
+import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.Util.EncryptionUtil;
 import com.iconsult.userservice.model.dto.request.CustomerDto;
-import com.iconsult.userservice.model.entity.Account;
-import com.iconsult.userservice.model.entity.Customer;
-import com.iconsult.userservice.model.entity.Device;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.SettingRepository;
+import com.iconsult.userservice.service.NotificationService;
 import com.iconsult.userservice.service.SettingService;
 import com.zanbeel.customUtility.exception.ServiceException;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -24,6 +22,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -44,6 +43,9 @@ public class SettingServiceImpl implements SettingService {
     CustomResponseEntity customResponseEntity;
     @Autowired
     Regex regex;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     AccountRepository accountRepository;
@@ -90,6 +92,19 @@ public class SettingServiceImpl implements SettingService {
                      device.setDevicePin(settingDTO.getDevicePin());
                      device.setPinStatus(PinStatus.ACTIVE);
                      cardGenericDao.saveOrUpdate(device);
+
+
+                     NotificationEvent notificationEvent = new NotificationEvent();
+                     notificationEvent.setNotificationType("SET PIN");
+                     notificationEvent.setMessage("you have successfully set the pin!");
+                     notificationEvent.setRecipientId(device.getCustomer().getId());
+                     notificationEvent.setChannel("EMAIL");
+                     notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+                     notificationEvent.setEmail(device.getCustomer().getEmail());
+
+                     notificationService.sendNotification(notificationEvent);
+
+
                      return customResponseEntity = new CustomResponseEntity<>("Pin set Successfully!");
                  }
              }
@@ -142,6 +157,17 @@ public class SettingServiceImpl implements SettingService {
                 existingDevice.setDevicePin(settingDTO.getDevicePin());
                 existingDevice.setPinStatus(PinStatus.ACTIVE);
                 settingRepository.save(existingDevice);
+
+                NotificationEvent notificationEvent = new NotificationEvent();
+                notificationEvent.setNotificationType("UPDATE PIN");
+                notificationEvent.setMessage("you have successfully updated your device pin!");
+                notificationEvent.setRecipientId(existingDevice.getCustomer().getId());
+                notificationEvent.setChannel("EMAIL");
+                notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+                notificationEvent.setEmail(existingDevice.getCustomer().getEmail());
+
+                notificationService.sendNotification(notificationEvent);
+
                 return customResponseEntity = new CustomResponseEntity<>("Pin Updated Successfully!");
             }
             else
@@ -175,6 +201,16 @@ public class SettingServiceImpl implements SettingService {
         account.setTransactionLimit(transferLimit);
         accountGenericDao.saveOrUpdate(account);
         CustomResponseEntity customResponse = new CustomResponseEntity<>( "Transaction limit set to : " + transferLimit);
+
+        NotificationEvent notificationEvent = new NotificationEvent();
+        notificationEvent.setNotificationType("SET TRANSACTION LIMIT");
+        notificationEvent.setMessage("you have successfully set the transaction Limit to "+ transferLimit);
+        notificationEvent.setRecipientId(customer.getId());
+        notificationEvent.setChannel("EMAIL");
+        notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+        notificationEvent.setEmail(customer.getEmail());
+        notificationService.sendNotification(notificationEvent);
+
         return customResponse;
     }
 
@@ -224,9 +260,9 @@ public class SettingServiceImpl implements SettingService {
 
     @Override
     public CustomResponseEntity changePassword(Long id, String oldPassword,String newPassword) throws Exception {
+        Customer customer = customerRepository.findById(id).orElse(null);
         try{
             String newEncryptedPassword;
-            Customer customer = customerRepository.findById(id).orElse(null);
             //**
             //*  NOTE: Here password should be encrypted in DB.
             //*
@@ -253,11 +289,21 @@ public class SettingServiceImpl implements SettingService {
             customerRepository.save(customer);
 
 
-        }catch (Exception e){
+        }catch (Exception e) {
             LOGGER.error("Exception occurred: ", e);
             return CustomResponseEntity.error("change password Exception" + e);
 
         }
+
+        NotificationEvent notificationEvent = new NotificationEvent();
+        notificationEvent.setNotificationType("UPDATE PIN");
+        notificationEvent.setMessage("you have successfully changed your password!");
+        notificationEvent.setRecipientId(customer.getId());
+        notificationEvent.setChannel("EMAIL");
+        notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+        notificationEvent.setEmail(customer.getEmail());
+        notificationService.sendNotification(notificationEvent);
+
         return CustomResponseEntity.builder().message("Password Change Successfully").success(true).build();
     }
     @Override
@@ -281,6 +327,16 @@ public class SettingServiceImpl implements SettingService {
             customer.setEmail(customerDto.getEmail());
             customerRepository.save(customer);
 
+        NotificationEvent notificationEvent = new NotificationEvent();
+        notificationEvent.setNotificationType("UPDATE PROFILE");
+        notificationEvent.setMessage("you have successfully updated your profile!");
+        notificationEvent.setRecipientId(customer.getId());
+        notificationEvent.setChannel("EMAIL");
+        notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+        notificationEvent.setEmail(customer.getEmail());
+        notificationService.sendNotification(notificationEvent);
+
+
         return CustomResponseEntity.builder()
                 .message("Profile Updated Successfully")
                 .success(true)
@@ -300,6 +356,15 @@ public class SettingServiceImpl implements SettingService {
             device.setDevicePin(null);
             device.setPinStatus(PinStatus.INACTIVE);
             settingRepository.save(device);
+
+            NotificationEvent notificationEvent = new NotificationEvent();
+            notificationEvent.setNotificationType("DEACTIVATE PIN");
+            notificationEvent.setMessage("you have successfully deactivated your pin!");
+            notificationEvent.setRecipientId(device.getCustomer().getId());
+            notificationEvent.setChannel("EMAIL");
+            notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+            notificationEvent.setEmail(device.getCustomer().getEmail());
+            notificationService.sendNotification(notificationEvent);
 
             // success response
             return new CustomResponseEntity<>(/*"success",*/ "Pin De-Activated Successfully.");

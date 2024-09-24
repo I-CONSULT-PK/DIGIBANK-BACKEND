@@ -17,6 +17,7 @@ import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.FundTransferService;
+import com.iconsult.userservice.service.NotificationService;
 import com.iconsult.userservice.service.UserActivityService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.slf4j.Logger;
@@ -47,9 +48,6 @@ public class FundTransferServiceImpl implements FundTransferService {
     private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
     private final String interBankFundTransferURL = "http://localhost:8084/api/v1/1link/creditTransaction";
-
-    private final String notificationUrl = "http://localhost:8085/v1/notification/process-notification";
-
     @Autowired
     private TransactionRepository transactionRepository;
     @Autowired
@@ -77,7 +75,8 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     @Autowired
     BeneficiaryServiceClient beneficiaryServiceClient;
-
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private AccountCDDetailsRepository accountCDDetailsRepository;
@@ -353,18 +352,6 @@ public class FundTransferServiceImpl implements FundTransferService {
                         userActivity.setPkr(cbsTransferDto.getTransferAmount());
                         userActivityService.saveUserActivity(userActivity);
 
-                        URI notificUrl = UriComponentsBuilder.fromHttpUrl(notificationUrl)
-                                .build()
-                                .toUri();
-
-                        // Log the full request URL
-                        LOGGER.info("Request URL: " + notificUrl);
-
-                        // Set headers
-                        HttpHeaders notificHeaders = new HttpHeaders();
-                        notificHeaders.setContentType(MediaType.APPLICATION_JSON);
-                        notificHeaders.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
                         NotificationEvent notificationEvent = new NotificationEvent();
                         notificationEvent.setNotificationType("Funds Transfer");
                         notificationEvent.setMessage("An amount of "+cbsTransferDto.getTransferAmount()+
@@ -376,23 +363,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
                         notificationEvent.setEmail(senderAccount.get().getCustomer().getEmail());
 
-                        // Create HttpEntity with Cbs_TransferDto as the body and headers
-                        HttpEntity<NotificationEvent> notificEntity = new HttpEntity<>(notificationEvent, notificHeaders);
-
-                        // Make HTTP POST request
-
-                        try{
-                            restTemplate.exchange(
-                                    notificUrl,
-                                    HttpMethod.POST,
-                                    notificEntity,
-                                    CustomResponseEntity.class
-                            );}
-                        catch (Exception e){
-                            LOGGER.info("Notification Service is down!");
-                            System.out.println("Notification Request failed: " + e.getMessage());
-                        }
-
+                        notificationService.sendNotification(notificationEvent);
 
                         // Return success message
                         return new CustomResponseEntity<>(responseDto, "Transaction successful.");
@@ -525,6 +496,20 @@ public class FundTransferServiceImpl implements FundTransferService {
                             +" Amount : "+fundTransferDto.getAmount());
                     userActivity.setPkr(fundTransferDto.getAmount());
                     userActivityService.saveUserActivity(userActivity);
+
+                    NotificationEvent notificationEvent = new NotificationEvent();
+                    notificationEvent.setNotificationType("Funds Transfer");
+                    notificationEvent.setMessage("An amount of "+fundTransferDto.getAmount()+
+                            " has been successfully transferred from your account '"+
+                            fundTransferDto.getFromAccountNumber()+"' to account '" +
+                            fundTransferDto.getToAccountNumber()+"'.");
+                    notificationEvent.setRecipientId(account.get().getCustomer().getId());
+                    notificationEvent.setChannel("EMAIL");
+                    notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+                    notificationEvent.setEmail(account.get().getCustomer().getEmail());
+
+                    notificationService.sendNotification(notificationEvent);
+
                     return new CustomResponseEntity<>(responseDto, "Funds have been successfully transferred.");
                 } else {
                     return CustomResponseEntity.error("The Bank Code or Recipient Account Number is invalid. " +
