@@ -101,6 +101,7 @@ public class MobilePackageServiceImpl implements MobilePackageService {
     private MobilePackageDTO convertToDTO(MobilePackage mobilePackage) {
         MobilePackageDTO dto = new MobilePackageDTO();
 
+        dto.setPkgId(mobilePackage.getId());
         dto.setPkgName(mobilePackage.getPkgName());
         dto.setPrice(mobilePackage.getPrice());
         dto.setTotalGBs(mobilePackage.getGBs());
