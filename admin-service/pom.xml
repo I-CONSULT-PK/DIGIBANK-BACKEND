@@ -8,10 +8,10 @@
 		<version>3.1.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.admin-service</groupId>
-	<artifactId>admin-service</artifactId>
+	<groupId>com.user-service</groupId>
+	<artifactId>user-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>admin-service</name>
+	<name>user-service</name>
 	<description>Admin-service for DigiBank</description>
 	<url/>
 	<licenses>

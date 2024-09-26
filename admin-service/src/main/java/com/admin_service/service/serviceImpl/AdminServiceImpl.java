@@ -1,7 +1,7 @@
 package com.admin_service.service.serviceImpl;
 
 import com.admin_service.dto.request.LoginDto;
-import com.admin_service.entity.Admin;
+import com.admin_service.entity.User;
 import com.admin_service.entity.AppConfiguration;
 import com.admin_service.model.CustomResponseEntity;
 import com.admin_service.repository.AdminRepository;
@@ -44,9 +44,9 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public CustomResponseEntity login(LoginDto loginDto) {
 
-        Admin admin = adminRepository.findByEmailOrUserName(loginDto.getEmailorUsername());
+        User user = adminRepository.findByEmailOrUserName(loginDto.getEmailorUsername());
 
-            if (admin.getPassword().equals(loginDto.getPassword())) {
+            if (user.getPassword().equals(loginDto.getPassword())) {
                 // JWT Implementation Starts
                 Authentication authentication =
                         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmailorUsername(), loginDto.getPassword()));
@@ -57,15 +57,15 @@ public class AdminServiceImpl implements AdminService {
                 // JWT Implementation Ends
 
                 Map<String, Object> data = new HashMap<>();
-                data.put("adminId", admin.getId());
+                data.put("adminId", user.getId());
                 data.put("token", token);
                 data.put("expirationTime", jwtService.getTokenExpireTime(token).getTime());
                 response = new CustomResponseEntity<>(data, "admin logged in successfully");
                 //set customer token
-                admin.setSessionToken(token);
+                user.setSessionToken(token);
                 AppConfiguration appConfiguration = this.appConfigurationImpl.findByName("RESET_EXPIRE_TIME"); // fetching token expire time in minutes
-                admin.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
-                updateAdmin(admin);
+                user.setSessionTokenExpireTime(Long.parseLong(Util.dateFormat.format(DateUtils.addMinutes(new Date(), Integer.parseInt(appConfiguration.getValue())))));
+                updateAdmin(user);
 
                 return response;
             } else {
@@ -75,8 +75,8 @@ public class AdminServiceImpl implements AdminService {
         }
 
     @Override
-    public Admin updateAdmin(Admin admin) {
-        return this.adminRepository.save(admin);
+    public User updateAdmin(User user) {
+        return this.adminRepository.save(user);
     }
 
 }

@@ -1,6 +1,6 @@
 package com.admin_service.config;
 
-import com.admin_service.entity.Admin;
+import com.admin_service.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -13,9 +13,9 @@ public class CustomUserDetails implements UserDetails {
 
     private String accountNumber, pinHash;
 
-    public CustomUserDetails(Admin admin) {
-        this.username = admin.getUserName();
-        this.password = admin.getPassword();
+    public CustomUserDetails(User user) {
+        this.username = user.getUserName();
+        this.password = user.getPassword();
     }
 
     @Override
