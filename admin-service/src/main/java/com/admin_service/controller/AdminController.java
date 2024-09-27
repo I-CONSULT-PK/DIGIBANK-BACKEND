@@ -7,10 +7,7 @@ import com.admin_service.service.JwtService;
 import com.admin_service.service.serviceImpl.AdminServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/admin")
@@ -25,6 +22,15 @@ public class AdminController {
     public CustomResponseEntity login(@Valid @RequestBody LoginDto loginDto)
     {
         return this.adminService.login(loginDto);
+    }
+    @GetMapping("/list")
+    public CustomResponseEntity getUsers(){
+        return CustomResponseEntity.error("admin Api");
+    }
+
+    @GetMapping("/userList")
+    public CustomResponseEntity userList(){
+        return CustomResponseEntity.error("user Api");
     }
 
 //    @Autowired

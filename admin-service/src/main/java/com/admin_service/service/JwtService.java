@@ -1,18 +1,16 @@
 package com.admin_service.service;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
-
+import java.util.stream.Collectors;
 @Component
 public class JwtService {
 
@@ -31,7 +29,18 @@ public class JwtService {
         return createToken(claims, userName);
 
     }
-    
+    public String generateToken(String username, Set<GrantedAuthority> roles) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("roles", roles.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(username)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours validity
+                .signWith(SignatureAlgorithm.HS256, SECRET)
+                .compact();
+    }
 
     private String createToken(Map<String, Object> claims, String userName) {
         return Jwts.builder()

@@ -4,7 +4,7 @@ import com.admin_service.dto.request.LoginDto;
 import com.admin_service.entity.User;
 import com.admin_service.entity.AppConfiguration;
 import com.admin_service.model.CustomResponseEntity;
-import com.admin_service.repository.AdminRepository;
+import com.admin_service.repository.UserRepository;
 import com.admin_service.service.AdminService;
 import com.admin_service.service.JwtService;
 import com.admin_service.util.Util;
@@ -26,7 +26,7 @@ import java.util.Map;
 public class AdminServiceImpl implements AdminService {
 
     @Autowired
-    AdminRepository adminRepository;
+    UserRepository userRepository;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -44,7 +44,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public CustomResponseEntity login(LoginDto loginDto) {
 
-        User user = adminRepository.findByEmailOrUserName(loginDto.getEmailorUsername());
+        User user = userRepository.findByUserName(loginDto.getEmailorUsername());
 
             if (user.getPassword().equals(loginDto.getPassword())) {
                 // JWT Implementation Starts
@@ -76,7 +76,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public User updateAdmin(User user) {
-        return this.adminRepository.save(user);
+        return this.userRepository.save(user);
     }
 
 }
