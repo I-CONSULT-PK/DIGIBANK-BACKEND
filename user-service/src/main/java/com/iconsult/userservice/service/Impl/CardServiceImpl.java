@@ -412,7 +412,7 @@ public class CardServiceImpl implements CardService {
             // Log user activity
             UserActivityRequest userActivity = new UserActivityRequest();
             userActivity.setActivityDate(LocalDateTime.now());
-            userActivity.setCustomerId(account.getCustomer());
+//            userActivity.setCustomerId(account.getCustomer());
             userActivity.setPkr(0.0);
             userActivity.setUserActivity("User Requested For The Card");
             userActivityService.saveUserActivity(userActivity);
