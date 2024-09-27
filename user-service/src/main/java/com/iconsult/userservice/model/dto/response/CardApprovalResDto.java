@@ -6,7 +6,7 @@ public class CardApprovalResDto {
     private String accountNumber;
     private String cardNumber;
     private String cardType;
-    private Date expiryDate;
+    private String expiryDate;
     private String cvv;
     private String cardHolderName;
 
@@ -37,11 +37,11 @@ public class CardApprovalResDto {
         this.cardType = cardType;
     }
 
-    public Date getExpiryDate() {
+    public String getExpiryDate() {
         return expiryDate;
     }
 
-    public void setExpiryDate(Date expiryDate) {
+    public void setExpiryDate(String expiryDate) {
         this.expiryDate = expiryDate;
     }
 

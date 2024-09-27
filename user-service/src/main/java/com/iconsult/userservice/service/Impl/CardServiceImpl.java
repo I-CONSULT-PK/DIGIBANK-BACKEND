@@ -30,6 +30,7 @@ import javax.net.ssl.*;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -292,25 +293,35 @@ public class CardServiceImpl implements CardService {
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
             headers.setContentType(MediaType.APPLICATION_JSON);
-            //setCard approval request for http POST request
 
+            // Generate card details
             int size = 16; // Example size
             String cardNumber = generateRandomNumber(size);
 
             int cvvSize = 4; // Example size
             String cvv = generateRandomNumber(cvvSize);
 
+            // Set expiry date to 5 years from now
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.YEAR, 5);
+            Date expiryDate = calendar.getTime();
+
+            // Format expiry date to string if necessary
+            SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String formattedExpiryDate = outputFormat.format(expiryDate);
+
             CardApprovalResDto creditCardRequest = new CardApprovalResDto();
             creditCardRequest.setCardHolderName(cardRequestDto.getCardHolderName());
             creditCardRequest.setCardNumber(cardNumber);
             creditCardRequest.setCardType("1");
             creditCardRequest.setCvv(cvv);
-            creditCardRequest.setExpiryDate(cardRequestDto.getExpireDate());
+            creditCardRequest.setExpiryDate(formattedExpiryDate); // Set formatted expiry date
             creditCardRequest.setAccountNumber(cardRequestDto.getAccountNumber());
+
             // Create HttpEntity with headers
             HttpEntity<CardApprovalResDto> entity = new HttpEntity<>(creditCardRequest, headers);
 
-            // Make HTTP GET request
+            // Make HTTP POST request
             ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
                     uri,
                     HttpMethod.POST,
@@ -322,15 +333,14 @@ public class CardServiceImpl implements CardService {
             if (response.getStatusCode() == HttpStatus.OK) { // 200 status code
                 CustomResponseEntity<Card> responseDto = response.getBody();
                 if (responseDto != null) {
-                    // Print or log responseDto to verify its content
                     LOGGER.info("Received CustomerDto: " + responseDto.getMessage());
-                    if (responseDto.isSuccess()) {//card request work
-                        //AddCard
+                    if (responseDto.isSuccess()) { // Card request successful
+                        // Add Card
                         Card card = addCreditCard(creditCardRequest);
                         if (card == null) {
                             return CustomResponseEntity.error("Customer does not exist!");
                         }
-                        //request
+                        // Request
                         CardRequest cardRequest = cardRequestMapper.dtoToEntity(cardRequestDto);
                         cardRequest.setRequestStatus("Approved");
                         cardRequest = requestRepository.save(cardRequest);
@@ -358,39 +368,57 @@ public class CardServiceImpl implements CardService {
         return null;
     }
 
+
     public static String generateRandomNumber(int length) {
         return RandomStringUtils.randomNumeric(length);
     }
 
     public Card addCreditCard(CardApprovalResDto card) {
-        Card cardDetail = cardMapper.dtoJpe(card);
-        long customerId = accountRepository.findCustomerByAccountNumber(card.getAccountNumber());
-        if (customerId == 0) {
-            return null;
+            Card cardDetail = cardMapper.dtoJpe(card);
+
+            // Get customer ID
+            long customerId = accountRepository.findCustomerByAccountNumber(card.getAccountNumber());
+            if (customerId == 0) {
+                return null; // Customer does not exist
+            }
+
+            // Fetch account
+            Account account = accountRepository.findByAccountNumber(card.getAccountNumber());
+
+            // Create Customer object
+            Customer customer = new Customer();
+            customer.setId(customerId);
+
+            // Set card details
+            cardDetail.setActive(true);
+            cardDetail.setCreatedAt(new Date());
+            cardDetail.setAccount(account);
+
+            // Set expiry date to 5 years from now
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.YEAR, 5);
+            Date expiryDate = calendar.getTime();
+
+            // Format the expiry date using SimpleDateFormat
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String formattedExpiryDate = sdf.format(expiryDate);
+
+            // Set the formatted expiry date in cardDetail
+            cardDetail.setExpiryDate(formattedExpiryDate);
+
+            // Save the card detail
+            cardDetail = cardRepository.save(cardDetail);
+
+            // Log user activity
+            UserActivityRequest userActivity = new UserActivityRequest();
+            userActivity.setActivityDate(LocalDateTime.now());
+            userActivity.setCustomerId(account.getCustomer());
+            userActivity.setPkr(0.0);
+            userActivity.setUserActivity("User Requested For The Card");
+            userActivityService.saveUserActivity(userActivity);
+
+            return cardDetail;
         }
-        Account account = accountRepository.findByAccountNumber(card.getAccountNumber());
-        Customer customer = new Customer();
-        customer.setId(customerId);
-        cardDetail.setActive(true);
-        cardDetail.setCreatedAt(new Date());
-        cardDetail.setAccount(account);
-        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy");
-        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        LocalDateTime dateTime = LocalDateTime.parse(card.getExpiryDate().toString(), inputFormatter);
-
-        String outputDate = dateTime.format(outputFormatter);
-        cardDetail.setExpiryDate(outputDate);
-        cardDetail = cardRepository.save(cardDetail);
-        UserActivityRequest userActivity = new UserActivityRequest();
-        userActivity.setActivityDate(LocalDateTime.now());
-        userActivity.setCustomerId(customer);
-        userActivity.setPkr(0.0);
-        userActivity.setUserActivity("User Requested For The Card");
-        userActivityService.saveUserActivity(userActivity);
-
-        return cardDetail;
-    }
 
     @Override
     public CustomResponseEntity setPinDigiBankAndMyDatabase(String pin, String card) {
