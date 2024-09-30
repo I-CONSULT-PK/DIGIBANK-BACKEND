@@ -2,30 +2,15 @@ package com.admin_service.service.serviceImpl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 @Component
 public class JwtUtil {
 
-   // private String SECRET_KEY = "my_secret_key"; // Your secret key
-
-    //private final String SECRET_KEY = "your_strong_secret_key"; // Ensure the key is strong
-    private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    //private final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    // Use this method in your class to return a byte array of the secret key
-//    private byte[] getSecretKeyBytes() {
-//        return SECRET_KEY.getBytes();
-//    }
-    private byte[] getSecretKeyBytes() {
-        return SECRET_KEY.getEncoded(); // Get the encoded key as a byte array
-    }
-
+    private String SECRET_KEY = "my_secret_key"; // Your secret key
 
     // Generate token with roles from DB
     public String generateToken(String username, Set<GrantedAuthority> roles) {
@@ -37,7 +22,7 @@ public class JwtUtil {
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours validity
-                .signWith(SECRET_KEY)
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }
 
@@ -60,25 +45,7 @@ public class JwtUtil {
     }
 
     private Claims getClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody();
-    }
-    public Date getTokenExpireTime(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-    private Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder()
-                .setSigningKey(SECRET_KEY)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
     }
 }
 
