@@ -25,21 +25,13 @@ public class AdminController {
         return this.adminService.login(loginDto);
     }
     @GetMapping("/list")
-    public String getUsers(){
-        return "hello ";
+    public CustomResponseEntity getUsers(){
+        return CustomResponseEntity.error("admin Api");
     }
 
     @GetMapping("/userList")
     public CustomResponseEntity userList(){
         return CustomResponseEntity.error("user Api");
-    }
-
-
-
-    @GetMapping("/protected")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String protectedEndpoint() {
-        return "This is a protected endpoint accessible only to ADMIN users.";
     }
 
 //    @Autowired
