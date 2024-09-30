@@ -763,11 +763,11 @@ public class FundTransferServiceImpl implements FundTransferService {
 //            LOGGER.info("Job Started-"+jobId+" at:"+new Date());
 
         String senderAccountNumber = fundTransferDto.getSenderAccountNumber();
-        String receiverAccountNumber = fundTransferDto.getSenderAccountNumber();
+        String receiverAccountNumber = fundTransferDto.getReceiverAccountNumber();
         Double transferAmount =fundTransferDto.getTransferAmount();
         String bankName =fundTransferDto.getBankName();
         String purpose = fundTransferDto.getPurpose();
-        Date date = fundTransferDto.getLocalDate();
+        LocalDateTime date = fundTransferDto.getLocalDate();
         Long scheduleId =fundTransferDto.getScheduledId() ;
 
         CustomResponseEntity sender = regex.checkAccountNumberFormat(senderAccountNumber);

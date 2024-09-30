@@ -39,6 +39,8 @@ public class AuthConfig {
                                 .requestMatchers("/api/chequebooks/**").permitAll()
                                 .requestMatchers("/v1/complaint/**").permitAll()
                                 .requestMatchers("/v1/topup/**").permitAll()
+                                .requestMatchers("/swagger-ui/index.html").permitAll()
+                                .requestMatchers("/v3/api-docs").permitAll()
 //                                .requestMatchers("/v1/topup/**").permitAll()
                 ).build();
     }

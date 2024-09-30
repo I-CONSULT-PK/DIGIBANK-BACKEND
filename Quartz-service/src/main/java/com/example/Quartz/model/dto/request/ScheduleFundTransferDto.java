@@ -7,8 +7,10 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -27,9 +29,11 @@ public class ScheduleFundTransferDto implements Serializable {
     @NotNull(message = "Transaction amount required")
     @DecimalMin(value = "1.0", inclusive = true, message = "Transaction amount must be at least 1")
     private Double transferAmount;
-    private Date localDate;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime localDate;
     private int successCode;
     private Long customerId;
+    private Long scheduledId;
 
     public Double getTransferAmount() {
         return transferAmount;

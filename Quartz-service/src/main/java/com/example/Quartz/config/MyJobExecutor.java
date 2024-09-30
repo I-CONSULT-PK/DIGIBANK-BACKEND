@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
-
 public class MyJobExecutor implements Job {
     @Autowired
     RestTemplate restTemplate;
@@ -86,10 +85,10 @@ public class MyJobExecutor implements Job {
                     CustomResponseEntity.class
             );
             if (response.getStatusCode() == HttpStatus.OK) {
-                LOGGER.info("Scheduled Transaction done from account :" +fundTransferDto.getSenderAccountNumber()+ " " + fundTransferDto.getReceiverAccountNumber() );
+                LOGGER.info("Scheduled Transaction done from account :" +fundTransferDto.getSenderAccountNumber()+ " " + fundTransferDto.getReceiverAccountNumber());
             }
         } catch (RestClientException e) {
-            LOGGER.error("Error occurred while doing  Scheduled Transaction from account :" +fundTransferDto.getSenderAccountNumber()+ " " + fundTransferDto.getReceiverAccountNumber());
+            LOGGER.error("Error occurred while doing  Scheduled Transaction from account :" + e.getMessage());
 //            return CustomResponseEntity.error("Unable to process the request." +
 //                    " Please verify that the provided information is correct and try again.");
         }
