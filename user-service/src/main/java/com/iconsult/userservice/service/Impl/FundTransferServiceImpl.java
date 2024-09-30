@@ -318,6 +318,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         HashMap<String, String> map = (HashMap<String, String>) responseDto.getData();
                         fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
+                        fundsTransferSender.setCustomer(senderAccount.get().getCustomer());
                         fundsTransferSender.setSenderAccount(senderAccount.get().getAccountNumber());
                         fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferSender.setCurrency(map.get("ccy"));
@@ -334,6 +335,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
 //                        fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
+                        fundsTransferReceiver.setCustomer(receiverAccount.get().getCustomer());
                         fundsTransferReceiver.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferReceiver.setSenderAccount(senderAccount.get().getAccountNumber());
                         fundsTransferReceiver.setCurrency(map.get("ccy"));
@@ -481,6 +483,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                     fundsTransferSender.setCurrentBalance(account.get().getAccountBalance() - totalAmount);
                     fundsTransferSender.setDebitAmt(totalAmount);
                     fundsTransferSender.setTransactionDate(formattedDate);
+                    fundsTransferSender.setCustomer(account.get().getCustomer());
                     fundsTransferSender.setCreditAmt(0.0);
 
                     fundsTransferSender.setBankCode(fundTransferDto.getBankCode());

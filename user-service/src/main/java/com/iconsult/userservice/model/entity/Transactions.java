@@ -16,6 +16,9 @@ public class Transactions implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String  bankCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
