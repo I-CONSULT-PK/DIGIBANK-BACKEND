@@ -7,6 +7,7 @@ import com.admin_service.service.JwtService;
 import com.admin_service.service.serviceImpl.AdminServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,13 +25,21 @@ public class AdminController {
         return this.adminService.login(loginDto);
     }
     @GetMapping("/list")
-    public CustomResponseEntity getUsers(){
-        return CustomResponseEntity.error("admin Api");
+    public String getUsers(){
+        return "hello ";
     }
 
     @GetMapping("/userList")
     public CustomResponseEntity userList(){
         return CustomResponseEntity.error("user Api");
+    }
+
+
+
+    @GetMapping("/protected")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String protectedEndpoint() {
+        return "This is a protected endpoint accessible only to ADMIN users.";
     }
 
 //    @Autowired

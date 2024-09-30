@@ -10,7 +10,8 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtil {
 
-    private String SECRET_KEY = "my_secret_key"; // Your secret key
+//    private static final String SECRET_KEY = "thisiskey="; // Your secret key
+    public static final String SECRET_KEY = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437"; // Your secret key
 
     // Generate token with roles from DB
     public String generateToken(String username, Set<GrantedAuthority> roles) {
@@ -22,7 +23,7 @@ public class JwtUtil {
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours validity
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(SignatureAlgorithm.RS256, SECRET_KEY)
                 .compact();
     }
 

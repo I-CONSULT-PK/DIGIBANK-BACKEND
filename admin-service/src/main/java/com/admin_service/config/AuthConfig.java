@@ -45,8 +45,16 @@ public class AuthConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/v1/admin/login").permitAll()
+                        // Public access to login URL
+                        .requestMatchers("/v1/user/all/**").permitAll()
+
+                        // Admin role access to admin endpoints
                         .requestMatchers("/v1/admin/**").hasRole("ADMIN")
+
+                        // User role access to user endpoints
+                        .requestMatchers("/v1/user/**").hasRole("USER")
+
+                        // All other requests must be authenticated
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -55,6 +63,7 @@ public class AuthConfig {
                 .addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 /*    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
