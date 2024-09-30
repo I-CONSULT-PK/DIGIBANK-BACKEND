@@ -348,6 +348,7 @@ public class CardServiceImpl implements CardService {
                         CustomResponseEntity customResponseEntity = new CustomResponseEntity();
                         customResponseEntity.setData(responseDto);
                         customResponseEntity.setMessage("Card has been generated");
+                        customResponseEntity.setSuccess(true);
                         return customResponseEntity;
                     }
                 } else {
