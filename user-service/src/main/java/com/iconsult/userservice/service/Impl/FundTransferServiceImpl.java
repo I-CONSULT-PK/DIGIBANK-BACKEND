@@ -323,12 +323,14 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferSender.setCurrency(map.get("ccy"));
                         fundsTransferSender.setIbanCode(senderAccount.get().getIbanCode());
+                        fundsTransferSender.setStatus("COMPLETED");
                         // Receiver Transfer Log
                         Transactions fundsTransferReceiver = new Transactions();
                         fundsTransferReceiver.setAccount(receiverAccount.get());
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
                         fundsTransferReceiver.setTransactionDate(formattedDate);
+                        fundsTransferReceiver.setStatus("COMPLETED");
 
                         fundsTransferReceiver.setTransactionId(
                                 map.get("paymentReference") != null ? map.get("paymentReference") : null );
@@ -485,6 +487,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                     fundsTransferSender.setTransactionDate(formattedDate);
                     fundsTransferSender.setCustomer(account.get().getCustomer());
                     fundsTransferSender.setCreditAmt(0.0);
+                    fundsTransferSender.setStatus("COMPLETED");
 
                     fundsTransferSender.setBankCode(fundTransferDto.getBankCode());
 
