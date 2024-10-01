@@ -1,5 +1,6 @@
 package com.admin_service.service;
 
+import com.admin_service.dto.request.AddUserDto;
 import com.admin_service.dto.request.LoginDto;
 import com.admin_service.entity.User;
 import com.admin_service.model.CustomResponseEntity;
@@ -10,4 +11,5 @@ public interface AdminService
 
     User updateAdmin(User user);
 
+    CustomResponseEntity addUser(AddUserDto addUserDto);
 }

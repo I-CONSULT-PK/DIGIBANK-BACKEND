@@ -11,4 +11,9 @@ public interface AdminRepository extends JpaRepository<User, Long> {
     @Query("SELECT a FROM User a WHERE a.email = ?1 OR a.userName = ?1")
     User findByEmailOrUserName(String identifier);
 
+
+    boolean existsByEmail(String email);
+
+    boolean existsByUserName(String userName);
+
 }

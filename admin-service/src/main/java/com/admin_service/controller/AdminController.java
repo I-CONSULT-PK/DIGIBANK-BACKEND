@@ -1,5 +1,6 @@
 package com.admin_service.controller;
 
+import com.admin_service.dto.request.AddUserDto;
 import com.admin_service.dto.request.LoginDto;
 import com.admin_service.model.CustomResponseEntity;
 import com.admin_service.service.JwtService;
@@ -7,10 +8,7 @@ import com.admin_service.service.JwtService;
 import com.admin_service.service.serviceImpl.AdminServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/admin")
@@ -25,6 +23,12 @@ public class AdminController {
     public CustomResponseEntity login(@Valid @RequestBody LoginDto loginDto)
     {
         return this.adminService.login(loginDto);
+    }
+
+    @PostMapping("/addUser")
+    public CustomResponseEntity addUser(@RequestBody AddUserDto AddUserDto)
+    {
+        return this.adminService.addUser(AddUserDto);
     }
 
 //    @Autowired

@@ -1,6 +1,5 @@
-package com.admin_service.entity;
+package com.admin_service.dto.request;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,26 +11,16 @@ import java.time.LocalDate;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "users")
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class AddUserDto {
     private String firstName;
     private String lastName;
     private String userName;
     private String email;
     private String password;
-    private Long resetTokenExpireTime;
-    private String sessionToken;
-    private Long sessionTokenExpireTime;
     private String jobType;
     private Boolean multiTenant;
     private String country;
     private String activation;
     private LocalDate fromDuration;
     private LocalDate toDuration;
-    private Boolean status;
 }

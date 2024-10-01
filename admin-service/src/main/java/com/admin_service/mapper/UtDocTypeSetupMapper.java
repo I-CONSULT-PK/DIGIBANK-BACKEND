@@ -9,7 +9,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface UtDocTypeSetupMapper {
 
-    UtDocTypeDto toDTO(UtDocTypeSetup utDocTypeSetup);
-
-    UtDocTypeSetup toEntity(UtDocTypeDto utDocTypeDto);
+//    UtDocTypeDto toDTO(UtDocTypeSetup utDocTypeSetup);
+//
+//    UtDocTypeSetup toEntity(UtDocTypeDto utDocTypeDto);
 }
