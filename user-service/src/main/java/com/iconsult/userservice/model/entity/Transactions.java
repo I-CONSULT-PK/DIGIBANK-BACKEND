@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -48,6 +49,19 @@ public class Transactions implements Serializable {
     private String natureOfAccount;
     private String currency;
     private String transactionType;
+
+    @Column(name = "surrogate_key", unique = true, nullable = false, insertable = false, updatable = false)
+    private String surrogateKey;
+
+    @Column(name = "start_date_time", nullable = false, insertable = false, updatable = false)
+    private LocalDateTime startDateTime;
+
+    @Column(name = "end_date_time",  insertable = false, updatable = false)
+    private LocalDateTime endDateTime;
+
+    @Column(name = "trans_status")
+    private String status;
+
 
     public Double getDebitAmt() {
         return debitAmt;
