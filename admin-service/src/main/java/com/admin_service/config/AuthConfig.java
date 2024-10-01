@@ -46,6 +46,7 @@ public class AuthConfig {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/v1/admin/login").permitAll()
+                        .requestMatchers("/v1/admin/userList").hasRole("USER")
                         .requestMatchers("/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

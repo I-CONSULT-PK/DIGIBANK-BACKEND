@@ -21,6 +21,7 @@
 
 package com.admin_service.config;
 
+import com.admin_service.model.CustomResponseEntity;
 import com.admin_service.service.serviceImpl.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -75,7 +76,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return; // Optionally write an error response
             }
         }
 
