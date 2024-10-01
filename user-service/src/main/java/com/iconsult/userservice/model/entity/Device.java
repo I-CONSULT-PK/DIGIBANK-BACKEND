@@ -6,8 +6,10 @@ import com.iconsult.userservice.constant.PinStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -54,4 +56,8 @@ public class Device implements Serializable {
     public void setCustomer(Customer customer) {
         this.customer = customer;
     }
+
+    @CreationTimestamp
+    @Column(name = "timestamp", updatable = false)
+    private LocalDateTime timestamp;
 }

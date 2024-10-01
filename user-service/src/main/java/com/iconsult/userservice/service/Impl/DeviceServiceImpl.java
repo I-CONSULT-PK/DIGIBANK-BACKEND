@@ -26,6 +26,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -364,10 +366,24 @@ public class DeviceServiceImpl implements DeviceService {
                 return CustomResponseEntity.error("No devices found with the given Customer ID");
             }
 
-            // Create a list of DeviceDetailDto from the retrieved devices
-            List<DeviceDetailDto> deviceDetailDtos = devices.stream()
-                    .map(DeviceDetailDto::new) // Assuming a constructor that takes Device
-                    .collect(Collectors.toList());
+            // Convert Device entities to DeviceDetailsDto
+            List<DeviceDetailDto> deviceDetailDtos = devices.stream().map(device -> {
+                DeviceDetailDto dto = new DeviceDetailDto();
+                dto.setDeviceId(device.getId());
+                dto.setDeviceName(device.getDeviceName());
+                dto.setPinHash(device.getPinHash());
+                dto.setDevicePin(device.getDevicePin());
+                dto.setDeviceType(device.getDeviceType());
+                dto.setUnique(device.getUnique1());
+                dto.setOsv_osn(device.getOsv_osn());
+                dto.setModelName(device.getModelName());
+                dto.setManufacture(device.getManufacture());
+                dto.setOsv_osn(device.getOs_name());
+                dto.setPublicKey(device.getPublic_key());
+                dto.setPinStatus(String.valueOf(device.getPinStatus())); // Assuming PinStatus is an enum
+                dto.setDateAndTime(String.valueOf(device.getTimestamp())); // Assuming you have a timestamp field
+                return dto;
+            }).collect(Collectors.toList());
 
             // Return the response with the list of device details
             return new CustomResponseEntity<>(deviceDetailDtos, "Device Details");
@@ -377,7 +393,6 @@ public class DeviceServiceImpl implements DeviceService {
             return CustomResponseEntity.error("An error occurred while fetching device details: " + e.getMessage());
         }
     }
-
 
 }
 //    private void associateCustomerWithDevice(Customer customer, Device device) {
