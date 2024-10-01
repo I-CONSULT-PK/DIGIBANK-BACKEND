@@ -31,6 +31,7 @@ public class AuthConfig {
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers("/v1/admin/login").permitAll()
+                                .requestMatchers("/module/**").permitAll()
                                .requestMatchers("/v1/admin/**").hasRole("")
                 ).build();
     }
