@@ -4,6 +4,7 @@ import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.constant.PinStatus;
 import com.iconsult.userservice.constant.ValidationUtil;
 import com.iconsult.userservice.custome.Regex;
+import com.iconsult.userservice.exception.ServiceException;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.Util.EncryptionUtil;
@@ -13,7 +14,6 @@ import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.SettingRepository;
 import com.iconsult.userservice.service.NotificationService;
 import com.iconsult.userservice.service.SettingService;
-import com.zanbeel.customUtility.exception.ServiceException;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -140,11 +140,20 @@ public class SettingServiceImpl implements SettingService {
         try
         {
             Device existingDevice = settingRepository.findById(Long.valueOf(id)).orElseThrow();
-            if(existingDevice.getDevicePin().equals(settingDTO.getOldPin()))
-            {
-                String pin = settingDTO.getDevicePin();
+            if(Objects.isNull(existingDevice)){
 
-              if(!pin.matches("\\d{4}")){
+                LOGGER.error("Device Does Not Exist With Id");
+                throw new ServiceException(String.format("Device Does Not Exist With Id"));
+            }
+            if(existingDevice.getPinStatus().equals(PinStatus.INACTIVE)){
+                LOGGER.error("Device Pin INACTIVE");
+                throw new ServiceException(String.format("Device Pin INACTIVE"));
+            }
+            if(existingDevice.getDevicePin().equals(settingDTO.getOldPin())){
+                return CustomResponseEntity.error("Device Pin is Same");
+            }
+            String pin = settingDTO.getDevicePin();
+            if(!pin.matches("\\d{4}")){
                   LOGGER.error("Pin must be exactly 4 digits");
                   return CustomResponseEntity.error("Pin must be exactly 4 digits");
               }
@@ -159,23 +168,19 @@ public class SettingServiceImpl implements SettingService {
                 existingDevice.setPinStatus(PinStatus.ACTIVE);
                 settingRepository.save(existingDevice);
 
-                NotificationEvent notificationEvent = new NotificationEvent();
-                notificationEvent.setNotificationType("UPDATE PIN");
-                notificationEvent.setMessage("you have successfully updated your device pin!");
-                notificationEvent.setRecipientId(existingDevice.getCustomer().getId());
-                notificationEvent.setChannel("EMAIL");
-                notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
-                notificationEvent.setEmail(existingDevice.getCustomer().getEmail());
-
-                notificationService.sendNotification(notificationEvent);
+//                NotificationEvent notificationEvent = new NotificationEvent();
+//                notificationEvent.setNotificationType("UPDATE PIN");
+//                notificationEvent.setMessage("you have successfully updated your device pin!");
+//                notificationEvent.setRecipientId(existingDevice.getCustomer().getId());
+//                notificationEvent.setChannel("EMAIL");
+//                notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
+//                notificationEvent.setEmail(existingDevice.getCustomer().getEmail());
+//
+//                notificationService.sendNotification(notificationEvent);
 
                 return customResponseEntity = new CustomResponseEntity<>("Pin Updated Successfully!");
             }
-            else
-            {
-                return customResponseEntity = new CustomResponseEntity<>("Old PIN Invalid");
-            }
-        }
+
         catch (EntityNotFoundException e) {
             // Handle case where the device is not found
             LOGGER.error("EntityNotFoundException occurred: ", e);
