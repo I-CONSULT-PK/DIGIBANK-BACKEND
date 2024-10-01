@@ -14,5 +14,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     User findByUserName(String username);
     @Query("SELECT COUNT(u) > 0 FROM User u WHERE u.sessionToken = :token AND u.sessionTokenExpireTime > :currentTime")
     boolean isValidToken(@Param("token") String token, @Param("currentTime") long currentTime);
+
+    Optional<User> findBySessionToken(String token);
 }
 
