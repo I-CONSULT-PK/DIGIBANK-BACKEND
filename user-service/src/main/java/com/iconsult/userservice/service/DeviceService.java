@@ -1,6 +1,5 @@
 package com.iconsult.userservice.service;
 
-import com.iconsult.userservice.model.dto.request.DeviceDto;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.dto.request.SignUpDto;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -16,6 +15,6 @@ public interface DeviceService {
 
     CustomResponseEntity loginWithPin(/*Long customerId,*/ String devicePin, String uniquePin);
 
-    CustomResponseEntity fetchDeviceRegister(SettingDTO settingDTO);
+    CustomResponseEntity fetchDeviceRegister(String customerId);
 
 }

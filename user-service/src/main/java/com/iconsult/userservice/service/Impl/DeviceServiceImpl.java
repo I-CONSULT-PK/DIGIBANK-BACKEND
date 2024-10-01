@@ -3,6 +3,7 @@ package com.iconsult.userservice.service.Impl;
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.Util.Util;
 import com.iconsult.userservice.model.dto.request.DeviceDetailDto;
+import com.iconsult.userservice.model.dto.request.DeviceDto;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.dto.request.SignUpDto;
 import com.iconsult.userservice.model.entity.*;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.hibernate.sql.ast.SqlTreeCreationLogger.LOGGER;
 
@@ -346,30 +348,37 @@ public class DeviceServiceImpl implements DeviceService {
         return true;
     }
 
-    // fetch registerd device data with Unique value
     @Override
-    public CustomResponseEntity fetchDeviceRegister(SettingDTO settingDTO) {
-
-
-//        Device device = deviceRepository.findById(unique).orElse(null);
-
-//        String jpql = "SELECT d FROM Device d WHERE d.unique1 = :unique1";
-//        String jpql = "SELECT d FROM Device d JOIN FETCH d.customer WHERE d.unique1 = :unique1";
-        String jpql = "SELECT d FROM Device d WHERE d.unique1 = :unique1";
+    public CustomResponseEntity fetchDeviceRegister(String customerId) {
+        String jpql = "SELECT d FROM Device d WHERE d.customer.id = :customerId";
         Map<String, Object> params = new HashMap<>();
-        params.put("unique1", settingDTO.getUnique());
+        params.put("customerId", customerId);
 
-        Device device = cardGenericDao.findOneWithQuery(jpql, params);
+        try {
+            // Fetching the list of devices
+            List<Device> devices = cardGenericDao.findWithQuery(jpql, params);
 
-        if(Objects.isNull(device)){
-            LOGGER.info("Error Receiving Device Details With Unique  : " + settingDTO.getUnique());
-            return CustomResponseEntity.error("Device not found with given unique value" );
+            // Check if devices list is empty
+            if (devices.isEmpty()) {
+                LOGGER.info("Error Receiving Device Details With Customer ID: " + customerId);
+                return CustomResponseEntity.error("No devices found with the given Customer ID");
+            }
+
+            // Create a list of DeviceDetailDto from the retrieved devices
+            List<DeviceDetailDto> deviceDetailDtos = devices.stream()
+                    .map(DeviceDetailDto::new) // Assuming a constructor that takes Device
+                    .collect(Collectors.toList());
+
+            // Return the response with the list of device details
+            return new CustomResponseEntity<>(deviceDetailDtos, "Device Details");
+
+        } catch (Exception e) {
+            LOGGER.error("Error fetching device details for Customer ID: " + customerId, e);
+            return CustomResponseEntity.error("An error occurred while fetching device details: " + e.getMessage());
         }
-
-        DeviceDetailDto deviceDetailDto = new DeviceDetailDto(device);
-
-        return new CustomResponseEntity<>(deviceDetailDto, "Device Details");
     }
+
+
 }
 //    private void associateCustomerWithDevice(Customer customer, Device device) {
         ////        customer.setDevice(device);

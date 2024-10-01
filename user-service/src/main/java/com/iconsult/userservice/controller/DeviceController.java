@@ -3,14 +3,13 @@ import com.iconsult.userservice.model.dto.request.DeviceDto;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.dto.request.SignUpDto;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
-import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.service.Impl.DeviceServiceImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import static org.hibernate.sql.ast.SqlTreeCreationLogger.LOGGER;
 
 @RestController
 @RequestMapping("/api/devices")
@@ -64,12 +63,13 @@ public class DeviceController {
     }
 
     @GetMapping("/fetchDeviceRegister")
-    public CustomResponseEntity fetchDeviceDetailsById(@Valid @RequestBody SettingDTO settingDTO){
+    public CustomResponseEntity fetchDeviceDetailsById(@Valid @RequestParam String customerId){
 
-        if(settingDTO.getUnique().isEmpty()){
-            return CustomResponseEntity.error("unique value can not be null");
+        if (customerId == null || customerId.trim().isEmpty()) {
+            LOGGER.info("Customer ID is required");
+            return CustomResponseEntity.error("Customer ID cannot be null or empty");
         }
-        return deviceService.fetchDeviceRegister(settingDTO);
+        return deviceService.fetchDeviceRegister(customerId);
     }
 }
 
