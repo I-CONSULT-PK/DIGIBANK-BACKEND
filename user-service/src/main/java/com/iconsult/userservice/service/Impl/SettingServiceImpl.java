@@ -2,6 +2,7 @@ package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
 import com.iconsult.userservice.constant.PinStatus;
+import com.iconsult.userservice.constant.ValidationUtil;
 import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
 import com.iconsult.userservice.model.entity.*;
@@ -278,8 +279,8 @@ public class SettingServiceImpl implements SettingService {
             }
             String decryptedSavedPassword = EncryptionUtil.decrypt(customer.getPassword(),"t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
             if(!decryptedSavedPassword.equals(oldPassword)){
-                LOGGER.error("password does not exist");
-                return CustomResponseEntity.error("password does not match");
+                LOGGER.error("Old password does not exist");
+                return CustomResponseEntity.error("Old password does not match");
             }
             if (decryptedSavedPassword.equals(newPassword)){
                 return CustomResponseEntity.error("Password can not be same as old, Pleae try new one!");
@@ -318,6 +319,14 @@ public class SettingServiceImpl implements SettingService {
         }
         if (customerDto.getEmail() == null || customerDto.getEmail().isEmpty()) {
             return CustomResponseEntity.error("Email cannot be null or empty.");
+        }
+        // Validate email format
+        if (!ValidationUtil.isValidNumber(customerDto.getMobileNumber())) {
+            return CustomResponseEntity.error("Invalid mobile number format or length.");
+        }
+        // Validate email format
+        if (!ValidationUtil.isValidEmail(customerDto.getEmail())) {
+            return CustomResponseEntity.error("Invalid email format.");
         }
         if (customerDto.getEmail().equals(customer.getEmail()) || customerDto.getMobileNumber().equals(customer.getMobileNumber())) {
             return CustomResponseEntity.error("Mobile Number or Email cannot be the same as the old.");
