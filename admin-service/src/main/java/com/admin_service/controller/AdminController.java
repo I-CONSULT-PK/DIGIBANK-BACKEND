@@ -31,6 +31,7 @@ public class AdminController {
 
     @GetMapping("/userList")
     public CustomResponseEntity userList(){
+
         return CustomResponseEntity.error("user Api");
     }
 
