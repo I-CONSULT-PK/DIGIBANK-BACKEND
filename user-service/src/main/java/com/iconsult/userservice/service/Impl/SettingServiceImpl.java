@@ -139,35 +139,45 @@ public class SettingServiceImpl implements SettingService {
 
         try
         {
-            Device existingDevice = settingRepository.findById(Long.valueOf(id)).orElseThrow();
-            if(Objects.isNull(existingDevice)){
+            String newPin = settingDTO.getDevicePin();
+            String oldPin = settingDTO.getOldPin();
 
-                LOGGER.error("Device Does Not Exist With Id");
-                throw new ServiceException(String.format("Device Does Not Exist With Id"));
+            if (!oldPin.matches("\\d{4}")) {
+                LOGGER.error("Old Pin must be exactly 4 digits");
+                return CustomResponseEntity.error("Old Pin must be exactly 4 digits");
             }
+            if (isSequential(oldPin)) {
+                LOGGER.error("Sequential old pins are not allowed");
+                return CustomResponseEntity.error("Sequential old pins are not allowed");
+            }
+            if (!newPin.matches("\\d{4}")) {
+                LOGGER.error("New Pin must be exactly 4 digits");
+                return CustomResponseEntity.error("New Pin must be exactly 4 digits");
+            }
+
+            if (isSequential(newPin)) {
+                LOGGER.error("Sequential new pins are not allowed");
+                return CustomResponseEntity.error("Sequential new pins are not allowed");
+            }
+
+            Device existingDevice = settingRepository.findById(Long.valueOf(id))
+                    .orElseThrow(() -> new RuntimeException("Device Does Not Exist!"));
+
             if(existingDevice.getPinStatus().equals(PinStatus.INACTIVE)){
                 LOGGER.error("Device Pin INACTIVE");
-                throw new ServiceException(String.format("Device Pin INACTIVE"));
+                throw new ServiceException(String.format("Device Pin INACTIVE!"));
+            }
+            if(settingDTO.getDevicePin().equals(settingDTO.getOldPin())){
+                return CustomResponseEntity.error("New PIN and Old PIN are same!");
             }
             if(existingDevice.getDevicePin().equals(settingDTO.getOldPin())){
-                return CustomResponseEntity.error("Device Pin is Same");
-            }
-            String pin = settingDTO.getDevicePin();
-            if(!pin.matches("\\d{4}")){
-                  LOGGER.error("Pin must be exactly 4 digits");
-                  return CustomResponseEntity.error("Pin must be exactly 4 digits");
-              }
-
-                // Check if the pin is sequential (e.g., 1234, 2345, etc.)
-                if (isSequential(pin)) {
-                    LOGGER.error("Sequential pins are not allowed");
-                    return CustomResponseEntity.error("Sequential pins are not allowed");
-                }
-
                 existingDevice.setDevicePin(settingDTO.getDevicePin());
                 existingDevice.setPinStatus(PinStatus.ACTIVE);
                 settingRepository.save(existingDevice);
-
+            }
+            else {
+                return CustomResponseEntity.error("Invalid Old PIN!");
+            }
 //                NotificationEvent notificationEvent = new NotificationEvent();
 //                notificationEvent.setNotificationType("UPDATE PIN");
 //                notificationEvent.setMessage("you have successfully updated your device pin!");
@@ -184,11 +194,11 @@ public class SettingServiceImpl implements SettingService {
         catch (EntityNotFoundException e) {
             // Handle case where the device is not found
             LOGGER.error("EntityNotFoundException occurred: ", e);
-            return new CustomResponseEntity<>(e.getMessage(), "Failed to update pin");
+            return new CustomResponseEntity<>(e.getMessage(), "Failed to update pin!");
         } catch (Exception e) {
             // Handle any other unexpected exceptions
             LOGGER.error("Exception occurred: ", e);
-            return new CustomResponseEntity<>(e.getMessage(),"Failed to update pin");
+            return new CustomResponseEntity<>(e.getMessage(),"Failed to update pin!");
         }
     }
 
