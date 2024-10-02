@@ -3,6 +3,7 @@ package DigiBank.BillPaymentService.service.impl;
 import DigiBank.BillPaymentService.constants.CustomResponseEntity;
 import DigiBank.BillPaymentService.constants.Util;
 import DigiBank.BillPaymentService.constants.UtilityType;
+import DigiBank.BillPaymentService.model.dto.UtilityTypeDto;
 import DigiBank.BillPaymentService.model.dto.request.BillDto;
 import DigiBank.BillPaymentService.model.dto.request.BillDtoResponse;
 import DigiBank.BillPaymentService.model.dto.request.BillerDtoRequest;
@@ -15,15 +16,14 @@ import DigiBank.BillPaymentService.repository.BillRepository;
 import DigiBank.BillPaymentService.repository.BillerRepository;
 import DigiBank.BillPaymentService.service.BillService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 public class BillServiceImpl implements BillService {
@@ -171,10 +171,23 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
-    public CustomResponseEntity getAllBillers() {
+    public CustomResponseEntity getAllBillers(UtilityType utilityType) {
 
-        List<Biller> billerList = billerRepository.findAll();
+        Optional<Biller> billerList = billerRepository.findByUtilityType(utilityType);
+
+        if(billerList.isEmpty()){
+            return CustomResponseEntity.error("No billers found for this utility type!");
+        }
         return new CustomResponseEntity(billerList, "Biller List");
+    }
+
+    @Override
+    public CustomResponseEntity getAllUtilityTypes() {
+
+        List<UtilityTypeDto> utilityTypeDtos = Arrays.stream(UtilityType.values())
+                .map(type -> new UtilityTypeDto(type.name(), type.getIconUrl()))
+                .toList();
+        return new CustomResponseEntity(utilityTypeDtos,"Utility Types!");
     }
 
     private static BillDto convertToBillDto(Bill bill) {
