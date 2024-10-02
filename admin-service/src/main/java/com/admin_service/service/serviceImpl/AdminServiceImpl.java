@@ -82,7 +82,6 @@ public class AdminServiceImpl implements AdminService {
         LOGGER.info("Expiration = " + jwtUtil.getTokenExpireTime(token).getTime());
         LOGGER.info("Expiration Date and Time with a Specific DateTime Format : "+expirationDate);
         // JWT Implementation Ends
-
         // Prepare response data
         Map<String, Object> data = new HashMap<>();
         data.put("adminId", user.getId());

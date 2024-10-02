@@ -18,7 +18,6 @@ public class AdminController {
 
     @Autowired
     AdminServiceImpl adminService;
-
     @PostMapping("/login")
     public CustomResponseEntity login(@Valid @RequestBody LoginDto loginDto)
     {

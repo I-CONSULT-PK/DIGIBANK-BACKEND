@@ -12,7 +12,6 @@ public class GlobalExceptionHandler {
         // Return the exception message with an appropriate HTTP status
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
-
     // You can add more exception handlers here for other exceptions
 }
 
