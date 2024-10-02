@@ -30,7 +30,16 @@ public class AdminController {
 
         return this.adminService.addUser(AddUserDto);
     }
+    @GetMapping("/list")
+    public CustomResponseEntity getUsers(){
+        return CustomResponseEntity.error("admin Api");
+    }
 
+    @GetMapping("/userList")
+    public CustomResponseEntity userList(){
+
+        return CustomResponseEntity.error("user Api");
+    }
 //    @Autowired
 //    AuthenticationManager authenticationManager;
 //
