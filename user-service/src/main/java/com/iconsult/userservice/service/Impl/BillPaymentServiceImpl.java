@@ -1,6 +1,7 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
+import com.iconsult.userservice.constant.UtilityType;
 import com.iconsult.userservice.model.dto.request.BillPaymentDto;
 import com.iconsult.userservice.model.dto.response.BillPaymentTransactionDto;
 import com.iconsult.userservice.model.entity.Account;
@@ -45,6 +46,7 @@ public class BillPaymentServiceImpl implements BillPaymentService {
 
     private final String URL = "http://localhost:8078/v1/billpayment/getBillDetails";
     private final String billersURL = "http://localhost:8078/v1/billpayment/getBillers";
+    private final String utilitiesURL = "http://localhost:8078/v1/billpayment/getUtilityTypes";
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -143,64 +145,64 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                                 }
                             }
 
-                            if(accountBalance >= amount) {
+                            if (accountBalance >= amount) {
                                 // Deduct amount from account balance
                                 Double previousBalance = accountBalance; // Save the previous balance
                                 accountBalance -= amount;
 
-                            // Update account balance
-                            account.setAccountBalance(accountBalance);
+                                // Update account balance
+                                account.setAccountBalance(accountBalance);
 
-                            // Create and set up the transaction DTO
-                            BillPaymentTransactionDto transactionDto = new BillPaymentTransactionDto();
-                            transactionDto.setAccountNumber(account.getAccountNumber());
-                            transactionDto.setDebitAmount(amount);
-                            transactionDto.setCreditAmount(0.0);
-                            transactionDto.setCurrentBalance(accountBalance);
-                            transactionDto.setTransactionId(referenceNumber);
-                            transactionDto.setTransactionDate(formatter.format(date));
-                            transactionDto.setIbanCode(account.getCustomer().getAccountNumber());
-                            transactionDto.setTransactionNarration("Bill Payment Against Consumer Number " + data.get("accountNumber"));
-                            transactionDto.setTransactionType("BILL");
+                                // Create and set up the transaction DTO
+                                BillPaymentTransactionDto transactionDto = new BillPaymentTransactionDto();
+                                transactionDto.setAccountNumber(account.getAccountNumber());
+                                transactionDto.setDebitAmount(amount);
+                                transactionDto.setCreditAmount(0.0);
+                                transactionDto.setCurrentBalance(accountBalance);
+                                transactionDto.setTransactionId(referenceNumber);
+                                transactionDto.setTransactionDate(formatter.format(date));
+                                transactionDto.setIbanCode(account.getCustomer().getAccountNumber());
+                                transactionDto.setTransactionNarration("Bill Payment Against Consumer Number " + data.get("accountNumber"));
+                                transactionDto.setTransactionType("BILL");
 
-                            // Convert DTO to entity
-                            Transactions transaction = BillPaymentTransactionMapper.toEntity(transactionDto, account);
+                                // Convert DTO to entity
+                                Transactions transaction = BillPaymentTransactionMapper.toEntity(transactionDto, account);
 
-                            // Update AccountCDDetails
-                            AccountCDDetails updateLastDebitAmount = accountCDDetailsRepository.findByAccount_Id(account.getId());
-                            if (updateLastDebitAmount != null) {
-                                updateLastDebitAmount.setDebit(amount);
-                                updateLastDebitAmount.setAccount(account);
-                                updateLastDebitAmount.setActualBalance(accountBalance);
-                                updateLastDebitAmount.setPreviousBalance(previousBalance); // Set the previous balance
-                                updateLastDebitAmount.setCredit(0.0);
-                            } else {
-                                // Handle the case where AccountCDDetails is not found
-                                updateLastDebitAmount = new AccountCDDetails();
-                                updateLastDebitAmount.setDebit(amount);
-                                updateLastDebitAmount.setAccount(account);
-                                updateLastDebitAmount.setActualBalance(accountBalance);
-                                updateLastDebitAmount.setPreviousBalance(previousBalance);
-                                updateLastDebitAmount.setCredit(0.0);
-                            }
-                            accountCDDetailsRepository.save(updateLastDebitAmount);
+                                // Update AccountCDDetails
+                                AccountCDDetails updateLastDebitAmount = accountCDDetailsRepository.findByAccount_Id(account.getId());
+                                if (updateLastDebitAmount != null) {
+                                    updateLastDebitAmount.setDebit(amount);
+                                    updateLastDebitAmount.setAccount(account);
+                                    updateLastDebitAmount.setActualBalance(accountBalance);
+                                    updateLastDebitAmount.setPreviousBalance(previousBalance); // Set the previous balance
+                                    updateLastDebitAmount.setCredit(0.0);
+                                } else {
+                                    // Handle the case where AccountCDDetails is not found
+                                    updateLastDebitAmount = new AccountCDDetails();
+                                    updateLastDebitAmount.setDebit(amount);
+                                    updateLastDebitAmount.setAccount(account);
+                                    updateLastDebitAmount.setActualBalance(accountBalance);
+                                    updateLastDebitAmount.setPreviousBalance(previousBalance);
+                                    updateLastDebitAmount.setCredit(0.0);
+                                }
+                                accountCDDetailsRepository.save(updateLastDebitAmount);
 
-                            // Save the updated account and transaction back to the database
-                            accountRepository.save(account);
-                            transactionsGenericDao.saveOrUpdate(transaction);
+                                // Save the updated account and transaction back to the database
+                                accountRepository.save(account);
+                                transactionsGenericDao.saveOrUpdate(transaction);
 
-                            LOGGER.info("Account balance and transaction updated successfully");
+                                LOGGER.info("Account balance and transaction updated successfully");
 
-                            // Prepare the response data with only the processed amount
-                            Map<String, Object> processedData = new HashMap<>();
-                            processedData.put("processedAmount", amount);
-                            processedData.put("referenceNumber", referenceNumber);
-                            processedData.put("date", formatter.format(date));
-                            processedData.put("consumerNumber", consumerNumber);
+                                // Prepare the response data with only the processed amount
+                                Map<String, Object> processedData = new HashMap<>();
+                                processedData.put("processedAmount", amount);
+                                processedData.put("referenceNumber", referenceNumber);
+                                processedData.put("date", formatter.format(date));
+                                processedData.put("consumerNumber", consumerNumber);
 
                                 // Return the successful response body
                                 return new CustomResponseEntity<>(processedData, "Utility Bill processed successfully");
-                            }else {
+                            } else {
                                 return CustomResponseEntity.error("Insufficient balance for the transaction..");
                             }
                         } else {
@@ -232,11 +234,18 @@ public class BillPaymentServiceImpl implements BillPaymentService {
     }
 
     @Override
-    public CustomResponseEntity getAllBillProviders() {
+    public CustomResponseEntity getAllBillProviders(String utilityType) {
 
+        UtilityType utilityType1 = null;
         try {
-
+            utilityType1 = UtilityType.valueOf(utilityType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return CustomResponseEntity.error("Invalid value for utilityType. Please use one of the following values: " +
+                    "INTERNET, CREDIT_CARD, WATER, GAS, PTCL, ELECTRICITY : " + utilityType);
+        }
+        try {
             URI uri = UriComponentsBuilder.fromHttpUrl(billersURL)
+                    .queryParam("utilityType", utilityType1)
                     .build()
                     .toUri();
 
@@ -267,23 +276,80 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                     return CustomResponseEntity.error("Error from response: " + errorMessage);
                 }
 
-                List<Map<String, Object>> billersList = (List<Map<String, Object>>) responseBody.getData();
-
-                Map<String, Object> billersData = new HashMap<>();
-                billersData.put("biller", billersList);
+                Map<String, Object> billerMap = (Map<String, Object>) responseBody.getData();
 
 
-                return new CustomResponseEntity(billersData, "Billers List");
+                return new CustomResponseEntity(billerMap, "Billers List");
 
             } else {
                 LOGGER.error("Response body is null");
                 return CustomResponseEntity.error("Response body is null");
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             LOGGER.error("An error occurred while getting billers details", e);
             return CustomResponseEntity.errorResponse(e);
         }
 
+    }
+
+    @Override
+    public CustomResponseEntity getUtilityTypes() {
+
+        try {
+            URI uri = UriComponentsBuilder.fromHttpUrl(utilitiesURL)
+                    .build()
+                    .toUri();
+
+            // Log the full request URL
+            LOGGER.info("Request URL: {}", uri);
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Create HttpEntity with headers
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Make HTTP GET request
+            ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    CustomResponseEntity.class
+            );
+            CustomResponseEntity<?> responseBody = response.getBody();
+            if (responseBody != null) {
+
+                if (!responseBody.isSuccess()) {
+                    String errorMessage = responseBody.getMessage();
+                    LOGGER.error("Error from response: {}", errorMessage);
+                    return CustomResponseEntity.error("Error from response: " + errorMessage);
+                }
+
+                Object data = responseBody.getData();
+                if (data instanceof List) {
+                    List<?> dataList = (List<?>) data;
+
+                    // Create a new Map to wrap the list under a single key
+                    Map<String, Object> responseMap = new HashMap<>();
+                    responseMap.put("utility", dataList);
+
+                    // Return the wrapped list
+                    return new CustomResponseEntity(responseMap, "Utility List");
+                }
+
+                // If data is not a list, return as-is
+                return new CustomResponseEntity(data, "Utility List");
+
+            } else {
+                LOGGER.error("Response body is null");
+                return CustomResponseEntity.error("Response body is null");
+            }
+        } catch (Exception e) {
+            LOGGER.error("An error occurred while fetching utility types!", e);
+            return CustomResponseEntity.errorResponse(e);
+        }
     }
 
 

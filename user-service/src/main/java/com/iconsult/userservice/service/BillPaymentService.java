@@ -9,5 +9,7 @@ public interface BillPaymentService  {
 
     CustomResponseEntity getUtilityDetails(String consumerNumber, String serviceCode, String utilityType , BillPaymentDto billPaymentDto);
 
-    CustomResponseEntity getAllBillProviders();
+    CustomResponseEntity getAllBillProviders(String utilityType);
+
+    CustomResponseEntity getUtilityTypes();
 }

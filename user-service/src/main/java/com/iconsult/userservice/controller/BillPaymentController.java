@@ -21,8 +21,13 @@ public class BillPaymentController {
     private BillPaymentService billPaymentService;
 
     @GetMapping("/getBillers")
-    public CustomResponseEntity getAllBillers(){
-        return this.billPaymentService.getAllBillProviders();
+    public CustomResponseEntity getAllBillers(@RequestParam("utilityType") String utilityType ){
+        return this.billPaymentService.getAllBillProviders(utilityType);
+    }
+
+    @GetMapping("/getUtilityTypes")
+    public CustomResponseEntity getUtilityTypes (){
+        return this.billPaymentService.getUtilityTypes();
     }
 
     @PostMapping("/details")
