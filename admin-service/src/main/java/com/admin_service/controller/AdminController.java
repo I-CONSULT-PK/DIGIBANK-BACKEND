@@ -28,11 +28,8 @@ public class AdminController {
     @PostMapping("/addUser")
     public CustomResponseEntity addUser(@RequestBody AddUserDto AddUserDto)
     {
-        return this.adminService.addUser(AddUserDto);
-    @GetMapping("/userList")
-    public CustomResponseEntity userList(){
 
-        return CustomResponseEntity.error("user Api");
+        return this.adminService.addUser(AddUserDto);
     }
 
 //    @Autowired
