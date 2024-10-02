@@ -8,9 +8,11 @@ import org.springframework.http.ResponseEntity;
 
 public interface BillService {
 
-    public ResponseEntity addBiller (BillerDtoRequest request);
+    public CustomResponseEntity addBiller (BillerDtoRequest request);
 
     CustomResponseEntity getBillDetailsByConsumerNumber(String consumerNumber, String serviceCode, String utilityType);
 
     CustomResponseEntity createBill(BillDto billDto);
+
+    CustomResponseEntity getAllBillers();
 }

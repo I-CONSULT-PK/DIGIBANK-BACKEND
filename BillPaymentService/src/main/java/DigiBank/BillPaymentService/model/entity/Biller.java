@@ -1,6 +1,7 @@
 package DigiBank.BillPaymentService.model.entity;
 
 import DigiBank.BillPaymentService.constants.UtilityType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,6 +28,8 @@ public class Biller {
     private UtilityType utilityType;
     private String contactNumber;
     private String address;
+    private String iconUrl;
     @OneToMany(mappedBy = "biller")
+    @JsonIgnore
     private Set<Account> accounts;
 }

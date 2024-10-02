@@ -40,14 +40,36 @@ public class BillServiceImpl implements BillService {
     @Autowired
     private BillerMapper billerMapper;
     @Override
-    public ResponseEntity addBiller(BillerDtoRequest request) {
+    public CustomResponseEntity addBiller(BillerDtoRequest request) {
+
+        if (request.getUtilityType() == null) {
+            return CustomResponseEntity.error( "Utility type must not be null.");
+        }
+
+        if (!isValidUtilityType(request.getUtilityType())) {
+            return CustomResponseEntity.error ("Invalid utility type: " + request.getUtilityType());
+        }
+        if (billerRepository.findByUtilityType(request.getUtilityType()).isPresent()) {
+            return CustomResponseEntity.error("A biller with the utility type " + request.getUtilityType() + " already exists.");
+        }
 
         Biller biller = billerMapper.dtoToEntity(request);
         String serviceCode = Util.generateUniqueServiceCode(request.getName());
         biller.setServiceCode(serviceCode);
         billerRepository.save(biller);
 
-        return ResponseEntity.ok("biller added");
+
+
+        return new CustomResponseEntity(request, "biller added!");
+    }
+    private boolean isValidUtilityType(UtilityType utilityType) {
+
+        for (UtilityType type : UtilityType.values()) {
+            if (type == utilityType) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -146,6 +168,13 @@ public class BillServiceImpl implements BillService {
         bill.setAccount(account);
         Bill savedBill = billRepository.save(bill);
         return new CustomResponseEntity(savedBill,"bill saved");
+    }
+
+    @Override
+    public CustomResponseEntity getAllBillers() {
+
+        List<Biller> billerList = billerRepository.findAll();
+        return new CustomResponseEntity(billerList, "Biller List");
     }
 
     private static BillDto convertToBillDto(Bill bill) {

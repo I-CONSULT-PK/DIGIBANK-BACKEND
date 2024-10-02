@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public class Util {
     public static String generateUniqueServiceCode(String prefix) {
-
+        prefix = prefix.replace(" ", "");
 
         // Get the current timestamp formatted as 'yyyyMMddHHmmss'
 //        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");

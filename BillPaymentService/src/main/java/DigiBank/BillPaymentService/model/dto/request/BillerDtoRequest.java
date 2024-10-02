@@ -19,6 +19,7 @@ public class BillerDtoRequest {
     private String address;
     private String name;
     private UtilityType utilityType;
+    private String iconUrl;
 
 
 }
