@@ -38,23 +38,6 @@ public class AuthConfig {
                                .requestMatchers("/v1/admin/**").hasRole("")
                 ).build();
     }
-/*    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                .requestMatchers("/v1/admin/login").permitAll() // Allow access to login
-                                .requestMatchers("/v1/admin/**").permitAll()    // Allow access to other admin routes
-                                .anyRequest().authenticated()
-                )
-                .formLogin(form -> form
-                        .loginPage("/v1/admin/login")
-                        .permitAll()
-                )
-                .build();
-    }*/
-
-
     @Bean
     public PasswordEncoder passwordEncoder() {
 //        return new BCryptPasswordEncoder();
