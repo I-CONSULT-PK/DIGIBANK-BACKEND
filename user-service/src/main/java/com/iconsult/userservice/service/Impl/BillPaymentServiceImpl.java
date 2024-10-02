@@ -44,6 +44,7 @@ public class BillPaymentServiceImpl implements BillPaymentService {
     private AccountCDDetailsRepository accountCDDetailsRepository;
 
     private final String URL = "http://localhost:8078/v1/billpayment/getBillDetails";
+    private final String billersURL = "http://localhost:8078/v1/billpayment/getBillers";
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -228,6 +229,61 @@ public class BillPaymentServiceImpl implements BillPaymentService {
             // Create an error response
             return CustomResponseEntity.errorResponse(e);
         }
+    }
+
+    @Override
+    public CustomResponseEntity getAllBillProviders() {
+
+        try {
+
+            URI uri = UriComponentsBuilder.fromHttpUrl(billersURL)
+                    .build()
+                    .toUri();
+
+            // Log the full request URL
+            LOGGER.info("Request URL: {}", uri);
+
+            // Set headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Create HttpEntity with headers
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            // Make HTTP GET request
+            ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    CustomResponseEntity.class
+            );
+            CustomResponseEntity<?> responseBody = response.getBody();
+            if (responseBody != null) {
+
+                if (!responseBody.isSuccess()) {
+                    String errorMessage = responseBody.getMessage();
+                    LOGGER.error("Error from response: {}", errorMessage);
+                    return CustomResponseEntity.error("Error from response: " + errorMessage);
+                }
+
+                List<Map<String, Object>> billersList = (List<Map<String, Object>>) responseBody.getData();
+
+                Map<String, Object> billersData = new HashMap<>();
+                billersData.put("biller", billersList);
+
+
+                return new CustomResponseEntity(billersData, "Billers List");
+
+            } else {
+                LOGGER.error("Response body is null");
+                return CustomResponseEntity.error("Response body is null");
+            }
+        }catch (Exception e) {
+            LOGGER.error("An error occurred while getting billers details", e);
+            return CustomResponseEntity.errorResponse(e);
+        }
+
     }
 
 

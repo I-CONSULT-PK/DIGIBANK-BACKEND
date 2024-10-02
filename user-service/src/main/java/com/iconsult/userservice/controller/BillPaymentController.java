@@ -20,6 +20,11 @@ public class BillPaymentController {
     @Autowired
     private BillPaymentService billPaymentService;
 
+    @GetMapping("/getBillers")
+    public CustomResponseEntity getAllBillers(){
+        return this.billPaymentService.getAllBillProviders();
+    }
+
     @PostMapping("/details")
     public ResponseEntity<CustomResponseEntity> getUtilityDetails(
             @RequestParam(name = "consumerNumber")  String consumerNumber,

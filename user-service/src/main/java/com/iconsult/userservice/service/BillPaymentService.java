@@ -8,4 +8,6 @@ import org.springframework.stereotype.Service;
 public interface BillPaymentService  {
 
     CustomResponseEntity getUtilityDetails(String consumerNumber, String serviceCode, String utilityType , BillPaymentDto billPaymentDto);
+
+    CustomResponseEntity getAllBillProviders();
 }
