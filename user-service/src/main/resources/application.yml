@@ -6,10 +6,20 @@ server:
 
 # Database configuration
 spring:
+#  quartz:
+#    job-store-type: jdbc
+#  jdbc:
+#    initialize-schema: never
+#  properties:
+#    org:
+#      quartz:
+#        jobStore:
+#          class: org.quartz.impl.jdbcjobstore.JobStoreTX
+#          driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
 #  kafka:
 #    topic:
 #      name: otp-topic
-#    producer:
+#    producer:z
 #      bootstrap-servers: kafka:9092
 #      key-serializer: org.apache.kafka.common.serialization.StringSerializer
 #      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
