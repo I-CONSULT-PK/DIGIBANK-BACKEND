@@ -1,10 +1,6 @@
 package com.admin_service.config;
 
-<<<<<<< HEAD
 
-=======
-import com.admin_service.service.serviceImpl.JwtUtil;
->>>>>>> admin_branch
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,34 +16,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class AuthConfig {
+
     @Bean
     public UserDetailsService userDetailsService(){
-        return new MyUserDetailsService();
-    }
-
-
-    private final MyUserDetailsService myUserDetailsService;
-    private final JwtUtil jwtUtil;
-
-    public AuthConfig(MyUserDetailsService myUserDetailsService, JwtUtil jwtUtil) {
-        this.myUserDetailsService = myUserDetailsService;
-        this.jwtUtil = jwtUtil;
-    }
-
-    @Bean
-    public JwtRequestFilter jwtRequestFilter() {
-        return new JwtRequestFilter(jwtUtil, myUserDetailsService);
+        return new CustomUserDetailsService();
     }
 
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-<<<<<<< HEAD
         return http.csrf(AbstractHttpConfigurer::disable)  // Disable CSRF protection
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
@@ -56,20 +37,6 @@ public class AuthConfig {
                                 .requestMatchers("/module/**").permitAll()
                                .requestMatchers("/v1/admin/**").hasRole("")
                 ).build();
-=======
-        return http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/v1/admin/login").permitAll()
-                        .requestMatchers("/v1/admin/userList").hasRole("USER")
-                        .requestMatchers("/v1/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .addFilterBefore(jwtRequestFilter(), UsernamePasswordAuthenticationFilter.class)
-                .build();
->>>>>>> admin_branch
     }
 /*    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

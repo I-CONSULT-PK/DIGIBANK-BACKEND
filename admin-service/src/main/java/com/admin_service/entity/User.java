@@ -6,11 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-<<<<<<< HEAD
 import java.time.LocalDate;
-=======
-import java.util.Set;
->>>>>>> admin_branch
 
 @Setter
 @Getter
@@ -31,7 +27,6 @@ public class User {
     private Long resetTokenExpireTime;
     private String sessionToken;
     private Long sessionTokenExpireTime;
-<<<<<<< HEAD
     private String jobType;
     private Boolean multiTenant;
     private String country;
@@ -39,13 +34,4 @@ public class User {
     private LocalDate fromDuration;
     private LocalDate toDuration;
     private Boolean status;
-=======
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles;
-
->>>>>>> admin_branch
 }

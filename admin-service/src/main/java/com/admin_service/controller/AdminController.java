@@ -8,10 +8,6 @@ import com.admin_service.service.JwtService;
 import com.admin_service.service.serviceImpl.AdminServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-<<<<<<< HEAD
-=======
-import org.springframework.security.access.prepost.PreAuthorize;
->>>>>>> admin_branch
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,15 +23,6 @@ public class AdminController {
     public CustomResponseEntity login(@Valid @RequestBody LoginDto loginDto)
     {
         return this.adminService.login(loginDto);
-    }
-    @GetMapping("/list")
-    public CustomResponseEntity getUsers(){
-        return CustomResponseEntity.error("admin Api");
-    }
-
-    @GetMapping("/userList")
-    public CustomResponseEntity userList(){
-        return CustomResponseEntity.error("user Api");
     }
 
     @PostMapping("/addUser")
