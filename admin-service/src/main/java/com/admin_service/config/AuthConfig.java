@@ -43,6 +43,7 @@ public class AuthConfig {
                         authorizeRequests
                                 .requestMatchers("/v1/admin/login").permitAll()
                                 .requestMatchers("/v1/admin/addUser").permitAll()
+                                .requestMatchers("/v1/role/addRole").permitAll()
                                 .requestMatchers("/module/**").permitAll()
                                 .requestMatchers("/v1/admin/userList").hasRole("USER")
                                .requestMatchers("/v1/admin/**").hasRole("ADMIN")
