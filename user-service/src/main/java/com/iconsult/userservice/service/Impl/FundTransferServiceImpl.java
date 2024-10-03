@@ -58,7 +58,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     private final String getAccountTitleURL = "http://localhost:8081/transaction/fetchAccountTitle";
 
-    private final String fundTransferURL = "http://192.168.0.86:8081/transaction/request";
+    private final String fundTransferURL = "http://localhost:8081/transaction/request";
 
     private final String interBankFundTransferURL = "http://localhost:8084/api/v1/1link/creditTransaction";
     @Autowired
