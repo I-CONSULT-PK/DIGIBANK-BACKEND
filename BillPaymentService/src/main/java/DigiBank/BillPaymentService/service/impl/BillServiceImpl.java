@@ -175,7 +175,14 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
-    public CustomResponseEntity getAllBillers(UtilityType utilityType) {
+    public CustomResponseEntity getAllBillers(String utilityTypeParam) {
+
+        UtilityType utilityType;
+        try {
+            utilityType = UtilityType.valueOf(utilityTypeParam.toUpperCase());
+        }catch (IllegalArgumentException ex) {
+            return CustomResponseEntity.error("Invalid Request Param for utility type!");
+        }
 
         List<Biller> billerList = billerRepository.findByUtilityType(utilityType);
 

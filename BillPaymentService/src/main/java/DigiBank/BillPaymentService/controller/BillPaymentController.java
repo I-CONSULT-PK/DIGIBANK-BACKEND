@@ -39,7 +39,7 @@ public class BillPaymentController {
 
 
     @GetMapping("/getBillers")
-    public CustomResponseEntity getBillers(@RequestParam("utilityType") UtilityType utilityType) {
+    public CustomResponseEntity getBillers(@RequestParam("utilityType") String utilityType) {
         return this.billService.getAllBillers(utilityType);
     }
 

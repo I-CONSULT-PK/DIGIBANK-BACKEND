@@ -15,7 +15,7 @@ public interface BillService {
 
     CustomResponseEntity createBill(BillDto billDto);
 
-    CustomResponseEntity getAllBillers(UtilityType utilityType);
+    CustomResponseEntity getAllBillers(String utilityType);
 
     CustomResponseEntity getAllUtilityTypes();
 }
