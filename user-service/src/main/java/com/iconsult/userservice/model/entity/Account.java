@@ -90,6 +90,10 @@ public class Account implements Serializable {
 
     private Double singleDayBillPayLimit;
     private Double singleDayTopUpLimit;
+    private Double singleDayOwnLimit;
+    private Double singleDaySendToOtherBankLimit;
+    private Double singleDayQRLimit;
+
 
     @Override
     public String toString() {
@@ -109,6 +113,12 @@ public class Account implements Serializable {
                 ", cardList=" + cardList +
                 ", accountCdDetails=" + accountCdDetails +
                 ", transactionLimit=" + transactionLimit +
+                ", singleDayLimit=" + singleDayLimit +
+                ", singleDayOwnLimit=" + singleDayOwnLimit +
+                ", singleDayBillPayLimit=" + singleDayBillPayLimit +
+                ", singleDayTopUpLimit=" + singleDayTopUpLimit +
+                ", singleDaySendToOtherBankLimit=" + singleDaySendToOtherBankLimit +
+                ", singleDayQRLimit=" + singleDayQRLimit +
                 '}';
     }
 

@@ -262,13 +262,34 @@ public class SettingServiceImpl implements SettingService {
 
         switch (limitType.toLowerCase()) {
             case "billpay":
-                account.setSingleDayBillPayLimit(limitValue);
+                if(limitValue <= 50000)
+                      account.setSingleDayBillPayLimit(limitValue);
+                else
+                      return CustomResponseEntity.error("The limit cannot exceed fifty thousand");
                 break;
             case "topup":
-                account.setSingleDayTopUpLimit(limitValue);
+                if(limitValue <= 50000)
+                      account.setSingleDayTopUpLimit(limitValue);
+                else
+                      return CustomResponseEntity.error("The limit cannot exceed fifty thousand");
+                break;
+            case "qrpay":
+                if(limitValue <= 150000)
+                      account.setSingleDayQRLimit(limitValue);
+                else
+                      return CustomResponseEntity.error("The limit cannot exceed one lakh fifty thousand");
+                break;
+            case "owntransfer":
+                      account.setSingleDayOwnLimit(limitValue);
+                break;
+            case "singleday":
+                      account.setSingleDayLimit(limitValue);
+                break;
+            case "sendtootherbank":
+                      account.setSingleDaySendToOtherBankLimit(limitValue);
                 break;
             default:
-                return CustomResponseEntity.error("Invalid limit type specified. Use 'billpay' or 'topup'.");
+                      return CustomResponseEntity.error("Invalid limit type specified. Use "+ limitType);
         }
 
         accountGenericDao.saveOrUpdate(account);

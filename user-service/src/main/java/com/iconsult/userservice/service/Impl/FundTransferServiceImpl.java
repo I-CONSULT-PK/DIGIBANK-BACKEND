@@ -265,9 +265,15 @@ public class FundTransferServiceImpl implements FundTransferService {
                         if(senderAccount.get().getTransactionLimit() < cbsTransferDto.getTransferAmount()) {
                             return CustomResponseEntity.error("Account limit is lower than the transfer money");
                         }
-                        if (isTransactionAllowed(senderAccount.get().getAccountNumber(),cbsTransferDto.getTransferAmount(),senderAccount.get().getSingleDayLimit()) == false){
-                            return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+//                        if (isTransactionAllowed(senderAccount.get().getAccountNumber(),cbsTransferDto.getTransferAmount(),senderAccount.get().getSingleDayLimit()) == false){
+//                            return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+//                        }
+                        if(senderAccount.get().getCustomer().getId().equals(receiverAccount.get().getCustomer().getId())){
+                            if (isTransactionAllowed(senderAccount.get().getAccountNumber(),cbsTransferDto.getTransferAmount(),senderAccount.get().getSingleDayOwnLimit()) == false){
+                                return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+                            }
                         }
+
                         // 2. Apply credit and debit logic
                         double senderBalance = senderAccount.get().getAccountBalance();
                         double receiverBalance = receiverAccount.get().getAccountBalance();
@@ -436,9 +442,12 @@ public class FundTransferServiceImpl implements FundTransferService {
 //            map.put("currentBalance", account.get().getAccountBalance());
             return CustomResponseEntity.error("Insufficient balance!");
         }
-        if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDayLimit()) == false){
+        if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDaySendToOtherBankLimit()) == false){
             return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
         }
+//        if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDayLimit()) == false){
+//            return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+//        }
 
 
 //        String jpql = "SELECT c FROM Account c WHERE c.accountNumber = :accountNumber Or c.ibanCode = :accountNumber";
@@ -1007,7 +1016,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
                         transactionsGenericDao.saveOrUpdate(fundsTransferReceiver);
 
-//                        beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount), receiverAccount.get().getCustomer().getId());
+                        beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount), receiverAccount.get().getCustomer().getId());
 
                         LOGGER.info("Request URL: " + "Transaction done");
                         Optional<ScheduledTransactions> scheduledTransactions = scheduledTransactionsRepository.findById(scheduleId);
