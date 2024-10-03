@@ -58,7 +58,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
     private final String getAccountTitleURL = "http://localhost:8081/transaction/fetchAccountTitle";
 
-    private final String fundTransferURL = "http://localhost:8081/transaction/request";
+    private final String fundTransferURL = "http://192.168.0.86:8081/transaction/request";
 
     private final String interBankFundTransferURL = "http://localhost:8084/api/v1/1link/creditTransaction";
     @Autowired
@@ -953,8 +953,10 @@ public class FundTransferServiceImpl implements FundTransferService {
                         accountGenericDao.saveOrUpdate(receiverAccount.get());
 
                         // 3. Log the transfer details (create and save Cbs_Transfer records for sender and receiver)
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        String formattedDate = dateFormat.format(date);
+//                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//                        String formattedDate = dateFormat.format(date);
+                        String input = date.toString();
+                        String inputModified = input.replace ( "T" , " " );
 //                            String formattedDate = LocalDate.now().format(formatter);
 //                        receiverAccount.get().getAccountCdDetails().setCredit(cbsTransferDto.getTransferAmount());
 //                        receiverAccount.get().getAccountCdDetails().setPreviousBalance(receiverAccount.get().getAccountBalance());
@@ -978,7 +980,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setAccount(senderAccount.get());
                         fundsTransferSender.setCurrentBalance(senderBalance);
                         fundsTransferSender.setDebitAmt(cbsTransferDto.getTransferAmount());
-                        fundsTransferSender.setTransactionDate(formattedDate);
+                        fundsTransferSender.setTransactionDate(inputModified);
                         HashMap<String, String> map = (HashMap<String, String>) responseDto.getData();
                         fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
@@ -992,7 +994,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferReceiver.setAccount(receiverAccount.get());
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
-                        fundsTransferReceiver.setTransactionDate(formattedDate);
+                        fundsTransferReceiver.setTransactionDate(inputModified);
                         fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
                         fundsTransferReceiver.setReceiverAccount(receiverAccount.get().getAccountNumber());
@@ -1005,7 +1007,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         transactionsGenericDao.saveOrUpdate(fundsTransferSender);
                         transactionsGenericDao.saveOrUpdate(fundsTransferReceiver);
 
-                        beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount), receiverAccount.get().getCustomer().getId());
+//                        beneficiaryServiceClient.addTransferAmountToBene(receiverAccount.get().getAccountNumber(), String.valueOf(transferAmount), receiverAccount.get().getCustomer().getId());
 
                         LOGGER.info("Request URL: " + "Transaction done");
                         Optional<ScheduledTransactions> scheduledTransactions = scheduledTransactionsRepository.findById(scheduleId);
