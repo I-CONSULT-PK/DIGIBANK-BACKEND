@@ -49,8 +49,12 @@ public class BillServiceImpl implements BillService {
         if (!isValidUtilityType(request.getUtilityType())) {
             return CustomResponseEntity.error ("Invalid utility type: " + request.getUtilityType());
         }
-        if (billerRepository.findByUtilityType(request.getUtilityType()).isPresent()) {
-            return CustomResponseEntity.error("A biller with the utility type " + request.getUtilityType() + " already exists.");
+
+        if(billerRepository.findByContactNumber(request.getContactNumber()).isPresent()){
+            return CustomResponseEntity.error("A biller with the this contactNumber " + request.getContactNumber() + " already exists.");
+        }
+        if (billerRepository.findByName(request.getName()).isPresent()) {
+            return CustomResponseEntity.error("A biller with the this name " + request.getName() + " already exists.");
         }
 
         Biller biller = billerMapper.dtoToEntity(request);
@@ -173,7 +177,7 @@ public class BillServiceImpl implements BillService {
     @Override
     public CustomResponseEntity getAllBillers(UtilityType utilityType) {
 
-        Optional<Biller> billerList = billerRepository.findByUtilityType(utilityType);
+        List<Biller> billerList = billerRepository.findByUtilityType(utilityType);
 
         if(billerList.isEmpty()){
             return CustomResponseEntity.error("No billers found for this utility type!");
