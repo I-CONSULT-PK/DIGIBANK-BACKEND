@@ -1,6 +1,7 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
+import com.iconsult.userservice.Util.EncryptionUtils;
 import com.iconsult.userservice.Util.Util;
 import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.domain.OTP;
@@ -243,7 +244,14 @@ public class CustomerServiceImpl implements CustomerService
         customer.setCnic(signUpDto.getCnic());
         customer.setEmail(signUpDto.getEmail());
         customer.setUserName(signUpDto.getUserName());
-        customer.setPassword(signUpDto.getPassword());
+//        customer.setPassword(signUpDto.getPassword());
+        // Encrypt the password before setting it in the customer entity
+        try {
+            String encryptedPassword = EncryptionUtils.encrypt(signUpDto.getPassword());
+            customer.setPassword(encryptedPassword);
+        } catch (Exception e) {
+            throw new ServiceException("Failed to encrypt password");
+        }
         if(Objects.nonNull(signUpDto.getSecurityPictureId())){
             customer.setSecurityPicture(imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
                 .orElseThrow(() -> new ServiceException("Image does not exist")).getName());
@@ -480,13 +488,22 @@ public class CustomerServiceImpl implements CustomerService
             return CustomResponseEntity.error("Password cannot be null or empty.");
         }
 
-        if (forgetPasswordRequestDto.getPassword().equals(customer.getPassword())) {
-            return CustomResponseEntity.error("Password cannot be the same as the old password.");
+        // Decrypt the saved password to compare
+        try {
+            String decryptedSavedPassword = EncryptionUtils.decrypt(customer.getPassword());
+
+            if (forgetPasswordRequestDto.getPassword().equals(decryptedSavedPassword)) {
+                return CustomResponseEntity.error("Password cannot be the same as the old password.");
+            }
+
+            // Encrypt the new password before setting it in the customer entity
+            String encryptedPassword = EncryptionUtils.encrypt(forgetPasswordRequestDto.getPassword());
+            customer.setPassword(encryptedPassword);
+            customerRepository.save(customer);
+
+        } catch (Exception e) {
+            throw new ServiceException("Error while processing password encryption/decryption");
         }
-
-        customer.setPassword(forgetPasswordRequestDto.getPassword()); // Hash the new password
-
-        customerRepository.save(customer);
 
         // Created response object
         ForgetUserAndPasswordResponse forgetUserAndPasswordResponse = new ForgetUserAndPasswordResponse();
