@@ -6,9 +6,9 @@ import lombok.*;
 @Entity
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Table (name = "Beneficiary")
 public class AddPayee {
     @Id

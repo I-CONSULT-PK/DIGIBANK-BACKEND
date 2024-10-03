@@ -1,111 +1,95 @@
 package com.example.AddPayeeService.Util;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import java.util.Base64;
 
 public class EncrpytionUtil {
 
-    private static final Charset UTF_8 = StandardCharsets.UTF_8;
-    private static final String CIPHER_ALGORITHM = "AES/GCM/NoPadding";
-    private static final String FACTORY_INSTANCE = "PBKDF2WithHmacSHA512";
-    private static final int TAG_LENGTH = 16;
-    private static final int IV_LENGTH = 12;
-    private static final int SALT_LENGTH = 16;
-    private static final int KEY_LENGTH = 32;
-    private static final int ITERATIONS = 65535;
+    // Secret keys for HMAC and AES
+    private static final String HMAC_KEY = "1234567890123456";
+    private static final String AES_KEY = "1234567890123456"; // Must be 16, 24, or 32 bytes
 
-    public static void main(String[] args) throws Exception {
-        System.out.println("AES GCMC 256 String decryption with PBKDF2 derived key");
+    // Encrypt the message
+    public static String encrypt(String message) throws Exception {
+        // Generate AES SecretKey
+        SecretKey aesKey = new SecretKeySpec(AES_KEY.getBytes(StandardCharsets.UTF_8), "AES");
 
-        String masterKey = "your_secure_key";
-        String encryptedData = encrypt(masterKey, "Affan");
-        System.out.println("Encrypted: " + encryptedData);
-        String decryptedText = decrypt(encryptedData, masterKey);
-        System.out.println("Decrypted: " + decryptedText);
+        // Initialize Cipher for AES Encryption
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        byte[] iv = new byte[cipher.getBlockSize()];
+        new SecureRandom().nextBytes(iv);  // Generate IV
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+        cipher.init(Cipher.ENCRYPT_MODE, aesKey, ivParams);
+
+        // Encrypt the message
+        byte[] encryptedBytes = cipher.doFinal(message.getBytes(StandardCharsets.UTF_8));
+        String encryptedMessage = Base64.getEncoder().encodeToString(encryptedBytes);
+
+        // Generate HMAC for the encrypted message
+        Mac mac = Mac.getInstance("HmacSHA256");
+        SecretKey hmacKey = new SecretKeySpec(HMAC_KEY.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        mac.init(hmacKey);
+        byte[] hmacBytes = mac.doFinal(encryptedMessage.getBytes(StandardCharsets.UTF_8));
+        String hmac = Base64.getEncoder().encodeToString(hmacBytes);
+
+        // Combine the encrypted message and the HMAC (including IV as a prefix)
+        String combined = Base64.getEncoder().encodeToString(iv) + ":" + encryptedMessage + ":" + hmac;
+        return combined;
     }
 
-    private static SecretKey getAESKeyFromPassword(char[] password, byte[] salt)
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
-        KeySpec spec = new PBEKeySpec(password, salt, ITERATIONS, KEY_LENGTH * 8);
-        SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
-        return secret;
+    // Decrypt the message
+    public static String decrypt(String combined) throws Exception {
+        String[] parts = combined.split(":");
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Invalid input format.");
+        }
+
+        // Extract IV, encrypted message, and HMAC
+        byte[] iv = Base64.getDecoder().decode(parts[0]);
+        String encryptedMessage = parts[1];
+        String receivedHmac = parts[2];
+
+        // Verify HMAC
+        Mac mac = Mac.getInstance("HmacSHA256");
+        SecretKey hmacKey = new SecretKeySpec(HMAC_KEY.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        mac.init(hmacKey);
+        byte[] calculatedHmacBytes = mac.doFinal(encryptedMessage.getBytes(StandardCharsets.UTF_8));
+        String calculatedHmac = Base64.getEncoder().encodeToString(calculatedHmacBytes);
+
+
+        if (!calculatedHmac.equals(receivedHmac)) {
+            throw new Exception("Invalid HMAC: The message has been tampered with.");
+        }
+
+        // Decrypt the message using AES
+        SecretKey aesKey = new SecretKeySpec(AES_KEY.getBytes(StandardCharsets.UTF_8), "AES");
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+        cipher.init(Cipher.DECRYPT_MODE, aesKey, ivParams);
+
+        byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedMessage));
+        return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
 
-    public static String decrypt(String cipherContent, String password) throws Exception {
-        byte[] decode = Base64.getDecoder().decode(cipherContent.getBytes(UTF_8));
-        ByteBuffer byteBuffer = ByteBuffer.wrap(decode);
+    // Example usage
+    public static void main(String[] args) {
+        try {
+            String message = "zanbeel-7f24cee";
+            String encryptedMessage = encrypt(message);
+            System.out.println("Encrypted Message with HMAC: " + encryptedMessage);
 
-        byte[] salt = new byte[SALT_LENGTH];
-        byteBuffer.get(salt);
+            String decryptedMessage = decrypt(encryptedMessage);
+            System.out.println("Decrypted Message: " + decryptedMessage);
 
-        byte[] iv = new byte[IV_LENGTH];
-        byteBuffer.get(iv);
-
-        byte[] content = new byte[byteBuffer.remaining()];
-        byteBuffer.get(content);
-
-        Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-        SecretKey aesKeyFromPassword = getAESKeyFromPassword(password.toCharArray(), salt);
-        cipher.init(Cipher.DECRYPT_MODE, aesKeyFromPassword, new GCMParameterSpec(TAG_LENGTH * 8, iv));
-        byte[] plainText = cipher.doFinal(content);
-        return new String(plainText, UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Decryption failed: " + e.getMessage());
+        }
     }
-
-    public static String encrypt(String password, String plainMessage) throws Exception {
-        byte[] salt = getRandomNonce(SALT_LENGTH);
-        SecretKey secretKey = getSecretKey(password, salt);
-
-        byte[] iv = getRandomNonce(IV_LENGTH);
-
-        Cipher cipher = initCipher(Cipher.ENCRYPT_MODE, secretKey, iv);
-
-        byte[] encryptedMessageByte = cipher.doFinal(plainMessage.getBytes(UTF_8));
-
-        byte[] cipherByte = ByteBuffer.allocate(salt.length + iv.length + encryptedMessageByte.length)
-                .put(salt)
-                .put(iv)
-                .put(encryptedMessageByte)
-                .array();
-        return Base64.getEncoder().encodeToString(cipherByte);
-    }
-
-    public static byte[] getRandomNonce(int length) {
-        byte[] nonce = new byte[length];
-        new SecureRandom().nextBytes(nonce);
-        return nonce;
-    }
-
-    public static SecretKey getSecretKey(String password, byte[] salt)
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, KEY_LENGTH * 8);
-
-        SecretKeyFactory factory = SecretKeyFactory.getInstance(FACTORY_INSTANCE);
-        return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
-    }
-
-    private static Cipher initCipher(int mode, SecretKey secretKey, byte[] iv) throws InvalidKeyException,
-            InvalidAlgorithmParameterException, NoSuchPaddingException, NoSuchAlgorithmException {
-        Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-        cipher.init(mode, secretKey, new GCMParameterSpec(TAG_LENGTH * 8, iv));
-        return cipher;
-    }
-
 }

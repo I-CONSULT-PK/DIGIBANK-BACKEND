@@ -62,7 +62,7 @@ public class Account implements Serializable {
         this.defaultAccount = defaultAccount;
     }
 
-    @JsonBackReference
+    @JsonManagedReference
     @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Card> cardList;
 //    @ManyToOne

@@ -12,6 +12,7 @@ import com.example.AddPayeeService.repository.AddPayeeRepository;
 import com.example.AddPayeeService.service.AddPayeeService;
 
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+import org.apache.tomcat.util.net.openssl.ciphers.Encryption;
 import org.bouncycastle.openssl.EncryptionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +33,8 @@ import java.util.*;
 public class AddPayeeServiceImpl implements AddPayeeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AddPayeeServiceImpl.class);
-    private final String GetAccountTitle = "http://192.168.0.153:8081/account/getAccount";
-    private final String GetAccountTitle2 = "http://192.168.0.138:8080/account/getAccount";
+    private final String GetAccountTitle = "http://localhost:8084/api/v1/1link/getAccount";
+    private final String GetAccountTitle2 = "http://localhost:8080/account/getAccount";
     private final String getLocalAccountTitleURL = "http://localhost:8081/transaction/fetchAccountTitle";
 
     private final String GetAllBank = "http://localhost:8081/bank";
@@ -65,11 +66,12 @@ public class AddPayeeServiceImpl implements AddPayeeService {
 
             return CustomResponseEntity.error("Beneficiary Data Cannot be null");
         }
-        EncrpytionUtil encrpytionUtil = new EncrpytionUtil();
         List<AddPayee> payees = addPayeeRepository.findAllByCustomerId((long) addPayeeRequestDto.getCustomerId());
         for (AddPayee payee : payees) {
-            String decryptedAccountNumber = encrpytionUtil.decrypt(payee.getAccountNumber(), "t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
-            if (decryptedAccountNumber.equals(addPayeeRequestDto.getAccountNumber()) && payee.getStatus().equals("00")) {
+            String decryptedAccountNumber = EncrpytionUtil.decrypt(payee.getAccountNumber());
+            String decrypt = EncrpytionUtil.decrypt(addPayeeRequestDto.getAccountNumber());
+
+            if (decryptedAccountNumber.equals(decrypt) && payee.getStatus().equals("00")) {
                 return CustomResponseEntity.error("This Account already exists");
             } else if (decryptedAccountNumber.equals(addPayeeRequestDto.getAccountNumber()) && payee.getStatus().equals("11")) {
              AddPayee addPayeeExist = addPayeeRepository.findByAccountNumberAndCustomerId(payee.getAccountNumber(),payee.getCustomerId());
@@ -79,8 +81,8 @@ public class AddPayeeServiceImpl implements AddPayeeService {
                 addPayeeExist.setStatus("00");
                 addPayeeExist.setFlag(addPayeeRequestDto.getFlag());
 
-                String encryptedAccountNumber = encrpytionUtil.encrypt("t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=", payee.getAccountNumber());
-                addPayeeExist.setAccountNumber(encryptedAccountNumber);
+//                String encryptedAccountNumber = EncrpytionUtil.encrypt(payee.getAccountNumber());
+                addPayeeExist.setAccountNumber(decryptedAccountNumber);
                 addPayeeRepository.save(payee);
 
                 Map<String, Object> data = new HashMap<>();
@@ -88,21 +90,27 @@ public class AddPayeeServiceImpl implements AddPayeeService {
                 return response;
             }
         }
-        AddPayee addPayee = addPayeeMapper.dtoToJpe(addPayeeRequestDto);
+//        AddPayee addPayee = addPayeeMapper.dtoToJpe(addPayeeRequestDto);
+        AddPayee addPayee = new AddPayee();
+        addPayee.setBeneficiaryAlias(addPayeeRequestDto.getBeneficiaryAlias());
+        addPayee.setMobileNumber(addPayeeRequestDto.getMobileNumber());
+        addPayee.setCategoryType(addPayeeRequestDto.getCategoryType());
+        addPayee.setCustomerId(addPayeeRequestDto.getCustomerId());
+        addPayee.setBankUrl(addPayeeRequestDto.getBankUrl());
         addPayee.setAccountNumber(addPayeeRequestDto.getAccountNumber());
         addPayee.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
-        addPayee.setAccountType(addPayeeRequestDto.getAccountType());
         addPayee.setFlag(false);
 
         addPayee.setStatus("00");
 
-        String encryptedAccountNumber = encrpytionUtil.encrypt("t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=", addPayee.getAccountNumber());
-        addPayee.setAccountNumber(encryptedAccountNumber);
+//        String encryptedAccountNumber = EncrpytionUtil.encrypt(addPayee.getAccountNumber());
+        addPayee.setAccountNumber(addPayee.getAccountNumber());
         addPayeeRepository.save(addPayee);
 
         Map<String, Object> data = new HashMap<>();
+        data.put("addPayee" , addPayee);
 
-        response = new CustomResponseEntity<>(addPayeeMapper.jpeToDto(addPayee), "Beneficiary added successfully");
+        response = new CustomResponseEntity<>(data.get("addPayee"), "Beneficiary added successfully");
         return response;
     }
 
@@ -420,7 +428,8 @@ public class AddPayeeServiceImpl implements AddPayeeService {
         }else
         {
             for (AddPayee payee : payees) {
-                String decryptedAccountNumber = EncrpytionUtil.decrypt(payee.getAccountNumber(), "t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
+                String decryptedAccountNumber = EncrpytionUtil.decrypt(payee.getAccountNumber());
+
                 if (decryptedAccountNumber.equals(accountNumber) && payee.getStatus().equals("00")) {
                     payee.setLastTransferAmount(transferAmount);
                     addPayeeRepository.save(payee);
