@@ -107,6 +107,12 @@ spring:
             - Path=/v1/packages/**
           filters:
             - name: AuthenticationFilter
+        - id: BILLPAYMENT-SERVICE
+          uri: lb://BILLPAYMENT-SERVICE
+          predicates:
+            - Path=/v1/billpayment/**
+          filters:
+            - name: AuthenticationFilter
 
 
 eureka:

@@ -8,7 +8,7 @@ server:
 spring:
 
   application:
-    name: Bill-Service
+    name: BILLPAYMENT-SERVICE
   datasource:
     url: jdbc:postgresql://192.168.0.196:5432/BillPayment
     username: postgres
