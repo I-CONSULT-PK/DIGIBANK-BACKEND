@@ -65,7 +65,8 @@ public class SettingController {
 
     @PostMapping("/changePassword")
     public CustomResponseEntity changePassword (@RequestParam("customerId") Long id,
-                                                @RequestBody String oldPassword , String newPassword)
+                                                @RequestBody String oldPassword ,
+                                                @RequestBody String newPassword)
             throws Exception {
         return this.settingService.changePassword(id,oldPassword,newPassword);
     }
