@@ -1,5 +1,6 @@
 package com.iconsult.userservice.controller;
 
+import com.iconsult.userservice.model.dto.request.ChangePasswordRequest;
 import com.iconsult.userservice.model.dto.request.CustomerDto;
 import com.iconsult.userservice.model.dto.request.DeactivatePinRequest;
 import com.iconsult.userservice.model.dto.request.SettingDTO;
@@ -65,10 +66,9 @@ public class SettingController {
 
     @PostMapping("/changePassword")
     public CustomResponseEntity changePassword (@RequestParam("customerId") Long id,
-                                                @RequestBody String oldPassword ,
-                                                @RequestBody String newPassword)
+                                                @RequestBody ChangePasswordRequest request)
             throws Exception {
-        return this.settingService.changePassword(id,oldPassword,newPassword);
+        return this.settingService.changePassword(id,request.getOldPassword(),request.getNewPassword());
     }
 
     @PostMapping("/updateProfile")

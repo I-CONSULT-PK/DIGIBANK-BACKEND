@@ -299,30 +299,27 @@ public class SettingServiceImpl implements SettingService {
     public CustomResponseEntity changePassword(Long id, String oldPassword, String newPassword) throws Exception {
         LOGGER.info("oldpassword = "+oldPassword, "newPassword = "+newPassword);
         Customer customer = customerRepository.findById(id).orElse(null);
-        String decryptedOldPassword = EncryptionUtils.decrypt(oldPassword);
-        String decryptedNewPassword = EncryptionUtils.decrypt(newPassword);
         try {
             //**
             //*  NOTE: Must sure password should be encrypted in DB.
             //*
             String newEncryptedPassword;
-            LOGGER.error("oldpassword = "+oldPassword, "newPassword = "+newPassword);
 
             if (Objects.isNull(customer)) {
                 LOGGER.error("Customer does not exist");
                 return CustomResponseEntity.error("Customer does not exist");
             }
-//            if (newPassword == null || newPassword.isEmpty()) {
-//                return CustomResponseEntity.error("New password cannot be null or empty.");
-//            }
-//            if (oldPassword == null || oldPassword.isEmpty()) {
-//                return CustomResponseEntity.error("Old password cannot be null or empty.");
-//            }
+            if (newPassword == null || newPassword.isEmpty()) {
+                return CustomResponseEntity.error("New password cannot be null or empty.");
+            }
+            if (oldPassword == null || oldPassword.isEmpty()) {
+                return CustomResponseEntity.error("Old password cannot be null or empty.");
+            }
 
             // Decrypt the saved password from the database
             String decryptedSavedPassword = EncryptionUtils.decrypt(customer.getPassword());
-//            decryptedOldPassword = EncryptionUtils.decrypt(oldPassword);
-//            decryptedNewPassword = EncryptionUtils.decrypt(newPassword);
+            String decryptedOldPassword = EncryptionUtils.decrypt(oldPassword);
+            String decryptedNewPassword = EncryptionUtils.decrypt(newPassword);
 
             if (!decryptedSavedPassword.equals(decryptedOldPassword)) {
                 LOGGER.error("Old password does not match");
@@ -356,54 +353,6 @@ public class SettingServiceImpl implements SettingService {
         return CustomResponseEntity.builder().message("Password changed successfully").success(true).build();
     }
 
-    /*@Override
-    public CustomResponseEntity changePassword(Long id, String oldPassword,String newPassword) throws Exception {
-        Customer customer = customerRepository.findById(id).orElse(null);
-        try{
-            String newEncryptedPassword;
-            //**
-            //*  NOTE: Here password should be encrypted in DB.
-            //*
-            if(Objects.isNull(customer)){
-                LOGGER.error("customer does not exist");
-                return CustomResponseEntity.error("customer does not exist");
-            }
-            if(newPassword == null || newPassword.isEmpty()){
-                return CustomResponseEntity.error("New password cannot be null or empty.");
-            }
-            if(oldPassword == null || oldPassword.isEmpty()){
-                return CustomResponseEntity.error("Old password cannot be null or empty.");
-            }
-            String decryptedSavedPassword = EncryptionUtil.decrypt(customer.getPassword(),"t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=");
-            if(!decryptedSavedPassword.equals(oldPassword)){
-                LOGGER.error("Old password does not exist");
-                return CustomResponseEntity.error("Old password does not match");
-            }
-            if (decryptedSavedPassword.equals(newPassword)){
-                return CustomResponseEntity.error("Password can not be same as old, Pleae try new one!");
-            }
-            newEncryptedPassword = EncryptionUtil.encrypt("t3dxltZbN3xYbI98nBJX3y6ZYZk1M9cukRIhgIz02mA=",newPassword);
-            customer.setPassword(newEncryptedPassword);
-            customerRepository.save(customer);
-
-
-        }catch (Exception e) {
-            LOGGER.error("Exception occurred: ", e);
-            return CustomResponseEntity.error("change password Exception" + e);
-
-        }
-
-        NotificationEvent notificationEvent = new NotificationEvent();
-        notificationEvent.setNotificationType("UPDATE PIN");
-        notificationEvent.setMessage("you have successfully changed your password!");
-        notificationEvent.setRecipientId(customer.getId());
-        notificationEvent.setChannel("EMAIL");
-        notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
-        notificationEvent.setEmail(customer.getEmail());
-        notificationService.sendNotification(notificationEvent);
-
-        return CustomResponseEntity.builder().message("Password Change Successfully").success(true).build();
-    }*/
     @Override
     public CustomResponseEntity updateProfile(CustomerDto customerDto) {
         Customer customer = customerRepository.findById(customerDto.getClientNo()).orElse(null);
