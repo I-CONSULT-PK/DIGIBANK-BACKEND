@@ -308,12 +308,12 @@ public class SettingServiceImpl implements SettingService {
                 LOGGER.error("Customer does not exist");
                 return CustomResponseEntity.error("Customer does not exist");
             }
-            if (newPassword == null || newPassword.isEmpty()) {
-                return CustomResponseEntity.error("New password cannot be null or empty.");
-            }
-            if (oldPassword == null || oldPassword.isEmpty()) {
-                return CustomResponseEntity.error("Old password cannot be null or empty.");
-            }
+//            if (newPassword == null || newPassword.isEmpty()) {
+//                return CustomResponseEntity.error("New password cannot be null or empty.");
+//            }
+//            if (oldPassword == null || oldPassword.isEmpty()) {
+//                return CustomResponseEntity.error("Old password cannot be null or empty.");
+//            }
 
             // Decrypt the saved password from the database
             String decryptedSavedPassword = EncryptionUtils.decrypt(customer.getPassword());
