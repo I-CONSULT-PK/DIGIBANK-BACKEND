@@ -297,6 +297,7 @@ public class SettingServiceImpl implements SettingService {
     }
     @Override
     public CustomResponseEntity changePassword(Long id, String oldPassword, String newPassword) throws Exception {
+        LOGGER.info("oldpassword = "+oldPassword, "newPassword = "+newPassword);
         Customer customer = customerRepository.findById(id).orElse(null);
         try {
             //**
