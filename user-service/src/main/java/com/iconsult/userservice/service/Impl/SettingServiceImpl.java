@@ -299,6 +299,8 @@ public class SettingServiceImpl implements SettingService {
     public CustomResponseEntity changePassword(Long id, String oldPassword, String newPassword) throws Exception {
         LOGGER.info("oldpassword = "+oldPassword, "newPassword = "+newPassword);
         Customer customer = customerRepository.findById(id).orElse(null);
+        String decryptedOldPassword = EncryptionUtils.decrypt(oldPassword);
+        String decryptedNewPassword = EncryptionUtils.decrypt(newPassword);
         try {
             //**
             //*  NOTE: Must sure password should be encrypted in DB.
@@ -319,8 +321,8 @@ public class SettingServiceImpl implements SettingService {
 
             // Decrypt the saved password from the database
             String decryptedSavedPassword = EncryptionUtils.decrypt(customer.getPassword());
-            String decryptedOldPassword = EncryptionUtils.decrypt(oldPassword);
-            String decryptedNewPassword = EncryptionUtils.decrypt(newPassword);
+//            decryptedOldPassword = EncryptionUtils.decrypt(oldPassword);
+//            decryptedNewPassword = EncryptionUtils.decrypt(newPassword);
 
             if (!decryptedSavedPassword.equals(decryptedOldPassword)) {
                 LOGGER.error("Old password does not match");
