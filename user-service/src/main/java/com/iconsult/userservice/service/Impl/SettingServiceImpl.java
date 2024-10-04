@@ -317,19 +317,21 @@ public class SettingServiceImpl implements SettingService {
 
             // Decrypt the saved password from the database
             String decryptedSavedPassword = EncryptionUtils.decrypt(customer.getPassword());
+            String decryptedOldPassword = EncryptionUtils.decrypt(oldPassword);
+            String decryptedNewPassword = EncryptionUtils.decrypt(newPassword);
 
-            if (!decryptedSavedPassword.equals(oldPassword)) {
+            if (!decryptedSavedPassword.equals(decryptedOldPassword)) {
                 LOGGER.error("Old password does not match");
                 return CustomResponseEntity.error("Old password does not match");
             }
 
-            if (decryptedSavedPassword.equals(newPassword)) {
+            if (decryptedOldPassword.equals(decryptedNewPassword)) {
                 return CustomResponseEntity.error("Password cannot be the same as the old one, please try a new one!");
             }
 
             // Encrypt the new password and update the customer entity
-            newEncryptedPassword = EncryptionUtils.encrypt(newPassword);
-            customer.setPassword(newEncryptedPassword);
+//            newEncryptedPassword = EncryptionUtils.encrypt(newPassword);
+            customer.setPassword(newPassword);
             customerRepository.save(customer);
 
         } catch (Exception e) {
