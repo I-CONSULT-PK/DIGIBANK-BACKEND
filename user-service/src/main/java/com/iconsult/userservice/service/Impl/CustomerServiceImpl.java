@@ -310,7 +310,12 @@ public class CustomerServiceImpl implements CustomerService
                 return response;
             }
 
-            if (customer.getPassword().equals(loginDto.getPassword()) &&
+            try {
+                // Decrypt the provided login password
+                String decryptLoginPassword = EncryptionUtils.decrypt(loginDto.getPassword());
+                String decryptedSavedPassword = EncryptionUtils.decrypt(customer.getPassword());
+
+            if (decryptedSavedPassword.equals(decryptLoginPassword) &&
                     (loginDto.getSecurityImage() == null || customer.getSecurityPicture().equals(loginDto.getSecurityImage()))) {
                 // JWT Implementation Starts
                 Authentication authentication =
@@ -353,6 +358,9 @@ public class CustomerServiceImpl implements CustomerService
             } else {
                 throw new ServiceException("Invalid Password or Security Image");
             }
+        } catch (Exception e) {
+            throw new ServiceException("Error during password encryption or decryption");
+        }
         }
 
         throw new ServiceException("Customer does not exist");
