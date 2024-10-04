@@ -55,10 +55,18 @@ public class SettingController {
         return this.settingService.setDailyLimit(accountNumber, customerId, limitValue, limitType);
     }
 
-    @PostMapping("/changePassword")
+/*    @PostMapping("/changePassword")
     public CustomResponseEntity changePassword (@RequestParam("customerId") Long id,
                                                 @RequestParam("oldPassword") String oldPassword ,
                                                 @RequestParam("newPassword") String newPassword)
+            throws Exception {
+        return this.settingService.changePassword(id,oldPassword,newPassword);
+    }*/
+
+    @PostMapping("/changePassword")
+    public CustomResponseEntity changePassword (@RequestParam("customerId") Long id,
+                                                @RequestBody String oldPassword ,
+                                                @RequestBody String newPassword)
             throws Exception {
         return this.settingService.changePassword(id,oldPassword,newPassword);
     }
