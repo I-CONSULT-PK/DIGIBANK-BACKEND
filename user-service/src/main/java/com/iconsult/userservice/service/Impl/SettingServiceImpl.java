@@ -303,6 +303,7 @@ public class SettingServiceImpl implements SettingService {
             //*  NOTE: Must sure password should be encrypted in DB.
             //*
             String newEncryptedPassword;
+            LOGGER.error("oldpassword = "+oldPassword, "newPassword = "+newPassword);
 
             if (Objects.isNull(customer)) {
                 LOGGER.error("Customer does not exist");
