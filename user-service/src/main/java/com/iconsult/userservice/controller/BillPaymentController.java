@@ -2,6 +2,7 @@ package com.iconsult.userservice.controller;
 
 
 import com.iconsult.userservice.model.dto.request.BillPaymentDto;
+import com.iconsult.userservice.model.dto.request.ScheduleBillPaymentRequest;
 import com.iconsult.userservice.service.BillPaymentService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.constraints.NotEmpty;
@@ -40,6 +41,25 @@ public class BillPaymentController {
         try {
             // Call service method to process the request
             CustomResponseEntity response = billPaymentService.getUtilityDetails(consumerNumber, serviceCode, utilityType,billPaymentDto);
+
+            // Return the response with HTTP 200 OK
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        } catch (Exception e) {
+
+            // Return an error response with HTTP 500 Internal Server Error
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/scheduleBillPay")
+    public ResponseEntity<CustomResponseEntity> schdeuleBillPayment(
+            @RequestBody ScheduleBillPaymentRequest scheduleBillPaymentRequest
+            ) {
+
+        try {
+            // Call service method to process the request
+            CustomResponseEntity response = billPaymentService.schdeuleUtilityBillPay(scheduleBillPaymentRequest);
 
             // Return the response with HTTP 200 OK
             return new ResponseEntity<>(response, HttpStatus.OK);

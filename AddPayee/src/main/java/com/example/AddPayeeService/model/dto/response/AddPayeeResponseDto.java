@@ -3,16 +3,14 @@ package com.example.AddPayeeService.model.dto.response;
 import java.io.Serializable;
 
 import com.example.AddPayeeService.model.entity.AddPayee;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
+@Getter
+@Setter
 public class AddPayeeResponseDto  {
     private Long id;
     private String beneficiaryName;
@@ -30,8 +28,8 @@ public class AddPayeeResponseDto  {
     private String categoryType;
     private int categoryId;
     private String bankUrl;
-
     private Boolean flag;
+    private String bankCode;
 
     public Boolean getFlag() {
         return flag;
@@ -167,5 +165,13 @@ public class AddPayeeResponseDto  {
 
     public void setBankUrl(String bankUrl) {
         this.bankUrl = bankUrl;
+    }
+
+    public String getBankCode() {
+        return bankCode;
+    }
+
+    public void setBankCode(String bankCode) {
+        this.bankCode = bankCode;
     }
 }

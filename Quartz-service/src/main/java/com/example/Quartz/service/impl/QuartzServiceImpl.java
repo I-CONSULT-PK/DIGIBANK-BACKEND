@@ -1,10 +1,14 @@
 package com.example.Quartz.service.impl;
 
 
+import com.example.Quartz.config.BillPaymentJobExecutor;
 import com.example.Quartz.config.MyJobExecutor;
+import com.example.Quartz.model.dto.request.ScheduleBillPaymentRequest;
 import com.example.Quartz.model.dto.request.ScheduleFundTransferDto;
 import com.example.Quartz.model.dto.response.CbsAccountDto;
+import com.example.Quartz.model.entity.ScheduleBillPayment;
 import com.example.Quartz.model.entity.ScheduledTransactions;
+import com.example.Quartz.repository.SchdeuledBillPaymentRepository;
 import com.example.Quartz.repository.ScheduledTransactionsRepository;
 import com.example.Quartz.service.QuartzService;
 
@@ -46,6 +50,9 @@ public class QuartzServiceImpl implements QuartzService {
     private Scheduler scheduler;
     @Autowired
     private ScheduledTransactionsRepository scheduledTransactionsRepository;
+
+    @Autowired
+    private SchdeuledBillPaymentRepository schdeuledBillPaymentRepository;
 
     @Override
     public CustomResponseEntity scheduleFundTransfer(ScheduleFundTransferDto fundTransferDto, String bearerToken) throws SchedulerException {
@@ -97,5 +104,44 @@ public class QuartzServiceImpl implements QuartzService {
             LOGGER.info("Account not found! {}", exception.getMessage());
             return CustomResponseEntity.error("Cbs Account not found!");
         }
+    }
+
+    @Override
+    public CustomResponseEntity scheduleBillPayment(ScheduleBillPaymentRequest scheduleBillPaymentRequest, String bearerToken) throws SchedulerException {
+        try {
+        ScheduleBillPayment scheduleBillPayment = new ScheduleBillPayment();
+        scheduleBillPayment.setAccountNumber(scheduleBillPaymentRequest.getAccountNumber());
+        scheduleBillPayment.setConsumerNumber(scheduleBillPaymentRequest.getConsumerNumber());
+        scheduleBillPayment.setUtilityType(scheduleBillPaymentRequest.getUtilityType());
+        scheduleBillPayment.setServiceCode(scheduleBillPaymentRequest.getServiceCode());
+        scheduleBillPayment.setBillPaymentDate(scheduleBillPaymentRequest.getLocalDate().toString());
+        scheduleBillPayment.setStatus("In Progress");
+        ScheduleBillPayment scheduleBill= schdeuledBillPaymentRepository.save(scheduleBillPayment);
+        scheduleBillPaymentRequest.setScheduledId(scheduleBill.getId());
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("scheduleBillPaymentRequest", scheduleBillPaymentRequest);
+
+        JobDetail job = newJob(BillPaymentJobExecutor.class)
+                .withIdentity("jobIdentity-"+scheduleBill.getId())
+                .usingJobData(jobDataMap)
+                .build();
+        Date startAt = Date.from(scheduleBillPaymentRequest.getLocalDate().atZone(ZoneId.systemDefault()).toInstant());
+        Trigger trigger = newTrigger()
+                .withIdentity("triggerIdentity-"+scheduleBill.getId())
+                .startAt(startAt)
+                .withSchedule(simpleSchedule()
+                        .withIntervalInSeconds(60)
+                        .withRepeatCount(1)
+                        .withMisfireHandlingInstructionNextWithRemainingCount()
+                )
+                .build();
+            scheduler.scheduleJob(job, trigger);
+            LOGGER.info("Bill Payment Scheduled");
+        LOGGER.info("Bill Payment Scheduled");
+        return new CustomResponseEntity(scheduleBillPaymentRequest,"Success");
+    } catch (Exception exception) {
+        LOGGER.info("Bill Payment Failed {}", exception.getMessage());
+        return CustomResponseEntity.error("Bill Payment Failed");
+    }
     }
 }

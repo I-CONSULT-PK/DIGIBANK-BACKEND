@@ -66,6 +66,12 @@ public class AddPayeeServiceImpl implements AddPayeeService {
 
             return CustomResponseEntity.error("Beneficiary Data Cannot be null");
         }
+        String checkaccountNumber = EncrpytionUtil.decrypt(addPayeeRequestDto.getAccountNumber());
+        String decrypt1 = EncrpytionUtil.decrypt(addPayeeRequestDto.getOwnAccount());
+        if(checkaccountNumber.equals(decrypt1)){
+            return CustomResponseEntity.error("Beneficiary cannot be added to Same Account");
+
+        }
         List<AddPayee> payees = addPayeeRepository.findAllByCustomerId((long) addPayeeRequestDto.getCustomerId());
         for (AddPayee payee : payees) {
             String decryptedAccountNumber = EncrpytionUtil.decrypt(payee.getAccountNumber());
@@ -79,7 +85,9 @@ public class AddPayeeServiceImpl implements AddPayeeService {
                 addPayeeExist.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
                 addPayeeExist.setAccountType(addPayeeRequestDto.getAccountType());
                 addPayeeExist.setStatus("00");
+                addPayeeExist.setBeneficiaryBankName(addPayeeRequestDto.getBeneficiaryBankName());
                 addPayeeExist.setFlag(addPayeeRequestDto.getFlag());
+                addPayeeExist.setBankCode(addPayeeRequestDto.getBankCode());
 
 //                String encryptedAccountNumber = EncrpytionUtil.encrypt(payee.getAccountNumber());
                 addPayeeExist.setAccountNumber(decryptedAccountNumber);
@@ -97,8 +105,10 @@ public class AddPayeeServiceImpl implements AddPayeeService {
         addPayee.setCategoryType(addPayeeRequestDto.getCategoryType());
         addPayee.setCustomerId(addPayeeRequestDto.getCustomerId());
         addPayee.setBankUrl(addPayeeRequestDto.getBankUrl());
+        addPayee.setBeneficiaryBankName(addPayeeRequestDto.getBeneficiaryBankName());
         addPayee.setAccountNumber(addPayeeRequestDto.getAccountNumber());
         addPayee.setBeneficiaryName(addPayeeRequestDto.getBeneficiaryName());
+        addPayee.setBankCode(addPayeeRequestDto.getBankCode());
         addPayee.setFlag(false);
 
         addPayee.setStatus("00");
@@ -162,6 +172,7 @@ public class AddPayeeServiceImpl implements AddPayeeService {
                 addPayeeResponse.setAccountNumber(fetchAccount.getAccountNumber());
                 addPayeeResponse.setAccountType(fetchAccount.getAccountType());
                 addPayeeResponse.setBeneficiaryName(fetchAccount.getAccountTitle());
+//                addPayeeResponse.setBeneficiaryBankName(fetchAccount.getBankName());
                 return new CustomResponseEntity<CbsAccountDto>(fetchAccount,"Banks reterived successfully");
             }
 //            else {

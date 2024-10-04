@@ -27,6 +27,7 @@ public class CbsAccountDto implements Serializable{
     private String accountClosedReason;
     private String proofOfIncome;
     private String branchCode;
+    private String bankName;
 
     public CbsAccountDto() {
 

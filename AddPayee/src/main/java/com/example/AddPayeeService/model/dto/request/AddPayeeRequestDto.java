@@ -28,6 +28,8 @@ public class AddPayeeRequestDto {
     private int customerId;
     private String bankUrl;
     private Boolean flag;
+    private String bankCode;
+    private String ownAccount;
 
     public Boolean getFlag() {
         return flag;

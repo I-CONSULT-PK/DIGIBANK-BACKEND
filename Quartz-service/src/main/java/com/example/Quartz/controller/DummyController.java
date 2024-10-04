@@ -1,6 +1,7 @@
 package com.example.Quartz.controller;
 
 
+import com.example.Quartz.model.dto.request.ScheduleBillPaymentRequest;
 import com.example.Quartz.model.dto.request.ScheduleFundTransferDto;
 import com.example.Quartz.service.QuartzService;
 import com.zanbeel.customUtility.exception.GlobalExceptionHandler;
@@ -20,5 +21,11 @@ public class DummyController extends GlobalExceptionHandler {
     @PostMapping("/scheduleFundTransfer")
     public CustomResponseEntity getAllBanks(@Valid @RequestBody ScheduleFundTransferDto fundTransferDto,  @RequestHeader("Authorization") String bearerToken) throws SchedulerException {
         return this.quartzService.scheduleFundTransfer(fundTransferDto,bearerToken);
+    }
+
+
+    @PostMapping("/billPaymentTransfer")
+    public CustomResponseEntity billPaymentTrasnfer(@Valid @RequestBody ScheduleBillPaymentRequest scheduleBillPaymentRequest, @RequestHeader("Authorization") String bearerToken) throws SchedulerException {
+        return this.quartzService.scheduleBillPayment(scheduleBillPaymentRequest,bearerToken);
     }
 }

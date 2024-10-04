@@ -31,6 +31,9 @@ public class Bank implements Serializable {
     @JsonIgnore
     private Boolean isActive;
 
+    @Column(name = "short_Bank")
+    private  String shortBank;
+
     @Override
     public String toString() {
         return "Bank{" +

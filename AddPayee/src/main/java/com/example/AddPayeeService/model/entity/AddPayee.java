@@ -59,6 +59,9 @@ public class AddPayee {
     private int customerId;
     private String bankUrl;
 
+    @Column(name = "bank_Code")
+    private String bankCode;
+
     public Boolean getFlag() {
         return flag;
     }
@@ -178,5 +181,13 @@ public class AddPayee {
 
     public void setBankUrl(String bankUrl) {
         this.bankUrl = bankUrl;
+    }
+
+    public String getBankCode() {
+        return bankCode;
+    }
+
+    public void setBankCode(String bankCode) {
+        this.bankCode = bankCode;
     }
 }

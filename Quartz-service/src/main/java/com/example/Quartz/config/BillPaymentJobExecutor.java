@@ -1,8 +1,8 @@
 package com.example.Quartz.config;
 
-
+import com.example.Quartz.model.dto.request.ScheduleBillPaymentRequest;
 import com.example.Quartz.model.dto.request.ScheduleFundTransferDto;
-
+import com.example.Quartz.model.entity.ScheduleBillPayment;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -11,12 +11,7 @@ import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
@@ -24,31 +19,17 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Component
-public class MyJobExecutor implements Job {
+public class BillPaymentJobExecutor implements Job {
+
+    private final String scheduleTransferUrl = "http://localhost:8088/v1/billPayment/scheduleBillPay";
+
     @Autowired
     RestTemplate restTemplate;
 
-    private final String getAccountTitleURL = "http://localhost:8081/transaction/fetchAccountTitle";
-
-    private final String fundTransferURL = "http://192.168.0.86:8081/transaction/request";
-
-    private final String scheduleTransferUrl = "http://localhost:8088/v1/customer/fund/scheduleFundTransfer";
-
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MyJobExecutor.class);
-
     @Override
     @Transactional
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -60,7 +41,7 @@ public class MyJobExecutor implements Job {
 //        String purpose = (String) jobDataMap.get("purpose");
 //        Date date = (Date) jobDataMap.get("date");
 //        Long scheduleId = (Long) jobDataMap.get("scheduleId");
-        ScheduleFundTransferDto fundTransferDto = (ScheduleFundTransferDto) jobDataMap.get("fundTransferDto");
+        ScheduleBillPaymentRequest scheduleBillPaymentRequest = (ScheduleBillPaymentRequest) jobDataMap.get("scheduleBillPaymentRequest");
         try {
             URI uri = UriComponentsBuilder.fromHttpUrl(scheduleTransferUrl)
                     .build()
@@ -75,7 +56,7 @@ public class MyJobExecutor implements Job {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
             // Create HttpEntity with Cbs_TransferDto as the body and headers
-            HttpEntity<ScheduleFundTransferDto> entity = new HttpEntity<>(fundTransferDto, headers);
+            HttpEntity<ScheduleBillPaymentRequest> entity = new HttpEntity<>(scheduleBillPaymentRequest, headers);
 
             // Make HTTP POST request
             ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
@@ -85,7 +66,7 @@ public class MyJobExecutor implements Job {
                     CustomResponseEntity.class
             );
             if (response.getStatusCode() == HttpStatus.OK) {
-                LOGGER.info("Scheduled Transaction done from account :" +fundTransferDto.getSenderAccountNumber()+ " " + fundTransferDto.getReceiverAccountNumber());
+                LOGGER.info("Scheduled Transaction done from account :" +scheduleBillPaymentRequest.getAccountNumber()+ " " + scheduleBillPaymentRequest.getAccountNumber());
             }
         } catch (RestClientException e) {
             LOGGER.error("Error occurred while doing  Scheduled Transaction from account :" + e.getMessage());
@@ -95,7 +76,4 @@ public class MyJobExecutor implements Job {
 
     }
 
-
-
 }
-
