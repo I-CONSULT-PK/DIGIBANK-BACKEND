@@ -273,6 +273,12 @@ public class FundTransferServiceImpl implements FundTransferService {
                                 return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
                             }
                         }
+                        if(cbsTransferDto.getSingleDayQRLimit().equals("qrpay")){
+                            if (isTransactionAllowed(senderAccount.get().getAccountNumber(),cbsTransferDto.getTransferAmount(),senderAccount.get().getSingleDayQRLimit()) == false){
+                                return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+                            }
+                        }
+
 
                         // 2. Apply credit and debit logic
                         double senderBalance = senderAccount.get().getAccountBalance();

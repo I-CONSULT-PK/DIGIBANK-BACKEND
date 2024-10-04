@@ -15,6 +15,7 @@ public class FundTransferDto {
     private String bankName;
     @NotNull(message = "Purpose Required")
     private String purpose;
+    private String singleDayQRLimit;
 
     @NotNull(message = "Transaction amount required")
     @DecimalMin(value = "1.0", inclusive = true, message = "Transaction amount must be at least 1")
