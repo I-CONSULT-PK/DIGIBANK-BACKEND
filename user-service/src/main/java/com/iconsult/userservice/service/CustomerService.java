@@ -21,7 +21,7 @@ public interface CustomerService
 
     Customer findByCnic(String cnic);
 
-    CustomResponseEntity login(LoginDto loginDto);
+    CustomResponseEntity login(LoginDto loginDto) throws Exception;
 
     void deleteUser(Long id);
 

@@ -292,7 +292,7 @@ public class CustomerServiceImpl implements CustomerService
 
 
     @Override
-    public CustomResponseEntity login(LoginDto loginDto) {
+    public CustomResponseEntity login(LoginDto loginDto) throws Exception {
         ImageVerification imageVerification = null;
         if(loginDto.getImageVerificationId() != null) {
             imageVerification = imageVerificationRepository.findById(loginDto.getImageVerificationId()).orElse(null);
@@ -310,7 +310,7 @@ public class CustomerServiceImpl implements CustomerService
                 return response;
             }
 
-            try {
+//            try {
                 // Decrypt the provided login password
                 String decryptLoginPassword = EncryptionUtils.decrypt(loginDto.getPassword());
                 String decryptedSavedPassword = EncryptionUtils.decrypt(customer.getPassword());
@@ -319,7 +319,7 @@ public class CustomerServiceImpl implements CustomerService
                     (loginDto.getSecurityImage() == null || customer.getSecurityPicture().equals(loginDto.getSecurityImage()))) {
                 // JWT Implementation Starts
                 Authentication authentication =
-                        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmailorUsername(), loginDto.getPassword()));
+                        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getEmailorUsername(), customer.getPassword()));
                 String email = authentication.getName();
                 String token = jwtService.generateToken(email);
                 LOGGER.info("Token = " + token);
@@ -358,9 +358,9 @@ public class CustomerServiceImpl implements CustomerService
             } else {
                 throw new ServiceException("Invalid Password or Security Image");
             }
-        } catch (Exception e) {
-            throw new ServiceException("Error during password encryption or decryption");
-        }
+//        } catch (Exception e) {
+//            throw new ServiceException("Error during password encryption or decryption");
+//        }
         }
 
         throw new ServiceException("Customer does not exist");
