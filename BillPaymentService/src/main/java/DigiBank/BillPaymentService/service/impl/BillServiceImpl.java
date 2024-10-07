@@ -138,6 +138,10 @@ public class BillServiceImpl implements BillService {
           //  Bill bill = billRepository.findBillsByAccountAndBillerServiceCodeAndBillerUtilityType(account, serviceCode, utilityType);
             Bill bill = billRepository.findBillsByAccountAndBillerServiceCodeAndBillerUtilityType(account, serviceCode, utilityType);
 
+            if (bill == null) {
+                return CustomResponseEntity.error("Bill not found or already paid!");
+            }
+
             if (bill.getStatus() == BillStatus.PAID) {
 
                 Optional<BillPayment> billPayment = bill.getBillPayments().stream()
@@ -148,12 +152,6 @@ public class BillServiceImpl implements BillService {
                 BillPaymentDto paymentDto = convertToBillPaymentDto(billPayment.get());
                 return  new CustomResponseEntity(paymentDto, "Already Paid!");
             }
-
-            if (bill == null) {
-                return CustomResponseEntity.error("Bill not found or already paid!");
-            }
-
-
 
             // Prepare the response for unpaid bill
             BillDtoResponse response = new BillDtoResponse();
