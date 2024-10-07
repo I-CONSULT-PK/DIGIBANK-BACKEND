@@ -16,5 +16,7 @@ public interface DeviceService {
     CustomResponseEntity loginWithPin(/*Long customerId,*/ String devicePin, String uniquePin);
 
     CustomResponseEntity fetchDeviceRegister(String customerId);
+    CustomResponseEntity deleteDevice(Long deviceId);
+
 
 }

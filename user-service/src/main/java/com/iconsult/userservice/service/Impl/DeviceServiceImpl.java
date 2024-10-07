@@ -26,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -203,8 +204,7 @@ public class DeviceServiceImpl implements DeviceService {
 
 //        Customer customer = customerRepository.findById(customerId).orElse();
 
-        try
-        {
+        try {
            /* // Check if the customer exists
             Customer customer = customerRepository.findById(customerId)
                     .orElseThrow(() -> new ServiceException("Account not found"));*/
@@ -239,7 +239,6 @@ public class DeviceServiceImpl implements DeviceService {
 //            }
 
 
-
             // JWT Implementation Starts
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(customer.getUserName(), customer.getPassword())
@@ -266,9 +265,7 @@ public class DeviceServiceImpl implements DeviceService {
 
             return new CustomResponseEntity<>(data, "Customer logged in successfully");
 
-        }
-
-        catch (ServiceException e) {
+        } catch (ServiceException e) {
             // Handle specific service exceptions
             LOGGER.error("ServiceException occurred: ", e);
             return CustomResponseEntity.error(e.getMessage());
@@ -293,11 +290,10 @@ public class DeviceServiceImpl implements DeviceService {
                 LOGGER.error("Device already exists");
                 return CustomResponseEntity.error("Device already exists");
             }
-            if(device == null)
-            {
+            if (device == null) {
                 String pin = settingDTO.getDevicePin();
 
-                if(!pin.matches("\\d{4}")){
+                if (!pin.matches("\\d{4}")) {
                     LOGGER.error("Pin must be exactly 4 digits");
                     return CustomResponseEntity.error("Pin must be exactly 4 digits");
                 }
@@ -321,18 +317,17 @@ public class DeviceServiceImpl implements DeviceService {
                 dv.setPublic_key(settingDTO.getPublicKey());
                 deviceRepository.save(dv);
                 LOGGER.error("Device Registered with Customer successfully...");
-                return new CustomResponseEntity<>(dv.getId(),"Device Registered with Customer successfully...");
+                return new CustomResponseEntity<>(dv.getId(), "Device Registered with Customer successfully...");
             }
 
-        }
-        catch (EntityNotFoundException e) {
+        } catch (EntityNotFoundException e) {
             // Handle case where the device is not found
             LOGGER.error("EntityNotFoundException occurred: ", e);
-            return CustomResponseEntity.error(e.getMessage()+" Failed Register Device! ");
+            return CustomResponseEntity.error(e.getMessage() + " Failed Register Device! ");
         } catch (Exception e) {
             // Handle any other unexpected exceptions
             LOGGER.error("Exception occurred: ", e);
-            return CustomResponseEntity.error(e.getMessage()+" Failed Register Device!");
+            return CustomResponseEntity.error(e.getMessage() + " Failed Register Device!");
         }
         return null;
     }
@@ -394,11 +389,19 @@ public class DeviceServiceImpl implements DeviceService {
         }
     }
 
-}
+    @Override
+    public CustomResponseEntity deleteDevice(Long deviceId) {
+        Optional<Device> device = Optional.ofNullable(deviceRepository.findById(deviceId).orElseThrow(() -> new ServiceException("Invalid Device Id")));
+        if(device.isPresent()){
+            deviceRepository.deleteById(deviceId);
+            return new CustomResponseEntity(device," is deleted Successfully");
+        }
+        return CustomResponseEntity.error("Invalid device id ");
+    }
 //    private void associateCustomerWithDevice(Customer customer, Device device) {
-        ////        customer.setDevice(device);
-        //        device.setCustomer(customer);
-        //    }
+    ////        customer.setDevice(device);
+    //        device.setCustomer(customer);
+    //    }
 
 
 //    public boolean verifyDevice(String deviceId, String verificationCode) {
@@ -436,5 +439,5 @@ public class DeviceServiceImpl implements DeviceService {
 //    private String generateVerificationCode() {
 //        return String.format("%06d", (int) (Math.random() * 1000000));
 //    }
-
+}
 

@@ -43,7 +43,7 @@ public class ModuleServiceImpl implements ModuleService {
         hdrAdModule.setModuleTxt(createModuleDto.getModuleTxt());
         hdrAdModule.setSysDateTime(new Date());
         HdrAdModule savedModule = moduleRepository.save(hdrAdModule);
-        return new CustomResponseEntity(savedModule,"Module Saved succesfully");
+        return new CustomResponseEntity(savedModule,"Module Saved successfully");
 
     }
 
@@ -103,13 +103,13 @@ public class ModuleServiceImpl implements ModuleService {
     @Override
     public CustomResponseEntity getUtDocTypeById(Long id) {
         Optional<UtDocTypeSetup> docType = utDocTypeSetupRepository.findById(id);
-        return new CustomResponseEntity(docType, "Succesfully fetched doctype against id " + id);
+        return new CustomResponseEntity(docType, "Successfully fetched doctype against id " + id);
     }
 
     @Override
     public CustomResponseEntity getUtDocSubTypeById(Long id) {
         Optional<UtDocSubtypeSetup> subDocType = utSubDocTypeSetupRepository.findById(id);
-        return new CustomResponseEntity(subDocType,"Succesfully fetch doctype against id " + id);
+        return new CustomResponseEntity(subDocType,"Successfully fetch doctype against id " + id);
     }
 
 
