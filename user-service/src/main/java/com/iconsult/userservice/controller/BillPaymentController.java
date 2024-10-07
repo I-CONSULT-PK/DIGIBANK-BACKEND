@@ -31,16 +31,14 @@ public class BillPaymentController {
         return this.billPaymentService.getUtilityTypes();
     }
 
-    @PostMapping("/details")
+    @PostMapping("/payBill")
     public ResponseEntity<CustomResponseEntity> getUtilityDetails(
-            @RequestParam(name = "consumerNumber")  String consumerNumber,
-            @RequestParam(name = "serviceCode")  String serviceCode,
-            @RequestParam(name = "utilityType")  String utilityType,
-            @RequestBody BillPaymentDto billPaymentDto) {
+            @RequestParam(name = "billId")  Long billId,
+            @RequestParam(name = "accountNumber") String accountNumber) {
 
         try {
             // Call service method to process the request
-            CustomResponseEntity response = billPaymentService.getUtilityDetails(consumerNumber, serviceCode, utilityType,billPaymentDto);
+            CustomResponseEntity response = billPaymentService.payBill(billId,accountNumber);
 
             // Return the response with HTTP 200 OK
             return new ResponseEntity<>(response, HttpStatus.OK);

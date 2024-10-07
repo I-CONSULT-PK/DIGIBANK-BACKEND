@@ -24,7 +24,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -44,7 +43,7 @@ public class BillPaymentServiceImpl implements BillPaymentService {
     @Autowired
     private AccountCDDetailsRepository accountCDDetailsRepository;
 
-    private final String URL = "http://localhost:8078/v1/billpayment/getBillDetails";
+    private final String URL = "http://localhost:8078/v1/billpayment/payBill";
     private final String billersURL = "http://localhost:8078/v1/billpayment/getBillers";
     private final String utilitiesURL = "http://localhost:8078/v1/billpayment/getUtilityTypes";
 
@@ -55,13 +54,11 @@ public class BillPaymentServiceImpl implements BillPaymentService {
     private TransactionRepository transactionRepository;
 
     @Override
-    public CustomResponseEntity<Object> getUtilityDetails(String consumerNumber, String serviceCode, String utilityType, BillPaymentDto billPaymentDto) {
+    public CustomResponseEntity<Object> payBill(Long billId, String accountNumber) {
         try {
             // Build URL with query parameters
             URI uri = UriComponentsBuilder.fromHttpUrl(URL)
-                    .queryParam("consumerNumber", consumerNumber)
-                    .queryParam("serviceCode", serviceCode)
-                    .queryParam("utilityType", utilityType)
+                    .queryParam("billId", billId)
                     .build()
                     .toUri();
 
@@ -79,7 +76,7 @@ public class BillPaymentServiceImpl implements BillPaymentService {
             // Make HTTP GET request
             ResponseEntity<CustomResponseEntity> response = restTemplate.exchange(
                     uri,
-                    HttpMethod.GET,
+                    HttpMethod.POST,
                     entity,
                     CustomResponseEntity.class
             );
@@ -92,136 +89,104 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                 if (!responseBody.isSuccess()) {
                     String errorMessage = responseBody.getMessage(); // Get error message from response body
                     LOGGER.error("Error from response: {}", errorMessage);
-                    throw new RuntimeException("Error from response: " + errorMessage);
+                    return CustomResponseEntity.error(errorMessage);
                 }
 
                 // Process the response body
                 Map<String, Object> data = (Map<String, Object>) responseBody.getData();
-                Object billObject = data.get("bill");
-
-                if (billObject instanceof Map) {
-                    Map<String, Object> billMap = (Map<String, Object>) billObject;
-
-                    Object amountObject = billMap.get("amount");
-                    Object afterDueDateAmountObject = billMap.get("amountDueAfterDueDate");
-                    String dueDateString = (String) billMap.get("dueDate");
-                    String referenceNumber = (String) billMap.get("referenceNumber");
-                    Date date = new Date();
-                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-
-                    // Convert amountObject to a Double
-                    Double amount = convertToDouble(amountObject);
-                    Double afterDueDateAmount = convertToDouble(afterDueDateAmountObject);
-
-                    // Validate the amount
-                    if (amount == null || amount <= 0) {
-                        throw new RuntimeException("Invalid amount: " + amount);
-                    }
-
-                    // Fetch account details
-                    Account account = accountRepository.findByAccountNumber(billPaymentDto.getAccountNumber());
-
-                    if (account != null) {
-                        Double accountBalance = account.getAccountBalance();
-                        Double singleDayBillPayLimit = account.getSingleDayBillPayLimit();
-                        // 1. Fetch today's transactions and sum their debit amounts
-//                        LocalDate today2 = LocalDate.now();
-                        Double totalDebitToday = calculateTodayTotalDebit(account.getId());
-
-                        // 2. Check if the new transaction amount plus today's total exceeds the limit
-                        if (totalDebitToday + amount > singleDayBillPayLimit) {
-                            LOGGER.warn("Daily transaction limit exceeded for account number: {}", billPaymentDto.getAccountNumber());
-                            return new CustomResponseEntity<>(1002, "Daily transaction limit exceeded");
-                        }
+                Object billAmount = data.get("Amount Paid!");
+                Object billTranDate = data.get("transactionDate");
+                Object billTranID = data.get("transactionId");
 
 
-                        // Check if account balance is sufficient
-                        if (amount <= accountBalance) {
-                            // Check due date and select the amount to deduct
-                            if (dueDateString != null) {
-                                LocalDate dueDate = LocalDate.parse(dueDateString); // Parse dueDateString to LocalDate
-                                LocalDate today = LocalDate.now();
+                // Convert amountObject to a Double
+                Double amount = convertToDouble(billAmount);
 
-                                if (dueDate.isBefore(today)) {
-                                    // Due date has passed, use afterDueDateAmount
-                                    amount = afterDueDateAmount != null ? afterDueDateAmount : amount;
-                                }
-                            }
-
-                            if (accountBalance >= amount) {
-                                // Deduct amount from account balance
-                                Double previousBalance = accountBalance; // Save the previous balance
-                                accountBalance -= amount;
-
-                                // Update account balance
-                                account.setAccountBalance(accountBalance);
-
-                                // Create and set up the transaction DTO
-                                BillPaymentTransactionDto transactionDto = new BillPaymentTransactionDto();
-                                transactionDto.setAccountNumber(account.getAccountNumber());
-                                transactionDto.setDebitAmount(amount);
-                                transactionDto.setCreditAmount(0.0);
-                                transactionDto.setCurrentBalance(accountBalance);
-                                transactionDto.setTransactionId(referenceNumber);
-                                transactionDto.setTransactionDate(formatter.format(date));
-                                transactionDto.setIbanCode(account.getCustomer().getAccountNumber());
-                                transactionDto.setTransactionNarration("Bill Payment Against Consumer Number " + data.get("accountNumber"));
-                                transactionDto.setTransactionType("BILL");
-
-                                // Convert DTO to entity
-                                Transactions transaction = BillPaymentTransactionMapper.toEntity(transactionDto, account);
-
-                                // Update AccountCDDetails
-                                AccountCDDetails updateLastDebitAmount = accountCDDetailsRepository.findByAccount_Id(account.getId());
-                                if (updateLastDebitAmount != null) {
-                                    updateLastDebitAmount.setDebit(amount);
-                                    updateLastDebitAmount.setAccount(account);
-                                    updateLastDebitAmount.setActualBalance(accountBalance);
-                                    updateLastDebitAmount.setPreviousBalance(previousBalance); // Set the previous balance
-                                    updateLastDebitAmount.setCredit(0.0);
-                                } else {
-                                    // Handle the case where AccountCDDetails is not found
-                                    updateLastDebitAmount = new AccountCDDetails();
-                                    updateLastDebitAmount.setDebit(amount);
-                                    updateLastDebitAmount.setAccount(account);
-                                    updateLastDebitAmount.setActualBalance(accountBalance);
-                                    updateLastDebitAmount.setPreviousBalance(previousBalance);
-                                    updateLastDebitAmount.setCredit(0.0);
-                                }
-                                accountCDDetailsRepository.save(updateLastDebitAmount);
-
-                                // Save the updated account and transaction back to the database
-                                accountRepository.save(account);
-                                transactionsGenericDao.saveOrUpdate(transaction);
-
-                                LOGGER.info("Account balance and transaction updated successfully");
-
-                                // Prepare the response data with only the processed amount
-                                Map<String, Object> processedData = new HashMap<>();
-                                processedData.put("processedAmount", amount);
-                                processedData.put("referenceNumber", referenceNumber);
-                                processedData.put("date", formatter.format(date));
-                                processedData.put("consumerNumber", consumerNumber);
-
-                                // Return the successful response body
-                                return new CustomResponseEntity<>(processedData, "Utility Bill processed successfully");
-                            } else {
-                                return CustomResponseEntity.error("Insufficient balance for the transaction..");
-                            }
-                        } else {
-                            // Handle case where account balance is not sufficient
-                            LOGGER.warn("Insufficient balance for account number: {}", billPaymentDto.getAccountNumber());
-                            return new CustomResponseEntity<>(1001, "Insufficient balance for the transaction");
-                        }
-                    } else {
-                        LOGGER.warn("Account not found for account number: {}", billPaymentDto.getAccountNumber());
-                        throw new RuntimeException("Account not found");
-                    }
-
-                } else {
-                    LOGGER.warn("Bill object is not a Map");
-                    throw new RuntimeException("Invalid bill format");
+                // Validate the amount
+                if (amount == null || amount <= 0) {
+                    throw new RuntimeException("Invalid amount: " + amount);
                 }
+
+                // Fetch account details
+                Account account = accountRepository.findByAccountNumber(accountNumber);
+
+                if (account != null) {
+                    Double accountBalance = account.getAccountBalance();
+                    Double singleDayBillPayLimit = account.getSingleDayBillPayLimit();
+                    // 1. Fetch today's transactions and sum their debit amounts
+//                        LocalDate today2 = LocalDate.now();
+                    Double totalDebitToday = calculateTodayTotalDebit(account.getId());
+
+                    // 2. Check if the new transaction amount plus today's total exceeds the limit
+                    if (totalDebitToday + amount > singleDayBillPayLimit) {
+                        LOGGER.warn("Daily transaction limit exceeded for account number: {}", accountNumber);
+                        return new CustomResponseEntity<>(1002, "Daily transaction limit exceeded");
+                    }
+
+                    if (accountBalance >= amount) {
+                        // Deduct amount from account balance
+                        Double previousBalance = accountBalance; // Save the previous balance
+                        accountBalance -= amount;
+
+                        // Update account balance
+                        account.setAccountBalance(accountBalance);
+
+                        // Create and set up the transaction DTO
+                        BillPaymentTransactionDto transactionDto = new BillPaymentTransactionDto();
+                        transactionDto.setAccountNumber(account.getAccountNumber());
+                        transactionDto.setDebitAmount(amount);
+                        transactionDto.setCreditAmount(0.0);
+                        transactionDto.setCurrentBalance(accountBalance);
+                        transactionDto.setTransactionId((String) billTranID);
+                        transactionDto.setTransactionDate((String) billTranDate);
+                        transactionDto.setIbanCode(account.getCustomer().getAccountNumber());
+                        transactionDto.setTransactionType("BILL");
+
+                        // Convert DTO to entity
+                        Transactions transaction = BillPaymentTransactionMapper.toEntity(transactionDto, account);
+
+                        // Update AccountCDDetails
+                        AccountCDDetails updateLastDebitAmount = accountCDDetailsRepository.findByAccount_Id(account.getId());
+                        if (updateLastDebitAmount != null) {
+                            updateLastDebitAmount.setDebit(amount);
+                            updateLastDebitAmount.setAccount(account);
+                            updateLastDebitAmount.setActualBalance(accountBalance);
+                            updateLastDebitAmount.setPreviousBalance(previousBalance); // Set the previous balance
+                            updateLastDebitAmount.setCredit(0.0);
+                        } else {
+                            // Handle the case where AccountCDDetails is not found
+                            updateLastDebitAmount = new AccountCDDetails();
+                            updateLastDebitAmount.setDebit(amount);
+                            updateLastDebitAmount.setAccount(account);
+                            updateLastDebitAmount.setActualBalance(accountBalance);
+                            updateLastDebitAmount.setPreviousBalance(previousBalance);
+                            updateLastDebitAmount.setCredit(0.0);
+                        }
+                        accountCDDetailsRepository.save(updateLastDebitAmount);
+
+                        // Save the updated account and transaction back to the database
+                        accountRepository.save(account);
+                        transactionsGenericDao.saveOrUpdate(transaction);
+
+                        LOGGER.info("Account balance and transaction updated successfully");
+
+                        // Prepare the response data with only the processed amount
+                        Map<String, Object> processedData = new HashMap<>();
+                        processedData.put("processedAmount", amount);
+                        processedData.put("referenceNumber", billTranID);
+                        processedData.put("date", billTranDate);
+//                                processedData.put("consumerNumber", consumerNumber);
+
+                        // Return the successful response body
+                        return new CustomResponseEntity<>(processedData, "Utility Bill processed successfully");
+                    } else {
+                        return CustomResponseEntity.error("Insufficient balance for the transaction..");
+                    }
+                } else {
+                    LOGGER.warn("Account not found for account number: {}", accountNumber);
+                    throw new RuntimeException("Account not found");
+                }
+
             } else {
                 // Handle case where response body is null
                 LOGGER.error("Response body is null");

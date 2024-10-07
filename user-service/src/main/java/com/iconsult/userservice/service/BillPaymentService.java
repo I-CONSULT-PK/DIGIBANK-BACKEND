@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public interface BillPaymentService  {
 
-    CustomResponseEntity getUtilityDetails(String consumerNumber, String serviceCode, String utilityType , BillPaymentDto billPaymentDto);
+    CustomResponseEntity payBill(Long billId, String accountNumber);
 
     CustomResponseEntity schdeuleUtilityBillPay(ScheduleBillPaymentRequest scheduleBillPaymentRequest);
 

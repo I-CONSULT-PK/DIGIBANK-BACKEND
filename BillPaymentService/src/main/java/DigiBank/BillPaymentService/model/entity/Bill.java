@@ -30,6 +30,6 @@ public class Bill {
     @JoinColumn(name = "account_id")
     private Account account;
     @OneToMany(mappedBy = "bill")
-    private Set<Payment> payments;
+    private Set<BillPayment> billPayments;
 
 }

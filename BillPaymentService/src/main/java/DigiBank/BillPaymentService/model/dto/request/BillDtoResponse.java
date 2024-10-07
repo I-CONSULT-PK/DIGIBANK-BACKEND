@@ -15,6 +15,7 @@ public class BillDtoResponse {
 
     private String accountNumber;
 
+    private Double validAmount;
     private String customerName;
 
     private String billerName;

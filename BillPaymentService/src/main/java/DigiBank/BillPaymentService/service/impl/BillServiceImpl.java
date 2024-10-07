@@ -1,29 +1,30 @@
 package DigiBank.BillPaymentService.service.impl;
 
+import DigiBank.BillPaymentService.constants.BillStatus;
 import DigiBank.BillPaymentService.constants.CustomResponseEntity;
 import DigiBank.BillPaymentService.constants.Util;
 import DigiBank.BillPaymentService.constants.UtilityType;
 import DigiBank.BillPaymentService.model.dto.UtilityTypeDto;
 import DigiBank.BillPaymentService.model.dto.request.BillDto;
 import DigiBank.BillPaymentService.model.dto.request.BillDtoResponse;
+import DigiBank.BillPaymentService.model.dto.request.BillPaymentDto;
 import DigiBank.BillPaymentService.model.dto.request.BillerDtoRequest;
 import DigiBank.BillPaymentService.model.entity.Account;
 import DigiBank.BillPaymentService.model.entity.Bill;
+import DigiBank.BillPaymentService.model.entity.BillPayment;
 import DigiBank.BillPaymentService.model.entity.Biller;
 import DigiBank.BillPaymentService.model.mapper.BillerMapper;
 import DigiBank.BillPaymentService.repository.AccountRepository;
 import DigiBank.BillPaymentService.repository.BillRepository;
 import DigiBank.BillPaymentService.repository.BillerRepository;
+import DigiBank.BillPaymentService.repository.PaymentRepository;
 import DigiBank.BillPaymentService.service.BillService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class BillServiceImpl implements BillService {
@@ -38,7 +39,13 @@ public class BillServiceImpl implements BillService {
     private BillerRepository billerRepository;
 
     @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
     private BillerMapper billerMapper;
+
+
+    Date currentDate = new Date();
     @Override
     public CustomResponseEntity addBiller(BillerDtoRequest request) {
 
@@ -75,21 +82,32 @@ public class BillServiceImpl implements BillService {
         }
         return false;
     }
-
-    @Override
-    public CustomResponseEntity getBillDetailsByConsumerNumber(String consumerNumber, String serviceCode, String utilityTypeString) {
-        // Validate input parameters
+    private CustomResponseEntity validateInputs(String consumerNumber, String serviceCode, String utilityTypeString) {
         if (consumerNumber == null || consumerNumber.trim().isEmpty()) {
             return CustomResponseEntity.error("Consumer number must not be null or empty.");
         }
-
         if (serviceCode == null || serviceCode.trim().isEmpty()) {
             return CustomResponseEntity.error("Service code must not be null or empty.");
         }
-
         if (utilityTypeString == null || utilityTypeString.trim().isEmpty()) {
             return CustomResponseEntity.error("Utility type must not be null or empty.");
         }
+        return null;
+    }
+
+
+    private boolean isValidBiller(Biller biller, String serviceCode, UtilityType utilityType) {
+        return biller.getServiceCode().equals(serviceCode) && biller.getUtilityType().equals(utilityType);
+    }
+    @Override
+    public CustomResponseEntity getBillDetailsByConsumerNumber(String consumerNumber, String serviceCode, String utilityTypeString) {
+
+        CustomResponseEntity validationError = validateInputs(consumerNumber, serviceCode, utilityTypeString);
+
+        if (validationError != null) {
+            return validationError;
+        }
+
 
         UtilityType utilityType;
         try {
@@ -100,7 +118,6 @@ public class BillServiceImpl implements BillService {
             return CustomResponseEntity.error("Invalid utility type provided.");
         }
 
-
         Account account = accountRepository.findByAccountNumber(consumerNumber);
         if (account == null) {
             return CustomResponseEntity.error("Account not found for consumer number: " + consumerNumber);
@@ -110,39 +127,66 @@ public class BillServiceImpl implements BillService {
         if (biller == null) {
             return CustomResponseEntity.error("Biller not found for account with consumer number: " + consumerNumber);
         }
-
-
-        if (!biller.getServiceCode().equals(serviceCode)) {
-            return CustomResponseEntity.error("Service code does not match the biller’s service code.");
+        if (!isValidBiller(biller, serviceCode, utilityType)) {
+            return CustomResponseEntity.error("Service code or utility type does not match the biller’s details.");
         }
 
-
-        if (!biller.getUtilityType().equals(utilityType)) {
-            return CustomResponseEntity.error("Utility type does not match the biller’s utility type.");
-        }
-
-        Bill bill;
+        return handleBillDetails(account, serviceCode, utilityType, consumerNumber, biller);
+    }
+    private CustomResponseEntity handleBillDetails(Account account, String serviceCode, UtilityType utilityType, String consumerNumber, Biller biller) {
         try {
-            bill = billRepository.findBillsByAccountAndBillerServiceCodeAndBillerUtilityType(account, serviceCode, utilityType);
+          //  Bill bill = billRepository.findBillsByAccountAndBillerServiceCodeAndBillerUtilityType(account, serviceCode, utilityType);
+            Bill bill = billRepository.findBillsByAccountAndBillerServiceCodeAndBillerUtilityType(account, serviceCode, utilityType);
+
+            if (bill.getStatus() == BillStatus.PAID) {
+
+                Optional<BillPayment> billPayment = bill.getBillPayments().stream()
+                        .sorted(Comparator.comparing(BillPayment::getPaymentDate).reversed())
+                        .findFirst();
+
+
+                BillPaymentDto paymentDto = convertToBillPaymentDto(billPayment.get());
+                return  new CustomResponseEntity(paymentDto, "Already Paid!");
+            }
+
+            if (bill == null) {
+                return CustomResponseEntity.error("Bill not found or already paid!");
+            }
+
+
+
+            // Prepare the response for unpaid bill
+            BillDtoResponse response = new BillDtoResponse();
+            response.setAccountNumber(consumerNumber);
+            response.setCustomerName(account.getCustomer().getName());
+            response.setBillerName(biller.getName());
+
+            if (bill.getDueDate().before(currentDate)) {
+                response.setValidAmount(bill.getAfterDueDateAmount());
+            } else {
+                response.setValidAmount(bill.getAmount());
+            }
+            BillDto billDto = convertToBillDto(bill);
+            billDto.setId(bill.getId());
+            response.setBill(billDto);
+
+            return new CustomResponseEntity(response, "bill details");
+
         } catch (Exception e) {
             return CustomResponseEntity.error("An error occurred while retrieving bills.");
         }
+    }
 
-        if (bill==null) {
-            return CustomResponseEntity.error("No bills found for the given parameters.");
-        }
+    private BillPaymentDto  convertToBillPaymentDto(BillPayment billPayment ) {
 
-        // Prepare the response
-        BillDtoResponse response = new BillDtoResponse();
-        response.setAccountNumber(consumerNumber);
-        response.setCustomerName(account.getCustomer().getName());
-        response.setBillerName(biller.getName());
-        BillDto billDto = convertToBillDto(bill);
-        response.setBill(billDto);
-
-
-
-        return new CustomResponseEntity(response,"bill details");
+        BillPaymentDto dto = new BillPaymentDto();
+        dto.setId(billPayment.getId());
+        dto.setPaymentDate(billPayment.getPaymentDate());
+        dto.setBillId(billPayment.getId());
+        dto.setStatus(billPayment.getStatus());
+        dto.setTransactionId(billPayment.getTransactionId());
+        dto.setAmount(billPayment.getAmount());
+        return dto;
     }
 
     @Override
@@ -199,6 +243,50 @@ public class BillServiceImpl implements BillService {
                 .map(type -> new UtilityTypeDto(type.name(), type.getIconUrl()))
                 .toList();
         return new CustomResponseEntity(utilityTypeDtos,"Utility Types!");
+    }
+
+    @Override
+    public CustomResponseEntity payBill(Long billId) {
+
+        Optional<Bill> billOptional = billRepository.findById(billId);
+
+        if(billOptional.isEmpty()){
+            return CustomResponseEntity.error("Bill not found with this id" +billId);
+        }
+
+
+        Bill bill = billOptional.get();
+
+        if (bill.getStatus() == BillStatus.PAID) {
+            return CustomResponseEntity.error("Already Paid");
+        }
+
+        bill.setStatus(BillStatus.PAID);
+
+        BillPayment billPayment = new BillPayment();
+        billPayment.setPaymentDate(new Date());
+        billPayment.setStatus(BillStatus.PAID);
+        billPayment.setBill(bill);
+
+        if (bill.getDueDate().before(currentDate)) {
+            billPayment.setAmount(bill.getAfterDueDateAmount());
+        } else {
+            billPayment.setAmount(bill.getAmount());
+        }
+        billPayment.setTransactionId(Util.generateTransactionId());
+        paymentRepository.save(billPayment);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM, yyyy hh:mm a");
+
+        String formattedDate = dateFormat.format(billPayment.getPaymentDate());
+
+//        billRepository.delete(billOptional.get());
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("Amount Paid!", billPayment.getAmount());
+        map.put("transactionId", billPayment.getTransactionId());
+        map.put("transactionDate",formattedDate);
+        return new CustomResponseEntity( map, "Bill paid successfully!");
     }
 
     private static BillDto convertToBillDto(Bill bill) {

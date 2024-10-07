@@ -1,7 +1,6 @@
 package DigiBank.BillPaymentService.controller;
 
 import DigiBank.BillPaymentService.constants.CustomResponseEntity;
-import DigiBank.BillPaymentService.constants.UtilityType;
 import DigiBank.BillPaymentService.model.dto.request.BillDto;
 import DigiBank.BillPaymentService.model.dto.request.BillerDtoRequest;
 import DigiBank.BillPaymentService.service.BillService;
@@ -20,6 +19,11 @@ public class BillPaymentController {
                                                                @RequestParam("serviceCode") String serviceCode,
                                                                @RequestParam("utilityType") String utilityType) {
         return billService.getBillDetailsByConsumerNumber(consumerNumber, serviceCode, utilityType);
+    }
+
+    @PostMapping("/payBill")
+    public CustomResponseEntity payUtilityBill(@RequestParam("billId") Long billId){
+        return billService.payBill(billId);
 
     }
     @PostMapping("/createBill")

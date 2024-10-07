@@ -22,15 +22,26 @@ public class Util {
         return serviceCode;
     }
 
+    public static String generateTransactionId() {
+        // Create a Random object
+        Random random = new Random();
+
+        // Generate a random 12-digit number (from 100000000000 to 999999999999)
+        long transactionId = 100000000000L + (long)(random.nextDouble() * 900000000000L);
+
+        // Return the transaction ID as a string
+        return String.valueOf(transactionId);
+    }
+
     public static String generateBillReference() {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         String currentDate = dateFormat.format(new Date());
 
         Random random = new Random();
-        int randomNum = 1000 + random.nextInt(9000);
+        int randomNum = 10000000 + random.nextInt(90000000);
 
-        return  currentDate + "-" + randomNum;
+        return  currentDate + randomNum;
     }
 
     public static Double calculateAmountForAfterDueDate(Double amount) {

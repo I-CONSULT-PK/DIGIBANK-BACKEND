@@ -12,13 +12,12 @@ import java.util.Date;
 @AllArgsConstructor
 @Getter
 @Setter
-public class BillDto {
+public class BillPaymentDto {
 
     private Long id;
     private Double amount;
-    private String dueDate;
-    private Double amountDueAfterDueDate;
+    private Date paymentDate;
+    private String transactionId;
     private BillStatus status;
-    private String referenceNumber;
-    private Long accountId;
+    private Long billId;
 }
