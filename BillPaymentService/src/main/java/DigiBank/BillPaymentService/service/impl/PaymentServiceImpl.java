@@ -2,7 +2,7 @@ package DigiBank.BillPaymentService.service.impl;
 
 import DigiBank.BillPaymentService.model.dto.request.PaymentRequest;
 import DigiBank.BillPaymentService.model.dto.response.PaymentResponse;
-import DigiBank.BillPaymentService.repository.AccountRepository;
+import DigiBank.BillPaymentService.repository.ConsumerRepository;
 import DigiBank.BillPaymentService.repository.BillerRepository;
 import DigiBank.BillPaymentService.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ public class PaymentServiceImpl implements PaymentService {
     private BillerRepository billerRepository;
 
     @Autowired
-    private AccountRepository accountRepository;
+    private ConsumerRepository consumerRepository;
 
     @Override
     public PaymentResponse processPayment(PaymentRequest paymentRequest) {

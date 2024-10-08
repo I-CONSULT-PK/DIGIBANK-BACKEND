@@ -6,8 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.Set;
 
 @Entity
@@ -15,12 +14,12 @@ import java.util.Set;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Account {
+public class Consumer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String accountNumber;
+    private String consumerNumber;
     @Enumerated(EnumType.STRING)
     private UtilityType utilityType;
 //    private Double balance;
@@ -31,7 +30,7 @@ public class Account {
     @ManyToOne
     @JoinColumn(name = "biller_id")
     private Biller biller;
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "consumer")
     private Set<Bill> bills;
 
 }

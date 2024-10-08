@@ -8,8 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -31,5 +29,5 @@ public class Biller {
     private String iconUrl;
     @OneToMany(mappedBy = "biller")
     @JsonIgnore
-    private Set<Account> accounts;
+    private Set<Consumer> consumers;
 }
