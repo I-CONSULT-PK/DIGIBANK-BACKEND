@@ -5,4 +5,6 @@ import com.admin_service.model.CustomResponseEntity;
 
 public interface RoleService {
     CustomResponseEntity AddRole(AddRoleDto addRoleDto);
+
+    CustomResponseEntity getAllRoles();
 }

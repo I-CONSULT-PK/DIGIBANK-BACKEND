@@ -21,7 +21,7 @@ public class AdminController {
     @PostMapping("/login")
     public CustomResponseEntity login(@Valid @RequestBody LoginDto loginDto)
     {
-        return this.adminService.login(loginDto);
+        return this.adminService.login(loginDto);       
     }
     
 

@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RoleServiceImpl implements RoleService {
     private static final Logger LOGGER = LoggerFactory.getLogger(RoleServiceImpl.class);
@@ -30,5 +32,11 @@ public class RoleServiceImpl implements RoleService {
         role.setName(addRoleDto.getName());
         roleRepository.save(role);
         return new CustomResponseEntity(roleRepository.save(role),"Role Added Successfully");
+    }
+
+    @Override
+    public CustomResponseEntity getAllRoles() {
+        List<Role> roleList = roleRepository.findAllRolesWithOutSuperAdmin();
+        return new CustomResponseEntity(roleList,"");
     }
 }
