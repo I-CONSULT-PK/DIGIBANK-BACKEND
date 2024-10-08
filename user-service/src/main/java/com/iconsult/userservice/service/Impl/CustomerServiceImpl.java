@@ -42,6 +42,7 @@ import java.security.cert.X509Certificate;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CustomerServiceImpl implements CustomerService
@@ -1013,6 +1014,85 @@ public class CustomerServiceImpl implements CustomerService
         } else {
             LOGGER.info("Customer Not Found...");
             return new CustomResponseEntity("Customer Not Found...");
+        }
+    }
+    @Override
+    public CustomResponseEntity getCustomers() {
+
+        try {
+            List<Customer> customers = customerRepository.findAll();
+
+            System.out.println("Customers... " + customers);
+
+            if (customers != null && !customers.isEmpty()) {
+
+                // Map each Customer object to CustomerListDto
+                List<CustomerListDto> customerListDtos = customers.stream().map(customer -> {
+                    CustomerListDto dto = new CustomerListDto();
+                    dto.setId(customer.getId());
+                    dto.setFirstName(customer.getFirstName());
+                    dto.setLastName(customer.getLastName());
+                    dto.setMobileNumber(customer.getMobileNumber());
+                    dto.setCnic(customer.getCnic());
+                    dto.setEmail(customer.getEmail());
+                    dto.setUserName(customer.getUserName());
+                    dto.setStatus(customer.getStatus());
+                    dto.setAccountNumber(customer.getAccountNumber());
+                    dto.setRegisteredAddress(customer.getRegisteredAddress());
+                    dto.setCity(customer.getCity());
+                    dto.setProvince(customer.getProvince());
+                    return dto;
+                }).collect(Collectors.toList());
+
+                LOGGER.info("List Of Customers... " + customers);
+                return new CustomResponseEntity(customerListDtos, "List Of Customers...");
+            } else {
+                LOGGER.info("Customer Not Found...");
+                return new CustomResponseEntity("Customer Not Found...");
+            }
+        } catch (Exception e) {
+            LOGGER.error("An error occurred while fetching customers: ", e);
+            return new CustomResponseEntity("An error occurred. Please try again later.");
+        }
+    }
+
+    @Override
+    public CustomResponseEntity getActiveCustomers(String action) {
+
+        try {
+            List<Customer> customers = customerRepository.findByActiveCustomers(action);
+
+            System.out.println("Customers... " + customers);
+
+            if (customers != null) {
+
+                // Map each Customer object to CustomerListDto
+                List<CustomerListDto> customerListDtos = customers.stream().map(customer -> {
+                    CustomerListDto dto = new CustomerListDto();
+                    dto.setId(customer.getId());
+                    dto.setFirstName(customer.getFirstName());
+                    dto.setLastName(customer.getLastName());
+                    dto.setMobileNumber(customer.getMobileNumber());
+                    dto.setCnic(customer.getCnic());
+                    dto.setEmail(customer.getEmail());
+                    dto.setUserName(customer.getUserName());
+                    dto.setStatus(customer.getStatus());
+                    dto.setAccountNumber(customer.getAccountNumber());
+                    dto.setRegisteredAddress(customer.getRegisteredAddress());
+                    dto.setCity(customer.getCity());
+                    dto.setProvince(customer.getProvince());
+                    return dto;
+                }).collect(Collectors.toList());
+
+                LOGGER.info("List Of Active Customers... " + customers);
+                return new CustomResponseEntity(customerListDtos, "List Of Active Customers...");
+            } else {
+                LOGGER.info("Customer Not Found...");
+                return new CustomResponseEntity("Customer Not Found...");
+            }
+        } catch (Exception e) {
+            LOGGER.error("An error occurred while fetching active customers: ", e);
+            return new CustomResponseEntity("An error occurred. Please try again later.");
         }
     }
 
