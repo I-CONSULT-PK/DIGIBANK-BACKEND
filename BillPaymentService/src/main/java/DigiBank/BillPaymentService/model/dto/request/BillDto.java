@@ -20,5 +20,5 @@ public class BillDto {
     private Double amountDueAfterDueDate;
     private BillStatus status;
     private String referenceNumber;
-    private Long accountId;
+    private Long consumerId;
 }

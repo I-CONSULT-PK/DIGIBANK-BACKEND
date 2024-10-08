@@ -23,6 +23,6 @@ public class Customer {
     private String phoneNumber;
     private String address;
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
-    private Set<Account> accounts;
+    private Set<Consumer> consumers;
 
 }

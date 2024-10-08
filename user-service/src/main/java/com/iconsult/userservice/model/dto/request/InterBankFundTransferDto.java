@@ -2,8 +2,6 @@ package com.iconsult.userservice.model.dto.request;
 
 import lombok.*;
 
-import java.util.Date;
-
 @Data
 @Getter
 @Setter
@@ -12,8 +10,8 @@ import java.util.Date;
 public class InterBankFundTransferDto {
 
     private String bankCode;
-    private String fromAccountNumber;
-    private String toAccountNumber;
+    private String senderAccountNumber;
+    private String receiverAccountNumber;
     private Double amount;
     private String purpose;
 }

@@ -27,8 +27,8 @@ public class Bill {
     private BillStatus status;
     private String referenceNumber;
     @ManyToOne
-    @JoinColumn(name = "account_id")
-    private Account account;
+    @JoinColumn(name = "consumer_id")
+    private Consumer consumer;
     @OneToMany(mappedBy = "bill")
     private Set<BillPayment> billPayments;
 

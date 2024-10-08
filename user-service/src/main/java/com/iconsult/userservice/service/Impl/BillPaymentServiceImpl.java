@@ -140,6 +140,7 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                         transactionDto.setTransactionId((String) billTranID);
                         transactionDto.setTransactionDate((String) billTranDate);
                         transactionDto.setIbanCode(account.getCustomer().getAccountNumber());
+                        transactionDto.setTransactionNarration("Utility BillPayment");
                         transactionDto.setTransactionType("BILL");
 
                         // Convert DTO to entity

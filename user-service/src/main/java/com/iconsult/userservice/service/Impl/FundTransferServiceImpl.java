@@ -1,7 +1,6 @@
 package com.iconsult.userservice.service.Impl;
 
 import com.iconsult.userservice.GenericDao.GenericDao;
-import com.iconsult.userservice.config.MyJobExecutor;
 import com.iconsult.userservice.constant.StatementType;
 import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.dto.UserActivityRequest;
@@ -23,17 +22,12 @@ import com.iconsult.userservice.service.FundTransferService;
 import com.iconsult.userservice.service.NotificationService;
 import com.iconsult.userservice.service.UserActivityService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -44,12 +38,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
-
-import static org.quartz.JobBuilder.*;
-import static org.quartz.TriggerBuilder.*;
-import static org.quartz.SimpleScheduleBuilder.*;
 
 @Service
 public class FundTransferServiceImpl implements FundTransferService {
@@ -426,7 +415,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 
         String jpql = "SELECT c FROM Account c WHERE c.accountNumber = :accountNumber Or c.ibanCode = :accountNumber";
         Map<String, Object> params = new HashMap<>();
-        params.put("accountNumber", fundTransferDto.getFromAccountNumber());
+        params.put("accountNumber", fundTransferDto.getSenderAccountNumber());
 
         Optional<Account> account  = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
 //        Account account = accountRepository.getAccountByAccountNumber(fundTransferDto.getFromAccountNumber());
@@ -448,9 +437,9 @@ public class FundTransferServiceImpl implements FundTransferService {
 //            map.put("currentBalance", account.get().getAccountBalance());
             return CustomResponseEntity.error("Insufficient balance!");
         }
-        if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDaySendToOtherBankLimit()) == false){
-            return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
-        }
+//        if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDaySendToOtherBankLimit()) == false){
+//            return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+//        }
 //        if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDayLimit()) == false){
 //            return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
 //        }
@@ -531,7 +520,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                     UserActivityRequest userActivity = new UserActivityRequest();
                     userActivity.setActivityDate(LocalDateTime.now());
                     userActivity.setCustomerId(senderAccountCDDetails.getAccount().getCustomer());
-                    userActivity.setUserActivity("From : "+fundTransferDto.getFromAccountNumber()+" To : "+fundTransferDto.getToAccountNumber()
+                    userActivity.setUserActivity("From : "+fundTransferDto.getSenderAccountNumber()+" To : "+fundTransferDto.getReceiverAccountNumber()
                             +" Amount : "+fundTransferDto.getAmount());
                     userActivity.setPkr(fundTransferDto.getAmount());
                     userActivityService.saveUserActivity(userActivity);
@@ -540,8 +529,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                     notificationEvent.setNotificationType("Funds Transfer");
                     notificationEvent.setMessage("An amount of "+fundTransferDto.getAmount()+
                             " has been successfully transferred from your account '"+
-                            fundTransferDto.getFromAccountNumber()+"' to account '" +
-                            fundTransferDto.getToAccountNumber()+"'.");
+                            fundTransferDto.getSenderAccountNumber()+"' to account '" +
+                            fundTransferDto.getReceiverAccountNumber()+"'.");
                     notificationEvent.setRecipientId(account.get().getCustomer().getId());
                     notificationEvent.setChannel("EMAIL");
                     notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
