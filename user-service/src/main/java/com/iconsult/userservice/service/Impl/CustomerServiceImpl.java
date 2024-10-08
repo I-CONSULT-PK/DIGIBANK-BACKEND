@@ -244,14 +244,7 @@ public class CustomerServiceImpl implements CustomerService
         customer.setCnic(signUpDto.getCnic());
         customer.setEmail(signUpDto.getEmail());
         customer.setUserName(signUpDto.getUserName());
-//        customer.setPassword(signUpDto.getPassword());
-        // Encrypt the password before setting it in the customer entity
-        try {
-            String encryptedPassword = EncryptionUtils.encrypt(signUpDto.getPassword());
-            customer.setPassword(encryptedPassword);
-        } catch (Exception e) {
-            throw new ServiceException("Failed to encrypt password");
-        }
+        customer.setPassword(signUpDto.getPassword());
         if(Objects.nonNull(signUpDto.getSecurityPictureId())){
             customer.setSecurityPicture(imageVerificationRepository.findById(signUpDto.getSecurityPictureId())
                 .orElseThrow(() -> new ServiceException("Image does not exist")).getName());
@@ -499,14 +492,13 @@ public class CustomerServiceImpl implements CustomerService
         // Decrypt the saved password to compare
         try {
             String decryptedSavedPassword = EncryptionUtils.decrypt(customer.getPassword());
+            String decryptedRequestPassword = EncryptionUtils.decrypt(forgetPasswordRequestDto.getPassword());
 
-            if (forgetPasswordRequestDto.getPassword().equals(decryptedSavedPassword)) {
+            if (decryptedRequestPassword.equals(decryptedSavedPassword)) {
                 return CustomResponseEntity.error("Password cannot be the same as the old password.");
             }
 
-            // Encrypt the new password before setting it in the customer entity
-            String encryptedPassword = EncryptionUtils.encrypt(forgetPasswordRequestDto.getPassword());
-            customer.setPassword(encryptedPassword);
+            customer.setPassword(forgetPasswordRequestDto.getPassword());
             customerRepository.save(customer);
 
         } catch (Exception e) {
