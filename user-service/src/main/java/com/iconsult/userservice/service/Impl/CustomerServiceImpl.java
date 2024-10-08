@@ -272,8 +272,13 @@ public class CustomerServiceImpl implements CustomerService
         account.setProofOfIncome(signUpDto.getAccountDto().getProofOfIncome());
         account.setCustomer(customer);
         account.setDefaultAccount(true);
+        account.setSingleDaySendToOtherBankLimit(20000.0);
+        account.setSingleDayLimit(10000.0);
+        account.setSingleDayOwnLimit(15000.0);
+        account.setSingleDayBillPayLimit(5000.0);
+        account.setSingleDayTopUpLimit(5000.0);
+        account.setSingleDayQRLimit(12000.0);
 
-        account.setTransactionLimit(0.0);
         customer.getAccountList().add(account);
 
         return customer;
