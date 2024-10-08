@@ -1,13 +1,11 @@
 package com.admin_service.service.serviceImpl;
 
-import com.admin_service.config.CustomUserDetailsService;
 import com.admin_service.config.MyUserDetailsService;
 import com.admin_service.dto.request.AddUserDto;
 import com.admin_service.dto.request.LoginDto;
 import com.admin_service.entity.User;
 import com.admin_service.entity.AppConfiguration;
 import com.admin_service.model.CustomResponseEntity;
-import com.admin_service.repository.AdminRepository;
 
 import com.admin_service.repository.UserRepository;
 import com.admin_service.service.AdminService;
@@ -22,13 +20,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class AdminServiceImpl implements AdminService {
@@ -50,7 +43,6 @@ public class AdminServiceImpl implements AdminService {
     private AppConfigurationImpl appConfigurationImpl;
     @Autowired
     private MyUserDetailsService myUserDetailsService;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminServiceImpl.class);
 
     @Override
@@ -204,6 +196,4 @@ public class AdminServiceImpl implements AdminService {
         return new CustomResponseEntity<>(user,"User created successfully");
 
     }
-
-
 }

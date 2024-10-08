@@ -2,13 +2,10 @@ package com.iconsult.userservice.controller;
 
 import com.iconsult.userservice.model.dto.request.*;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
-import com.iconsult.userservice.model.entity.CardRequest;
 import com.iconsult.userservice.model.entity.Customer;
-import com.iconsult.userservice.service.CustomerService;
 import com.iconsult.userservice.service.Impl.CardRequestServiceImpl;
 import com.iconsult.userservice.service.Impl.CustomerServiceImpl;
 import com.iconsult.userservice.service.Impl.OTPLogImpl;
-import com.netflix.discovery.converters.Auto;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpSession;
@@ -16,12 +13,9 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/v1/customer")
@@ -183,6 +177,16 @@ public class CustomerController
     public CustomResponseEntity changeCustomerAddress(@PathVariable ("id") Long id, @RequestBody CustomerDto customerDto)
     {
         return this.customerServiceImpl.changeCustomerAddress(id, customerDto);
+    }
+
+    @GetMapping("/getCustomers")
+    public CustomResponseEntity getCustomers(){
+        return this.customerServiceImpl.getCustomers();
+    }
+
+    @GetMapping("/getActiveCustomers")
+    public CustomResponseEntity getActiveCustomers(@RequestParam("action")  String action){
+        return this.customerServiceImpl.getActiveCustomers(action);
     }
 
 }

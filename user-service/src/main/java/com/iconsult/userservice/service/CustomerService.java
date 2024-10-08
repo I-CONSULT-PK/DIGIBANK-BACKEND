@@ -8,6 +8,8 @@ import com.iconsult.userservice.service.Impl.OTPLogImpl;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.servlet.http.HttpSession;
 
+import java.util.List;
+
 public interface CustomerService
 {
 
@@ -68,4 +70,8 @@ public interface CustomerService
     Boolean validateUser(String email, String mobileNumber);
 
     CustomResponseEntity changeCustomerAddress(Long id, CustomerDto customerDto);
+
+    CustomResponseEntity getCustomers();
+
+    CustomResponseEntity getActiveCustomers(String action);
 }

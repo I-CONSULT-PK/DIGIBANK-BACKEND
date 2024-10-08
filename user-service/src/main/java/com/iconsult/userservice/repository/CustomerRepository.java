@@ -1,15 +1,13 @@
 package com.iconsult.userservice.repository;
 
-import com.iconsult.userservice.model.dto.request.AccountDto;
-import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.Customer;
-import com.iconsult.userservice.model.entity.ImageVerification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -59,5 +57,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>
 
     Optional<Customer> findByMobileNumberAndEmail(String mobileNumber, String email);
 
+    @Query("SELECT c FROM Customer c WHERE c.status = :action")
+    List<Customer> findByActiveCustomers(String action);
 
 }
