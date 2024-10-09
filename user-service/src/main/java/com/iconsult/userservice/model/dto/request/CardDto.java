@@ -3,73 +3,33 @@ package com.iconsult.userservice.model.dto.request;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.iconsult.userservice.model.entity.Customer;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Date;
 
+@Getter
+@Setter
+@ToString
 public class CardDto {
 
-        private Long cardId;
-        private Long cid;
-        private String accountNumber;
+    private Long cardId;
+    private Long accountId;
+    private String cardHolderName;
+    private String accountNumber;
+    private String cardNumber;
+    private String cvv;
 
-        private String cardNumber;
+    private String issueDate;
+    private String expiryDate;
+    private Boolean isActive;
 
-        private String cvv;
-        private String expiryDate;
+    private String cardType;
 
-        private String cardHolderName;
+    private String pin;
+    private Long cid;
 
-        private Boolean isActive;
-
-
-
-    public Long getCardId() {
-        return cardId;
-    }
-
-    public void setCardId(Long cardId) {
-        this.cardId = cardId;
-    }
-
-    public Long getCid() {
-        return cid;
-    }
-
-    public void setCid(Long cid) {
-        this.cid = cid;
-    }
-
-    public String getCardNumber() {
-        return cardNumber;
-    }
-
-    public void setCardNumber(String cardNumber) {
-        this.cardNumber = cardNumber;
-    }
-
-    public String getCvv() {
-        return cvv;
-    }
-
-    public void setCvv(String cvv) {
-        this.cvv = cvv;
-    }
-
-    public String getExpiryDate() {
-        return expiryDate;
-    }
-
-    public void setExpiryDate(String expiryDate) {
-        this.expiryDate = expiryDate;
-    }
-
-    public String getCardHolderName() {
-        return cardHolderName;
-    }
-
-    public void setCardHolderName(String cardHolderName) {
-        this.cardHolderName = cardHolderName;
-    }
 
     public Boolean getActive() {
         return isActive;
@@ -77,28 +37,6 @@ public class CardDto {
 
     public void setActive(Boolean active) {
         isActive = active;
-    }
-
-    public String getAccountNumber() {
-        return accountNumber;
-    }
-
-    public void setAccountNumber(String accountNumber) {
-        this.accountNumber = accountNumber;
-    }
-
-    @Override
-    public String toString() {
-        return "CardDto{" +
-                "cardId=" + cardId +
-                ", cid=" + cid +
-                ", accountNumber='" + accountNumber + '\'' +
-                ", cardNumber='" + cardNumber + '\'' +
-                ", cvv='" + cvv + '\'' +
-                ", expiryDate='" + expiryDate + '\'' +
-                ", cardHolderName='" + cardHolderName + '\'' +
-                ", isActive=" + isActive +
-                '}';
     }
 }
 

@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CardServiceImpl implements CardService {
@@ -375,51 +376,51 @@ public class CardServiceImpl implements CardService {
     }
 
     public Card addCreditCard(CardApprovalResDto card) {
-            Card cardDetail = cardMapper.dtoJpe(card);
+        Card cardDetail = cardMapper.dtoJpe(card);
 
-            // Get customer ID
-            long customerId = accountRepository.findCustomerByAccountNumber(card.getAccountNumber());
-            if (customerId == 0) {
-                return null; // Customer does not exist
-            }
-
-            // Fetch account
-            Account account = accountRepository.findByAccountNumber(card.getAccountNumber());
-
-            // Create Customer object
-            Customer customer = new Customer();
-            customer.setId(customerId);
-
-            // Set card details
-            cardDetail.setActive(true);
-            cardDetail.setCreatedAt(new Date());
-            cardDetail.setAccount(account);
-
-            // Set expiry date to 5 years from now
-            Calendar calendar = Calendar.getInstance();
-            calendar.add(Calendar.YEAR, 5);
-            Date expiryDate = calendar.getTime();
-
-            // Format the expiry date using SimpleDateFormat
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            String formattedExpiryDate = sdf.format(expiryDate);
-
-            // Set the formatted expiry date in cardDetail
-            cardDetail.setExpiryDate(formattedExpiryDate);
-
-            // Save the card detail
-            cardDetail = cardRepository.save(cardDetail);
-
-            // Log user activity
-            UserActivityRequest userActivity = new UserActivityRequest();
-            userActivity.setActivityDate(LocalDateTime.now());
-//            userActivity.setCustomerId(account.getCustomer());
-            userActivity.setPkr(0.0);
-            userActivity.setUserActivity("User Requested For The Card");
-            userActivityService.saveUserActivity(userActivity);
-
-            return cardDetail;
+        // Get customer ID
+        long customerId = accountRepository.findCustomerByAccountNumber(card.getAccountNumber());
+        if (customerId == 0) {
+            return null; // Customer does not exist
         }
+
+        // Fetch account
+        Account account = accountRepository.findByAccountNumber(card.getAccountNumber());
+
+        // Create Customer object
+        Customer customer = new Customer();
+        customer.setId(customerId);
+
+        // Set card details
+        cardDetail.setActive(true);
+        cardDetail.setCreatedAt(new Date());
+        cardDetail.setAccount(account);
+
+        // Set expiry date to 5 years from now
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.YEAR, 5);
+        Date expiryDate = calendar.getTime();
+
+        // Format the expiry date using SimpleDateFormat
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String formattedExpiryDate = sdf.format(expiryDate);
+
+        // Set the formatted expiry date in cardDetail
+        cardDetail.setExpiryDate(formattedExpiryDate);
+
+        // Save the card detail
+        cardDetail = cardRepository.save(cardDetail);
+
+        // Log user activity
+        UserActivityRequest userActivity = new UserActivityRequest();
+        userActivity.setActivityDate(LocalDateTime.now());
+//            userActivity.setCustomerId(account.getCustomer());
+        userActivity.setPkr(0.0);
+        userActivity.setUserActivity("User Requested For The Card");
+        userActivityService.saveUserActivity(userActivity);
+
+        return cardDetail;
+    }
 
     @Override
     public CustomResponseEntity setPinDigiBankAndMyDatabase(String pin, String card) {
@@ -497,9 +498,7 @@ public class CardServiceImpl implements CardService {
                     if (cardNo.getPin() != null) {
                         LOGGER.error("Pin already exists");
                         return CustomResponseEntity.error("Pin already exists");
-                    }
-                    else
-                    {
+                    } else {
                         cardNo.setPin(pin);
                         cardNo.setCardNumber(card);
                         cardGenericDao.saveOrUpdate(cardNo);
@@ -566,7 +565,7 @@ public class CardServiceImpl implements CardService {
     @Override
     public CustomResponseEntity changePin(ChangePinDto changePinRequestDto) {
         try {
-            if(!regex.isValidPin(changePinRequestDto.getNewPin()) || !regex.isValidPin(changePinRequestDto.getOldPin())){
+            if (!regex.isValidPin(changePinRequestDto.getNewPin()) || !regex.isValidPin(changePinRequestDto.getOldPin())) {
                 LOGGER.warn("Invalid PIN format");
                 return CustomResponseEntity.error("Pin must be exactly 4 digits.");
             }
@@ -606,6 +605,47 @@ public class CardServiceImpl implements CardService {
         } catch (Exception e) {
             LOGGER.error("Error occurred while changing PIN: ", e);
             return CustomResponseEntity.error("Unable to change PIN");
+        }
+    }
+
+    @Override
+    public CustomResponseEntity getCardNumbersAgainstAccountNumber(String accountNumber) {
+
+        try {
+            CustomResponseEntity accountFormat = regex.checkAccountNumberFormat(accountNumber);
+            if (!accountFormat.isSuccess()){
+                return accountFormat;
+            }
+
+            List<Card> cardList = cardRepository.getCardNumbersAgainstAccountNumber(accountNumber);
+            if (cardList.isEmpty()) {
+                LOGGER.info("No cards found for account number " + accountNumber);
+                return new CustomResponseEntity("No cards found for account number " + accountNumber);
+            }
+
+            List<CardDto> cardListDtos = cardList.stream().map(listCard -> {
+
+                CardDto cardDto = new CardDto();
+                cardDto.setCardId(listCard.getCardId());
+                cardDto.setAccountId(listCard.getAccount().getId());
+                cardDto.setAccountNumber(listCard.getAccount().getAccountNumber());
+                cardDto.setCardHolderName(listCard.getCardHolderName());
+                cardDto.setCardNumber(listCard.getCardNumber());
+                cardDto.setCardType(listCard.getCardType());
+                cardDto.setCvv(listCard.getCvv());
+                cardDto.setIssueDate(String.valueOf(listCard.getCreatedAt()));
+                cardDto.setExpiryDate(listCard.getExpiryDate());
+                cardDto.setActive(listCard.getActive());
+
+                return cardDto;
+            }).collect(Collectors.toList());
+
+            LOGGER.info("List Of Cards... " + cardListDtos);
+            return new CustomResponseEntity(cardListDtos, "List Of Cards...");
+
+        } catch (Exception e) {
+            LOGGER.error("An error occurred while fetching cards", e);
+            return new CustomResponseEntity<>("An error occurred", String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 }

@@ -45,6 +45,7 @@ public class AuthConfig {
                                 .requestMatchers("/v1/admin/addUser").permitAll()
                                 .requestMatchers("/v1/role/addRole").permitAll()
                                 .requestMatchers("/v1/customer/**").permitAll()
+                                .requestMatchers("/v1/card/**").permitAll()
                                 .requestMatchers("/v1/role/getAllRoles").hasRole("SUPER_ADMIN")
                                 .requestMatchers("/module/**").permitAll()
                                 .requestMatchers("/v1/admin/userList").hasRole("USER")

@@ -7,12 +7,8 @@ import com.iconsult.userservice.model.dto.request.ChangePinDto;
 import com.iconsult.userservice.service.CardService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/v1/customer/card")
@@ -58,5 +54,10 @@ public class CardController {
     @PostMapping("/changePin")
     public CustomResponseEntity changePin(@RequestBody ChangePinDto changePinRequestDto) {
         return cardService.changePin(changePinRequestDto);
+    }
+
+    @GetMapping("/getCardNumbersAgainstAccountNumber")
+    public CustomResponseEntity  getCardNumbersAgainstAccountNumber(@RequestParam("accountNumber")  String accountNumber) {
+        return this.cardService.getCardNumbersAgainstAccountNumber(accountNumber);
     }
 }
