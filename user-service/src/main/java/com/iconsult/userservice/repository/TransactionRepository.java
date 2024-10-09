@@ -28,6 +28,15 @@ List<Transactions> findByAccount_IdAndTransactionTypeAndTransactionDateContainin
     // find all transactions for a specific date without the type
     List<Transactions> findByAccount_IdAndTransactionDateContaining(Long accountId, String transactionDate);
 
+    @Query("SELECT SUM(t.debitAmt) FROM Transactions t " +
+            "WHERE t.account.id = :accountId " +
+            "AND UPPER(t.transactionType) = UPPER(:transactionType) " +
+            "AND FUNCTION('DATE', t.startDateTime) = :currentDate")
+    Double findTotalTransactionsForType(
+            @Param("accountId") Long accountId,
+            @Param("transactionType") String transactionType,
+            @Param("currentDate") LocalDate currentDate);
+
 }
 
 

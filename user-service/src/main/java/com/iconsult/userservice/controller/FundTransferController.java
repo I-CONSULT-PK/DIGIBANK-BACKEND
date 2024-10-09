@@ -5,6 +5,7 @@ import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.model.dto.request.ScheduleFundTransferDto;
+import com.iconsult.userservice.model.dto.request.ScheduleIbftFundTransferDto;
 import com.iconsult.userservice.service.FundTransferService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.validation.Valid;
@@ -77,5 +78,11 @@ public class FundTransferController {
     @PostMapping("/scheduleFundTransfer")
     public CustomResponseEntity getAllBanks(@Valid @RequestBody ScheduleFundTransferDto fundTransferDto) throws SchedulerException {
         return this.fundTransferService.scheduleFundTransfer(fundTransferDto);
+    }
+
+
+    @PostMapping("/scheduleIbftFundTransfer")
+    public CustomResponseEntity scheduleIbftFundTransfer(@Valid @RequestBody ScheduleIbftFundTransferDto fundTransferDto) throws SchedulerException {
+        return this.fundTransferService.scheduleIbftFundTransfer(fundTransferDto);
     }
 }

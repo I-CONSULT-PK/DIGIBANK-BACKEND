@@ -5,12 +5,14 @@ import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.AccountDto;
 import com.iconsult.userservice.model.dto.request.CustomerAccountDto2;
 import com.iconsult.userservice.model.dto.response.CbsAccountDto;
+import com.iconsult.userservice.model.dto.response.LimitResponse;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AccountCDDetails;
 import com.iconsult.userservice.model.entity.Customer;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
+import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.AccountService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.transaction.Transactional;
@@ -23,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,6 +46,9 @@ public class AccountServiceImpl implements AccountService {
     AccountCDDetailsRepository accountCDDetailsRepository;
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -178,7 +184,68 @@ public class AccountServiceImpl implements AccountService {
             return new CustomResponseEntity<>(save, "Success");
 //        return CustomResponseEntity.error("Invalid Customer Id");
     }
-///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public CustomResponseEntity<LimitResponse> calculateLimits(String accountNumber) {
+
+        if(accountNumber.isBlank() || accountNumber==null){
+            LOGGER.info("account number can not be null or empty");
+            return CustomResponseEntity.error("account number cannot be null empty");
+        }
+
+        Account account = accountRepository.findByAccountNumber(accountNumber);
+
+        if(account==null){
+            LOGGER.info("account not found");
+            return CustomResponseEntity.error("account does not exists");
+        }
+
+        LimitResponse limitResponse = new LimitResponse();
+
+        Double availedBillPayLimit = calculateAvailedLimit(account.getId(), "BILL");
+        Double remainingBillPayLimit = calculateRemainingLimit(account.getSingleDayBillPayLimit(), availedBillPayLimit);
+        Double topUpAvailedLimit = calculateAvailedLimit(account.getId(), "TOPUP");
+        Double remainingTopUpLimit = calculateRemainingLimit(account.getSingleDayTopUpLimit(), topUpAvailedLimit);
+        Double otherBankAvailedLimit = calculateAvailedLimit(account.getId(), "IBFT");
+        Double otherBankRemainingLimit = calculateRemainingLimit(account.getSingleDaySendToOtherBankLimit(), otherBankAvailedLimit);
+        Double ownBankAvailedLimit = calculateAvailedLimit(account.getId(), "FT");
+        Double remainingOwnBankLimit = calculateRemainingLimit(account.getSingleDayOwnLimit(), ownBankAvailedLimit);
+        Double qrAvailedLimit = calculateAvailedLimit(account.getId(), "QR-PAYMENT");
+        Double qrRemainingLimit = calculateRemainingLimit(account.getSingleDayQRLimit(), qrAvailedLimit);
+        Double ownAccountAvailedLimit = calculateAvailedLimit(account.getId(), "OWN-ACCOUNT");
+        Double remainingOwnAccountLimit = calculateRemainingLimit(account.getSingleDayOwnLimit(), ownAccountAvailedLimit);
+
+        limitResponse.setAvailedOwnLimit(ownAccountAvailedLimit);
+        limitResponse.setRemainingOwnLimit(remainingOwnAccountLimit);
+        limitResponse.setAvailedQRLimit(qrAvailedLimit);
+        limitResponse.setRemainingQRLimit(qrRemainingLimit);
+        limitResponse.setAvailedOwnLimit(ownBankAvailedLimit);
+        limitResponse.setRemainingOwnLimit(remainingOwnBankLimit);
+        limitResponse.setAvailedSendToOtherBankLimit(otherBankAvailedLimit);
+        limitResponse.setRemainingSendToOtherBankLimit(otherBankRemainingLimit);
+        limitResponse.setAvailedTopUpLimit(topUpAvailedLimit);
+        limitResponse.setRemainingTopUpLimit(remainingTopUpLimit);
+        limitResponse.setAvailedBillPayLimit(availedBillPayLimit);
+        limitResponse.setRemainingBillPayLimit(remainingBillPayLimit);
+
+        LOGGER.info("account limits fetched successfully!");
+        return new CustomResponseEntity<>(limitResponse, "account limits details");
+    }
+
+    public Double calculateRemainingLimit(Double limit, Double availedLimit) {
+        return limit - availedLimit;
+    }
+
+
+    public Double calculateAvailedLimit(Long accountId, String transType) {
+
+        LocalDate today = LocalDate.now();
+        Double totalTransactions = transactionRepository.findTotalTransactionsForType(accountId, transType, today);
+
+        return (totalTransactions != null) ? totalTransactions : 0.0;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     public CustomerAccountDto2 getCustomerAccountDetails(Long customerId, String accountNumber) {
         Account account = accountRepository.findByCustomerIdAndAccountNumber(customerId, accountNumber);

@@ -1,10 +1,12 @@
 package com.example.Quartz.service.impl;
 
 
+import com.example.Quartz.config.IbftJobExecutor;
 import com.example.Quartz.config.BillPaymentJobExecutor;
 import com.example.Quartz.config.MyJobExecutor;
 import com.example.Quartz.model.dto.request.ScheduleBillPaymentRequest;
 import com.example.Quartz.model.dto.request.ScheduleFundTransferDto;
+import com.example.Quartz.model.dto.request.ScheduleIbftFundTransferDto;
 import com.example.Quartz.model.dto.response.CbsAccountDto;
 import com.example.Quartz.model.entity.ScheduleBillPayment;
 import com.example.Quartz.model.entity.ScheduledTransactions;
@@ -21,18 +23,10 @@ import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.time.ZoneId;
-import java.util.Collections;
 import java.util.Date;
 
 import static org.quartz.JobBuilder.newJob;
@@ -102,6 +96,58 @@ public class QuartzServiceImpl implements QuartzService {
             return new CustomResponseEntity(fundsTransferSender,"Success");
         } catch (Exception exception) {
             LOGGER.info("Account not found! {}", exception.getMessage());
+            return CustomResponseEntity.error("Cbs Account not found!");
+        }
+    }
+
+    @Override
+    public CustomResponseEntity scheduleIbftFundTransfer(ScheduleIbftFundTransferDto fundTransferDto, String bearerToken) throws SchedulerException {
+        try {
+            // Create a new scheduled transaction entity and set its fields
+            ScheduledTransactions fundsTransferSender = new ScheduledTransactions();
+            fundsTransferSender.setCurrentBalance(fundTransferDto.getAmount());
+            fundsTransferSender.setDebitAmt(fundTransferDto.getAmount());
+            fundsTransferSender.setTransactionDate(fundTransferDto.getLocalDate().toString());
+            fundsTransferSender.setCreditAmt(0.0);
+            fundsTransferSender.setSenderAccount(fundTransferDto.getReceiverAccountNumber());
+            fundsTransferSender.setReceiverAccount(fundTransferDto.getSenderAccountNumber());
+            fundsTransferSender.setTransactionNarration("Scheduled Payment");
+            fundsTransferSender.setStatus("In Progress");
+
+            // Save transaction to repository
+            ScheduledTransactions scheduledTransactions = scheduledTransactionsRepository.save(fundsTransferSender);
+            fundTransferDto.setScheduledId(scheduledTransactions.getId());
+
+            // Create job data map with the DTO
+            JobDataMap jobDataMap = new JobDataMap();
+            jobDataMap.put("fundTransferDto", fundTransferDto);
+
+            // Build the job
+            JobDetail job = newJob(IbftJobExecutor.class)
+                    .withIdentity("jobIdentity-" + scheduledTransactions.getId())
+                    .usingJobData(jobDataMap)
+                    .build();
+
+            // Set trigger to start at specified time
+            Date startAt = Date.from(fundTransferDto.getLocalDate().atZone(ZoneId.systemDefault()).toInstant());
+
+            Trigger trigger = newTrigger()
+                    .withIdentity("triggerIdentity-" + scheduledTransactions.getId())
+                    .startAt(startAt)
+                    .withSchedule(simpleSchedule()
+                            .withIntervalInSeconds(60)
+                            .withRepeatCount(0)
+                            .withMisfireHandlingInstructionNextWithRemainingCount())
+                    .build();
+
+            // Schedule the job
+            scheduler.scheduleJob(job, trigger);
+            LOGGER.info("Payment Scheduled successfully.");
+
+            return new CustomResponseEntity(fundsTransferSender, "Success");
+
+        } catch (Exception exception) {
+            LOGGER.error("Account not found or an error occurred: {}", exception.getMessage(), exception);
             return CustomResponseEntity.error("Cbs Account not found!");
         }
     }

@@ -3,6 +3,7 @@ package com.iconsult.userservice.service;
 import com.iconsult.userservice.model.dto.request.FundTransferDto;
 import com.iconsult.userservice.model.dto.request.InterBankFundTransferDto;
 import com.iconsult.userservice.model.dto.request.ScheduleFundTransferDto;
+import com.iconsult.userservice.model.dto.request.ScheduleIbftFundTransferDto;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.quartz.SchedulerException;
 
@@ -28,5 +29,7 @@ public interface FundTransferService {
     CustomResponseEntity setOneDayLimit(String account ,Long customerId, Double ondDayLimit);
 
     CustomResponseEntity scheduleFundTransfer(ScheduleFundTransferDto fundTransferDto) throws SchedulerException;
+
+    CustomResponseEntity scheduleIbftFundTransfer(ScheduleIbftFundTransferDto fundTransferDto);
 }
 

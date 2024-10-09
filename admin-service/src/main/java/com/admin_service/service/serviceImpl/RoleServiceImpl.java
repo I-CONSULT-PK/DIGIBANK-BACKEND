@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class RoleServiceImpl implements RoleService {
@@ -38,5 +39,18 @@ public class RoleServiceImpl implements RoleService {
     public CustomResponseEntity getAllRoles() {
         List<Role> roleList = roleRepository.findAllRolesWithOutSuperAdmin();
         return new CustomResponseEntity(roleList,"");
+    }
+
+    @Override
+    public CustomResponseEntity deleteRoleById(Long roleId) {
+        Role role = roleRepository.findById(roleId).orElse(null);
+        if(Objects.isNull(role)){
+
+            LOGGER.error("Role Does Not Exist With Id "  + roleId);
+            return CustomResponseEntity.error(String.format("Role Does Not Exist With Id "  + roleId));
+        }
+        roleRepository.delete(role);
+        LOGGER.error("Role Deleted Successfully With Id "  + roleId);
+        return new CustomResponseEntity(String.format("Role Deleted Successfully With Id "  + roleId));
     }
 }

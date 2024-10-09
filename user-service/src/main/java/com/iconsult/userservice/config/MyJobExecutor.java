@@ -15,13 +15,10 @@ import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.ScheduledTransactionsRepository;
 import com.iconsult.userservice.repository.TransactionRepository;
-import com.iconsult.userservice.service.Impl.FundTransferServiceImpl;
-import com.mysql.cj.log.Log;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,7 +125,7 @@ public class MyJobExecutor implements Job {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
             FundTransferDto cbsTransferDto = new FundTransferDto();
-            cbsTransferDto.setTransferAmount(Double.valueOf(transferAmount));
+            cbsTransferDto.setAmount(Double.valueOf(transferAmount));
             cbsTransferDto.setPurpose(purpose);
             cbsTransferDto.setReceiverAccountNumber(receiverAccountNumber);
             cbsTransferDto.setSenderAccountNumber(senderAccountNumber);
@@ -165,11 +162,11 @@ public class MyJobExecutor implements Job {
 //                            return CustomResponseEntity.error("Invalid Receiver account");
                     }
                     if (senderAccount.isPresent() && receiverAccount.isPresent()) {
-                        if (senderAccount.get().getTransactionLimit() < cbsTransferDto.getTransferAmount()) {
+                        if (senderAccount.get().getTransactionLimit() < cbsTransferDto.getAmount()) {
                             LOGGER.info("Account limit is lower than the transfer money for account : " + senderAccountNumber);
 //                                return CustomResponseEntity.error("Account limit is lower than the transfer money");
                         }
-                        if (isTransactionAllowed(senderAccount.get().getAccountNumber(), cbsTransferDto.getTransferAmount(), senderAccount.get().getSingleDayLimit()) == false) {
+                        if (isTransactionAllowed(senderAccount.get().getAccountNumber(), cbsTransferDto.getAmount(), senderAccount.get().getSingleDayLimit()) == false) {
                             LOGGER.info("Single Day Account limit is lower than the transfer money for account : " + senderAccountNumber);
                             throw new SecurityException("Single Day Account limit is lower than the transfer money");
                         }
@@ -184,23 +181,23 @@ public class MyJobExecutor implements Job {
                         AccountCDDetails receiverAccountCDDetails2 = accountCDDetailsRepository.findByAccount_Id(receiverAccount.get().getId());
                         if (receiverAccountCDDetails2 != null) {
                             receiverAccountCDDetails = receiverAccountCDDetails2;
-                            receiverAccountCDDetails.setActualBalance(receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount());
-                            receiverAccountCDDetails.setCredit(cbsTransferDto.getTransferAmount());
+                            receiverAccountCDDetails.setActualBalance(receiverAccount.get().getAccountBalance() + cbsTransferDto.getAmount());
+                            receiverAccountCDDetails.setCredit(cbsTransferDto.getAmount());
                             receiverAccountCDDetails.setPreviousBalance(receiverAccount.get().getAccountBalance());
 
                         } else {
-                            receiverAccountCDDetails = new AccountCDDetails(receiverAccount.get(), receiverAccount.get().getAccountBalance() + cbsTransferDto.getTransferAmount(), receiverAccount.get().getAccountBalance(), cbsTransferDto.getTransferAmount(), 0.0);
+                            receiverAccountCDDetails = new AccountCDDetails(receiverAccount.get(), receiverAccount.get().getAccountBalance() + cbsTransferDto.getAmount(), receiverAccount.get().getAccountBalance(), cbsTransferDto.getAmount(), 0.0);
                         }
                         AccountCDDetails senderAccountCDDetails;
                         AccountCDDetails senderAccountCDDetails2 = accountCDDetailsRepository.findByAccount_Id(senderAccount.get().getId());
                         if (senderAccountCDDetails2 != null) {
                             senderAccountCDDetails = senderAccountCDDetails2;
                             senderAccountCDDetails.setActualBalance(senderBalance);
-                            senderAccountCDDetails.setDebit(cbsTransferDto.getTransferAmount());
+                            senderAccountCDDetails.setDebit(cbsTransferDto.getAmount());
                             senderAccountCDDetails.setPreviousBalance(senderAccount.get().getAccountBalance());
 
                         } else {
-                            senderAccountCDDetails = new AccountCDDetails(senderAccount.get(), senderBalance, senderAccount.get().getAccountBalance(), 0.0, cbsTransferDto.getTransferAmount());
+                            senderAccountCDDetails = new AccountCDDetails(senderAccount.get(), senderBalance, senderAccount.get().getAccountBalance(), 0.0, cbsTransferDto.getAmount());
                         }
                         // Update sender's account details
                         senderAccount.get().setAccountBalance(senderBalance);
@@ -237,7 +234,7 @@ public class MyJobExecutor implements Job {
                         Transactions fundsTransferSender = new Transactions();
                         fundsTransferSender.setAccount(senderAccount.get());
                         fundsTransferSender.setCurrentBalance(senderBalance);
-                        fundsTransferSender.setDebitAmt(cbsTransferDto.getTransferAmount());
+                        fundsTransferSender.setDebitAmt(cbsTransferDto.getAmount());
                         fundsTransferSender.setTransactionDate(formattedDate);
                         HashMap<String, String> map = (HashMap<String, String>) responseDto.getData();
                         fundsTransferSender.setTransactionId(map.get("paymentReference"));
@@ -251,7 +248,7 @@ public class MyJobExecutor implements Job {
                         Transactions fundsTransferReceiver = new Transactions();
                         fundsTransferReceiver.setAccount(receiverAccount.get());
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
-                        fundsTransferReceiver.setCreditAmt(cbsTransferDto.getTransferAmount());
+                        fundsTransferReceiver.setCreditAmt(cbsTransferDto.getAmount());
                         fundsTransferReceiver.setTransactionDate(formattedDate);
                         fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
