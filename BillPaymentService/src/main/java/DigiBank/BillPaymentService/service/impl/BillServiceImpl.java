@@ -136,25 +136,20 @@ public class BillServiceImpl implements BillService {
     }
     private CustomResponseEntity handleBillDetails(Consumer consumer, String serviceCode, UtilityType utilityType, String consumerNumber, Biller biller) {
         try {
-          //  Bill bill = billRepository.findBillsByAccountAndBillerServiceCodeAndBillerUtilityType(account, serviceCode, utilityType);
             Bill bill = billRepository.findBillByConsumerServiceAndUtilityAndStatus(consumer.getId(), serviceCode, utilityType, BillStatus.UNPAID);
 
             if (bill == null) {
-                return CustomResponseEntity.error("Bill not found or already paid!");
+
+                BillPayment recentPayment = paymentRepository.findTop1ByBillConsumerIdOrderByPaymentDateDesc(consumer.getId());
+
+                if(recentPayment==null){
+                    return CustomResponseEntity.error("bill does not exist against this consumer!");
+                }
+
+                BillPaymentDto paymentDto = convertToBillPaymentDto(recentPayment);
+                return new CustomResponseEntity(paymentDto,"Bill Already Paid!");
             }
 
-            if (bill.getStatus() == BillStatus.PAID) {
-
-                Optional<BillPayment> billPayment = bill.getBillPayments().stream()
-                        .sorted(Comparator.comparing(BillPayment::getPaymentDate).reversed())
-                        .findFirst();
-
-
-                BillPaymentDto paymentDto = convertToBillPaymentDto(billPayment.get());
-                return  new CustomResponseEntity(paymentDto, "Already Paid!");
-            }
-
-            // Prepare the response for unpaid bill
             BillDtoResponse response = new BillDtoResponse();
             response.setAccountNumber(consumerNumber);
             response.setCustomerName(consumer.getCustomer().getName());
@@ -169,7 +164,7 @@ public class BillServiceImpl implements BillService {
             billDto.setId(bill.getId());
             response.setBill(billDto);
 
-            return new CustomResponseEntity(response, "bill details");
+            return new CustomResponseEntity(response, "Bill Details");
 
         } catch (Exception e) {
             return CustomResponseEntity.error("An error occurred while retrieving bills.");
@@ -181,7 +176,7 @@ public class BillServiceImpl implements BillService {
         BillPaymentDto dto = new BillPaymentDto();
         dto.setId(billPayment.getId());
         dto.setPaymentDate(billPayment.getPaymentDate());
-        dto.setBillId(billPayment.getId());
+        dto.setBillId(billPayment.getBill().getId());
         dto.setStatus(billPayment.getStatus());
         dto.setTransactionId(billPayment.getTransactionId());
         dto.setAmount(billPayment.getAmount());

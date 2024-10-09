@@ -2,6 +2,7 @@ package com.iconsult.userservice.controller;
 
 import com.iconsult.userservice.model.dto.request.CustomerAccountDto2;
 import com.iconsult.userservice.model.dto.response.CbsAccountDto;
+import com.iconsult.userservice.model.dto.response.LimitResponse;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.service.AccountService;
 import com.iconsult.userservice.service.CustomerService;
@@ -32,6 +33,12 @@ public class AccountController {
     @PostMapping("/addAccount")
     CustomResponseEntity<?> addAccount(@RequestBody CbsAccountDto cbsAccountDto) {
         return accountService.addAccount(cbsAccountDto);
+    }
+
+
+    @GetMapping("/limits")
+    public CustomResponseEntity<LimitResponse> getAllLimits(@RequestParam ("accountNumber") String accountNumber) {
+        return accountService.calculateLimits(accountNumber);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////

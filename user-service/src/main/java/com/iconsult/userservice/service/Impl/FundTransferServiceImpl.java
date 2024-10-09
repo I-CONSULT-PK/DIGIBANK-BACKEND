@@ -337,6 +337,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setSenderAccount(senderAccount.get().getAccountNumber());
                         fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferSender.setCurrency(map.get("ccy"));
+                        fundsTransferSender.setTransactionType("FT");
                         fundsTransferSender.setIbanCode(senderAccount.get().getIbanCode());
                         fundsTransferSender.setStatus("COMPLETED");
                         // Receiver Transfer Log
@@ -345,6 +346,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getAmount());
                         fundsTransferReceiver.setTransactionDate(formattedDate);
+                        fundsTransferReceiver.setTransactionType("FT");
                         fundsTransferReceiver.setStatus("COMPLETED");
 
                         fundsTransferReceiver.setTransactionId(
@@ -497,6 +499,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                     Object billObject = data.get("transactionId");
                     fundsTransferSender.setTransactionId(String.valueOf(billObject));
                     fundsTransferSender.setTransactionNarration("IBFT");
+                    fundsTransferSender.setTransactionType("IBFT");
                     fundsTransferSender.setCurrentBalance(account.get().getAccountBalance() - totalAmount);
                     fundsTransferSender.setDebitAmt(totalAmount);
                     fundsTransferSender.setTransactionDate(formattedDate);
@@ -981,6 +984,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         HashMap<String, String> map = (HashMap<String, String>) responseDto.getData();
                         fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
+                        fundsTransferSender.setTransactionType("FT");
                         fundsTransferSender.setSenderAccount(senderAccount.get().getAccountNumber());
                         fundsTransferSender.setReceiverAccount(receiverAccount.get().getAccountNumber());
                         fundsTransferSender.setCurrency(map.get("ccy"));
@@ -988,6 +992,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setTransactionNarration("Scheduled Payment");
                         // Receiver Transfer Log
                         Transactions fundsTransferReceiver = new Transactions();
+                        fundsTransferReceiver.setTransactionType("FT");
                         fundsTransferReceiver.setAccount(receiverAccount.get());
                         fundsTransferReceiver.setCurrentBalance(receiverBalance);
                         fundsTransferReceiver.setCreditAmt(cbsTransferDto.getAmount());
@@ -1169,6 +1174,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferSender.setCurrentBalance(senderBalance);
                         fundsTransferSender.setDebitAmt(cbsTransferDto.getAmount());
                         fundsTransferSender.setTransactionDate(inputModified);
+                        fundsTransferSender.setTransactionType("IBFT");
                         HashMap<String, String> map = (HashMap<String, String>) responseDto.getData();
                         fundsTransferSender.setTransactionId(map.get("paymentReference"));
                         fundsTransferSender.setCreditAmt(0.0);
