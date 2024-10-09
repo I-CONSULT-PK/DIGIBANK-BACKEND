@@ -7,4 +7,6 @@ public interface RoleService {
     CustomResponseEntity AddRole(AddRoleDto addRoleDto);
 
     CustomResponseEntity getAllRoles();
+
+    CustomResponseEntity deleteRoleById(Long roleId);
 }

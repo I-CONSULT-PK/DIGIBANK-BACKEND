@@ -49,6 +49,7 @@ public class AuthConfig {
                                 .requestMatchers("/module/**").permitAll()
                                 .requestMatchers("/v1/admin/userList").hasRole("USER")
                                .requestMatchers("/v1/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/v1/role/**").hasRole("SUPER_ADMIN")
 
                 ).sessionManagement(session -> session
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

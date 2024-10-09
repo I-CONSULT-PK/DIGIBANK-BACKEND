@@ -3,10 +3,13 @@ package com.admin_service.service.serviceImpl;
 import com.admin_service.config.MyUserDetailsService;
 import com.admin_service.dto.request.AddUserDto;
 import com.admin_service.dto.request.LoginDto;
+import com.admin_service.dto.request.RoleDto;
+import com.admin_service.entity.Role;
 import com.admin_service.entity.User;
 import com.admin_service.entity.AppConfiguration;
 import com.admin_service.model.CustomResponseEntity;
 
+import com.admin_service.repository.RoleRepository;
 import com.admin_service.repository.UserRepository;
 import com.admin_service.service.AdminService;
 import com.admin_service.service.JwtService;
@@ -44,6 +47,8 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private MyUserDetailsService myUserDetailsService;
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminServiceImpl.class);
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Override
     public CustomResponseEntity login(LoginDto loginDto) {
@@ -181,6 +186,17 @@ public class AdminServiceImpl implements AdminService {
         if (userRepository.existsByUserName(addUserDto.getUserName())) {
             LOGGER.info("User Already Exist");
             return CustomResponseEntity.error("User Already Exist");
+        }
+        if(addUserDto.getRoleList().size()>0) {
+            for(RoleDto roleDto: addUserDto.getRoleList()) {
+                Role role = roleRepository.findById(roleDto.getId()).orElse(null);
+                if(role!=null) {
+                    if (user.getRoles() == null) {
+                        user.setRoles(new HashSet<>());
+                    }
+                    user.getRoles().add(role);
+                }
+            }
         }
 
 
