@@ -7,9 +7,12 @@ import com.iconsult.userservice.model.entity.Feedback;
 import com.iconsult.userservice.repository.CustomerRepository;
 import com.iconsult.userservice.repository.FeedbackRepository;
 import com.iconsult.userservice.service.FeedbackService;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,7 +26,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     private CustomerRepository customerRepository;
 
     @Override
-    public FeedbackResponseDTO createFeedback(FeedbackRequestDTO feedbackRequestDTO) {
+    public CustomResponseEntity createFeedback(FeedbackRequestDTO feedbackRequestDTO) {
 
         Optional<Customer> customerOpt = customerRepository.findById(feedbackRequestDTO.getCustomerId());
         if (!customerOpt.isPresent()) {
@@ -64,29 +67,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         Feedback savedFeedback = feedbackRepository.save(feedback);
 
-        return convertToDTO(savedFeedback);
-
-        /*// Check if the customer has already provided feedback
-        Optional<Feedback> existingFeedback = feedbackRepository.findByCustomerId(feedbackRequestDTO.getCustomerId());
-        if (existingFeedback.isPresent()) {
-            throw new IllegalArgumentException("Customer has already provided feedback");
-        }
-
-        int rating = feedbackRequestDTO.getRating();
-        if (rating < 1 || rating > 5) {
-            throw new IllegalArgumentException("Rating must be between 1 and 5");
-        }
-
-        Feedback feedback = new Feedback();
-        feedback.setCustomer(customerOpt.get());
-        feedback.setMessage(feedbackRequestDTO.getMessage());
-        feedback.setRating(feedbackRequestDTO.getRating());
-        feedback.setTimestamp(new Date());
-
-        Feedback savedFeedback = feedbackRepository.save(feedback);
-
-        return convertToDTO(savedFeedback);
-*/
+        return new CustomResponseEntity<>(convertToDTO(savedFeedback),"Your Feedback has been sent successfully");
     }
 
     @Override
@@ -127,11 +108,15 @@ public class FeedbackServiceImpl implements FeedbackService {
 
     private FeedbackResponseDTO convertToDTO(Feedback feedback) {
         FeedbackResponseDTO dto = new FeedbackResponseDTO();
-        dto.setId(feedback.getId());
-        dto.setCustomerId(feedback.getCustomer().getId());
-        dto.setMessage(feedback.getMessage());
-        dto.setRating(feedback.getRating());
-        dto.setTimestamp(feedback.getTimestamp());
+//        dto.setId(feedback.getId());
+//        dto.setCustomerId(feedback.getCustomer().getId());
+//        dto.setMessage(feedback.getMessage());
+//        dto.setRating(feedback.getRating());
+
+        SimpleDateFormat formatter = new SimpleDateFormat("dd MMM yyyy HH:mm");
+        String formattedDate = formatter.format(feedback.getTimestamp());
+        dto.setTimestamp(formattedDate);
+
         return dto;
     }
 

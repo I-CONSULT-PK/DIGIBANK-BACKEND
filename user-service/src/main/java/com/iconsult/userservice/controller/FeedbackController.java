@@ -3,6 +3,7 @@ package com.iconsult.userservice.controller;
 import com.iconsult.userservice.model.dto.request.FeedbackRequestDTO;
 import com.iconsult.userservice.model.dto.response.FeedbackResponseDTO;
 import com.iconsult.userservice.service.FeedbackService;
+import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +19,8 @@ public class FeedbackController {
     private FeedbackService feedbackService;
 
     @PostMapping("/createFeedback")
-    public ResponseEntity<FeedbackResponseDTO> createFeedback(@RequestBody FeedbackRequestDTO feedbackRequestDTO) {
-        FeedbackResponseDTO feedbackResponseDTO = feedbackService.createFeedback(feedbackRequestDTO);
-        return new ResponseEntity<>(feedbackResponseDTO, HttpStatus.CREATED);
+    public CustomResponseEntity createFeedback(@RequestBody FeedbackRequestDTO feedbackRequestDTO) {
+        return this.feedbackService.createFeedback(feedbackRequestDTO);
     }
 
     @GetMapping("/customer/{customerId}")

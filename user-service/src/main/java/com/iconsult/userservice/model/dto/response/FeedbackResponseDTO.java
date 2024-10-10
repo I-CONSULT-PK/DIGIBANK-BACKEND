@@ -9,10 +9,10 @@ import java.util.Date;
 @Setter
 public class FeedbackResponseDTO {
 
-    private Long id;
-    private Long customerId;
-    private String message;
-    private int rating;
-    private Date timestamp;
+//    private Long id;
+//    private Long customerId;
+//    private String message;
+//    private int rating;
+    private String timestamp;
 
 }

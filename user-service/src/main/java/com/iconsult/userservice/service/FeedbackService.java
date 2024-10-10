@@ -16,7 +16,7 @@ public interface FeedbackService {
 //     CustomResponseEntity<FeedbackResponseDTO> convertToDTO(Feedback feedback);
 
 
-     FeedbackResponseDTO createFeedback(FeedbackRequestDTO feedbackRequestDTO);
+     CustomResponseEntity createFeedback(FeedbackRequestDTO feedbackRequestDTO);
 
      List<FeedbackResponseDTO> getFeedbacksByCustomerId(Long customerId);
 
