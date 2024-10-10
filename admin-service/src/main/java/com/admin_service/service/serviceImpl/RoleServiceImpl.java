@@ -1,6 +1,7 @@
 package com.admin_service.service.serviceImpl;
 
 import com.admin_service.dto.request.AddRoleDto;
+import com.admin_service.dto.request.RoleDto;
 import com.admin_service.entity.Role;
 import com.admin_service.model.CustomResponseEntity;
 import com.admin_service.repository.RoleRepository;
@@ -52,5 +53,40 @@ public class RoleServiceImpl implements RoleService {
         roleRepository.delete(role);
         LOGGER.error("Role Deleted Successfully With Id "  + roleId);
         return new CustomResponseEntity(String.format("Role Deleted Successfully With Id "  + roleId));
+    }
+
+    @Override
+    public CustomResponseEntity getRoleById(Long roleId) {
+        Role role = roleRepository.findById(roleId).orElse(null);
+        if(role == null){
+
+            LOGGER.error("Role Does Not Exist With Id "  + roleId);
+            return CustomResponseEntity.error(String.format("Role Does Not Exist With Id "  + roleId));
+        }
+        RoleDto roleDto = new RoleDto();
+        roleDto.setName(role.getName());
+        roleDto.setId(role.getId());
+        return new CustomResponseEntity(roleDto,"");
+
+    }
+
+    @Override
+    public CustomResponseEntity updateRole(RoleDto roleDto) {
+        if (roleRepository.existsByName(roleDto.getName())) {
+            LOGGER.info("Role Already Exist");
+            return CustomResponseEntity.error("Role Already Exist");
+        }
+
+        Role role = roleRepository.findById(roleDto.getId()).orElse(null);
+        if(role == null){
+
+            LOGGER.error("Role Does Not Exist With Id "  + roleDto.getId());
+            return CustomResponseEntity.error(String.format("Role Does Not Exist With Id "  + roleDto.getId()));
+        }
+        role.setName(roleDto.getName());
+        roleRepository.save(role);
+        LOGGER.info(String.format("Role updated Successfully With Id "  + roleDto.getId()));
+        return new CustomResponseEntity(role,String.format("Role updated Successfully With Id "  + roleDto.getId()));
+
     }
 }
