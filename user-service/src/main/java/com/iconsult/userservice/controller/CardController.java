@@ -18,7 +18,6 @@ public class CardController {
     @Autowired
     Regex regex;
 
-
     @PostMapping("/verifyCard")
     public CustomResponseEntity verifyCard(@Valid @RequestBody CardDto cardDto) {
         return this.cardService.cardExist(cardDto);
@@ -60,4 +59,5 @@ public class CardController {
     public CustomResponseEntity  getCardNumbersAgainstAccountNumber(@RequestParam("accountNumber")  String accountNumber) {
         return this.cardService.getCardNumbersAgainstAccountNumber(accountNumber);
     }
+
 }

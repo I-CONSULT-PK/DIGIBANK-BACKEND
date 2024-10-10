@@ -36,6 +36,9 @@ public class SignUpDto {
     private String password;
 
     private Long securityPictureId;
+
+    private String branchCode;
+
     private String resetToken;
     private String status; //00-Active ;; 01-Disable ;; 02-Closed
     private Long resetTokenExpireTime;

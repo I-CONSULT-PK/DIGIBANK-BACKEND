@@ -13,6 +13,7 @@ import com.iconsult.userservice.enums.CustomerStatus;
 import com.iconsult.userservice.enums.ResponseCodes;
 import com.iconsult.userservice.exception.ServiceException;
 import com.iconsult.userservice.model.dto.request.*;
+import com.iconsult.userservice.model.dto.response.CbsBranchDto;
 import com.iconsult.userservice.model.dto.response.DashBoardResponseDto;
 import com.iconsult.userservice.model.dto.response.ForgetUserAndPasswordResponse;
 import com.iconsult.userservice.model.dto.response.SignUpResponse;
@@ -24,6 +25,7 @@ import com.zanbeel.customUtility.model.CustomResponseEntity;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang.time.DateUtils;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -52,17 +55,21 @@ public class CustomerServiceImpl implements CustomerService
     private final String URL = "http://localhost:8081/customer/get/cnic/mobileNumber/accountNumber";
     private final String dashBoardCBSURL = "http://localhost:8081/account/dashboard";
     private final String setdefaultaccountCBSURL = "http://localhost:8081/customer/setdefaultaccount";
-
+    private final String getBranchURL = "http://localhost:8081/branch";
     private final String accountURL = "http://localhost:8081/account/getAccount";
 
     @Autowired
     private NotificationService notificationService;
-
+    @Autowired
+    private ModelMapper modelMapper;
     @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
     BankRepository bankRepository;
+
+    @Autowired
+    BranchRepository  digiBankBranchRepository;
 
     private CustomResponseEntity response;
     @Autowired
@@ -166,6 +173,12 @@ public class CustomerServiceImpl implements CustomerService
             validateImage(signUpDto.getSecurityPictureId());
         }
 
+        // Fetch branch from CBS using branch code
+        String branchCode = signUpDto.getBranchCode();
+        CustomResponseEntity<CbsBranchDto> branchResponse = fetchBranchFromCbs(branchCode);
+        if (branchResponse.getData() == null) {
+            return CustomResponseEntity.error("Branch does not exist in CBS");
+        }
 
         // Validate account information
         AccountDto accountDto = signUpDto.getAccountDto();
@@ -190,11 +203,40 @@ public class CustomerServiceImpl implements CustomerService
         Customer customer = createCustomer(signUpDto, response.getBody());
         customerRepository.save(customer);
         Account account = accountRepository.findByAccountNumberAndCustomerCnic(signUpDto.getAccountDto().getAccountNumber(), signUpDto.getCnic());
+
+        // Map CBS branch to DigiBankBranch and set it in the account
+        DigiBankBranch digiBranch = mapCbsBranchToDigiBranch(branchResponse.getData());
+        digiBankBranchRepository.save(digiBranch); // Save the DigiBankBranch
+
+        // Associate the fetched DigiBankBranch with the account
+        account.setDigiBranch(digiBranch);
+
         AccountCDDetails accountCDDetails = new AccountCDDetails(account, account.getAccountBalance(),0.0,accountDto.getLastCredit(),accountDto.getLastDebit());
         accountCDDetailsRepository.save(accountCDDetails);// This will cascade and save the account
 
         // Return success response
         return new CustomResponseEntity<>(customer,"Customer registered successfully");
+    }
+
+    private DigiBankBranch mapCbsBranchToDigiBranch(CbsBranchDto cbsBranchDto) {
+        if (cbsBranchDto == null) {
+            throw new ServiceException("CBS Branch data cannot be null");
+        }
+        DigiBankBranch digiBankBranch = new DigiBankBranch();
+        digiBankBranch.setBranchCode(cbsBranchDto.getBranchCode());
+        digiBankBranch.setBranchName(cbsBranchDto.getBranchName());
+        digiBankBranch.setBranchDescription(cbsBranchDto.getBranchDescription());
+        digiBankBranch.setRegion(cbsBranchDto.getRegion());
+        digiBankBranch.setCountry(cbsBranchDto.getCountry());
+        digiBankBranch.setState(cbsBranchDto.getState());
+        digiBankBranch.setCity(cbsBranchDto.getCity());
+        digiBankBranch.setBranchType(cbsBranchDto.getBranchType());
+        digiBankBranch.setCurrencyWiseBase(cbsBranchDto.getCurrencyWiseBase());
+        digiBankBranch.setBranchCode(cbsBranchDto.getBranchCode());
+        digiBankBranch.setStartDate(cbsBranchDto.getStartDate());
+        digiBankBranch.setEndDate(cbsBranchDto.getEndDate());
+
+        return digiBankBranch;
     }
 
     private void checkExistingData(SignUpDto signUpDto) {
@@ -1099,6 +1141,48 @@ public class CustomerServiceImpl implements CustomerService
             LOGGER.error("An error occurred while fetching active customers: ", e);
             return new CustomResponseEntity("An error occurred. Please try again later.");
         }
+    }
+
+
+
+    public CustomResponseEntity fetchBranchFromCbs(String branchCode) {
+        try {
+            if (branchCode == null) {
+                return CustomResponseEntity.error("Branch code cannot be null");
+            }
+            URI uri = UriComponentsBuilder.fromHttpUrl(getBranchURL)
+                    .pathSegment(branchCode)
+                    .build()
+                    .toUri();
+            LOGGER.info("Request URL: " + uri.toString());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<CbsBranchDto> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    CbsBranchDto.class // Use CbsBranchDto as response type
+            );
+
+            if (response.getBody() != null) {
+                return new CustomResponseEntity(response.getBody(), "Success");
+            } else {
+                return CustomResponseEntity.error("Branch details not found");
+            }
+
+        } catch (HttpClientErrorException e) {
+            LOGGER.error("Error fetching branch from CBS: ");
+            return CustomResponseEntity.error("CBS branch not found!");
+        }
+    }
+
+    @Override
+    public CustomResponseEntity<?> getBranch(String branchCode) {
+        CustomResponseEntity<CbsBranchDto> response = fetchBranchFromCbs(branchCode);
+        return response;
     }
 
 

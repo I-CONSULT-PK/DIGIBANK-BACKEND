@@ -74,4 +74,7 @@ public interface CustomerService
     CustomResponseEntity getCustomers();
 
     CustomResponseEntity getActiveCustomers(String action);
+
+
+    CustomResponseEntity getBranch(String branchCode);
 }
