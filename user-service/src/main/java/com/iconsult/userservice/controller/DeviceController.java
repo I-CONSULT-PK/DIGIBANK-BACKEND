@@ -72,7 +72,7 @@ public class DeviceController {
         return deviceService.fetchDeviceRegister(customerId);
     }
     @DeleteMapping("/delete/{id}")
-    public CustomResponseEntity deviceRegister(@PathVariable("id") Long id) {
+    public CustomResponseEntity deleteDevice(@PathVariable("id") Long id) {
         return this.deviceService.deleteDevice(id);
     }
 }
