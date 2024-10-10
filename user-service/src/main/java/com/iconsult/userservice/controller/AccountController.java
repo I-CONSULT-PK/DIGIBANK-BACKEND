@@ -1,6 +1,8 @@
 package com.iconsult.userservice.controller;
 
+import com.iconsult.userservice.model.dto.request.AccountDto;
 import com.iconsult.userservice.model.dto.request.CustomerAccountDto2;
+import com.iconsult.userservice.model.dto.request.MostActiveAccountDto;
 import com.iconsult.userservice.model.dto.response.CbsAccountDto;
 import com.iconsult.userservice.model.dto.response.LimitResponse;
 import com.iconsult.userservice.repository.CustomerRepository;
@@ -8,7 +10,10 @@ import com.iconsult.userservice.service.AccountService;
 import com.iconsult.userservice.service.CustomerService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/v1/account")
@@ -47,6 +52,13 @@ public class AccountController {
             @PathVariable Long customerId,
             @PathVariable String accountNumber) {
         return accountService.getCustomerAccountDetails(customerId, accountNumber);
+    }
+
+    // Dashboard :: For most active accounts
+    @GetMapping("/most-active")
+    public ResponseEntity<List<MostActiveAccountDto>> getMostActiveAccounts() {
+        List<MostActiveAccountDto> mostActiveAccounts = accountService.getMostActiveAccounts();
+        return ResponseEntity.ok(mostActiveAccounts);
     }
 
 }

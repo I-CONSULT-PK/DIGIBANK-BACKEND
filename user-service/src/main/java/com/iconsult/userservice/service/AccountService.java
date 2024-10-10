@@ -2,10 +2,13 @@ package com.iconsult.userservice.service;
 
 import com.iconsult.userservice.model.dto.request.AccountDto;
 import com.iconsult.userservice.model.dto.request.CustomerAccountDto2;
+import com.iconsult.userservice.model.dto.request.MostActiveAccountDto;
 import com.iconsult.userservice.model.dto.response.CbsAccountDto;
 import com.iconsult.userservice.model.dto.response.LimitResponse;
 import com.iconsult.userservice.model.entity.Account;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
+
+import java.util.List;
 
 public interface AccountService {
 
@@ -22,5 +25,8 @@ public interface AccountService {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     CustomerAccountDto2 getCustomerAccountDetails(Long customerId, String accountNumber);
+
+    // Dashboard ::
+     List<MostActiveAccountDto> getMostActiveAccounts();
 
 }

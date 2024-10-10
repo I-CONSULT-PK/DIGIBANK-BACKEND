@@ -1,5 +1,6 @@
 package com.iconsult.userservice.repository;
 
+import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.Transactions;
 import feign.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,6 +38,24 @@ List<Transactions> findByAccount_IdAndTransactionTypeAndTransactionDateContainin
             @Param("transactionType") String transactionType,
             @Param("currentDate") LocalDate currentDate);
 
+    // Dashborad ::
+
+    // Fetch the most recent debit transaction for a given account
+    Transactions findTopByAccountAndDebitAmtIsNotNullOrderByTransactionDateDesc(Account account);
+
+    // Fetch the most recent credit transaction for a given account
+    Transactions findTopByAccountAndCreditAmtIsNotNullOrderByTransactionDateDesc(Account account);
+
+    // Sum of all debit transactions for a given account
+    @Query("SELECT SUM(t.debitAmt) FROM Transactions t WHERE t.account = :account")
+    Double calculateTotalDebitAmountByAccount(@Param("account") Account account);
+
+    // Sum of all credit transactions for a given account
+    @Query("SELECT SUM(t.creditAmt) FROM Transactions t WHERE t.account = :account")
+    Double calculateTotalCreditAmountByAccount(@Param("account") Account account);
+
+    // Count of all transactions for a given account
+    @Query("SELECT COUNT(t) FROM Transactions t WHERE t.account = :account")
+    Long countTransactionsByAccount(@Param("account") Account account);
+
 }
-
-

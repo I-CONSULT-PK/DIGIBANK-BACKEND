@@ -4,11 +4,13 @@ package com.iconsult.userservice.service.Impl;
 import com.iconsult.userservice.custome.Regex;
 import com.iconsult.userservice.model.dto.request.AccountDto;
 import com.iconsult.userservice.model.dto.request.CustomerAccountDto2;
+import com.iconsult.userservice.model.dto.request.MostActiveAccountDto;
 import com.iconsult.userservice.model.dto.response.CbsAccountDto;
 import com.iconsult.userservice.model.dto.response.LimitResponse;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AccountCDDetails;
 import com.iconsult.userservice.model.entity.Customer;
+import com.iconsult.userservice.model.entity.Transactions;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
 import com.iconsult.userservice.repository.CustomerRepository;
@@ -26,9 +28,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -264,5 +265,57 @@ public class AccountServiceImpl implements AccountService {
 
         return dto;
 
+    }
+
+    // Dashboard ::
+    @Override
+    public List<MostActiveAccountDto> getMostActiveAccounts() {
+        // Fetch all accounts
+        List<Account> accounts = accountRepository.findAll();
+        List<MostActiveAccountDto> result = new ArrayList<>();
+
+        // Process each account
+        for (Account account : accounts) {
+            Customer customer = account.getCustomer();
+
+            // Handle cases where customer might be null
+            if (customer == null) continue;
+
+            // Fetch last debit and credit transactions for the account
+            Transactions lastDebitTransaction = transactionRepository.findTopByAccountAndDebitAmtIsNotNullOrderByTransactionDateDesc(account);
+            Transactions lastCreditTransaction = transactionRepository.findTopByAccountAndCreditAmtIsNotNullOrderByTransactionDateDesc(account);
+
+            // Fetch total debit amount and credit amount
+            Double totalDebitAmount = transactionRepository.calculateTotalDebitAmountByAccount(account);
+            totalDebitAmount = totalDebitAmount != null ? totalDebitAmount : 0.0;
+
+            Double totalCreditAmount = transactionRepository.calculateTotalCreditAmountByAccount(account);
+            totalCreditAmount = totalCreditAmount != null ? totalCreditAmount : 0.0;
+
+            // Fetch total number of transactions
+            Long totalTransactions = transactionRepository.countTransactionsByAccount(account);
+
+            // Extract last transaction amounts (if exist)
+            Double lastDebitAmt = lastDebitTransaction != null ? lastDebitTransaction.getDebitAmt() : 0.0;
+            Double lastCreditAmt = lastCreditTransaction != null ? lastCreditTransaction.getCreditAmt() : 0.0;
+
+            // Create DTO and add to result
+            MostActiveAccountDto dto = new MostActiveAccountDto(
+                    customer.getUserName(),
+                    account.getAccountType(),
+                    account.getAccountNumber(),
+                    lastDebitAmt,
+                    lastCreditAmt,
+                    totalDebitAmount,
+                    totalCreditAmount,
+                    totalTransactions
+            );
+            result.add(dto);
+        }
+
+        // Sort by total Transactions in descending order
+        result.sort(Comparator.comparing(MostActiveAccountDto::getTotalTransactions).reversed());
+
+        return result;
     }
 }
