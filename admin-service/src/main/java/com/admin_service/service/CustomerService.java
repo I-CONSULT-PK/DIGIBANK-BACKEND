@@ -7,4 +7,5 @@ public interface CustomerService {
     CustomResponseEntity getCustomers();
 
     CustomResponseEntity getActiveCustomers(String action);
+    CustomResponseEntity getTotalCreditDebit(String record);
 }

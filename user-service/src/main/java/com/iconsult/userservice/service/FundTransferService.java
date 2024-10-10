@@ -31,5 +31,6 @@ public interface FundTransferService {
     CustomResponseEntity scheduleFundTransfer(ScheduleFundTransferDto fundTransferDto) throws SchedulerException;
 
     CustomResponseEntity scheduleIbftFundTransfer(ScheduleIbftFundTransferDto fundTransferDto);
+    CustomResponseEntity transactionRecordPerDay(String startDate, String endDate);
 }
 

@@ -68,6 +68,15 @@ public class FundTransferController {
         return  fundTransferService.generateStatement(accountNumber, startDate, endDate, statementType);
     }
 
+    @GetMapping("/getTotalCreditDebit")
+    public CustomResponseEntity<Map<String, Object>> getTotalCreditDebit(
+            @RequestParam
+            String startDate,
+            @RequestParam
+            String endDate
+    ){
+        return  fundTransferService.transactionRecordPerDay(startDate, endDate);
+    }
     @PostMapping("/setOneDayLimit")
     public CustomResponseEntity setOneDayLimit(@RequestParam
         String account ,@RequestParam Long customerId, @RequestParam Double ondDayLimit){

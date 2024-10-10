@@ -32,6 +32,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1244,6 +1246,49 @@ public class FundTransferServiceImpl implements FundTransferService {
             throw new SecurityException("Unable to Process!");
         }
         return null;
+    }
+    private boolean checkDateFormat(String startDate, String endDate) {
+        // Corrected format: MM for month
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        simpleDateFormat.setLenient(false); // Enforce strict date parsing
+
+        try {
+            // Attempt to parse both dates
+            simpleDateFormat.parse(startDate);
+            simpleDateFormat.parse(endDate);
+            return true;
+        } catch (ParseException e) {
+            // Parsing failed, invalid date format
+            return false;
+        }
+    }
+
+    @Override
+    public CustomResponseEntity transactionRecordPerDay(String startDate, String endDate) {
+        if(!checkDateFormat(startDate, endDate)){
+            return CustomResponseEntity.error("Invalid Date Format Date Format will be yyyy,MM,dd");
+        }
+        List<Transactions> transactionsList = transactionRepository.findByTransactionDate(startDate, endDate);
+        double credit = totalCredit(transactionsList);
+        double debit = totalDebit(transactionsList);
+        Map<String, Double> data = new HashMap<>();
+        data.put("credit", credit);
+        data.put("debit", debit);
+        return new CustomResponseEntity<>(data,"Success");
+    }
+    private Double totalCredit(List<Transactions> transactionsList){
+        Double totalCredit = 0.0;
+        for(Transactions transactional : transactionsList){
+            totalCredit += transactional.getCreditAmt();
+        }
+        return totalCredit;
+    }
+    private Double totalDebit(List<Transactions> transactionsList){
+        Double totalDebit = 0.0;
+        for(Transactions transactional : transactionsList){
+            totalDebit += transactional.getDebitAmt();
+        }
+        return totalDebit;
     }
 
 }

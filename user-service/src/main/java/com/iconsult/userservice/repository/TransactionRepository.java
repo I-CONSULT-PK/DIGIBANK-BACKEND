@@ -20,8 +20,14 @@ public interface TransactionRepository extends JpaRepository<Transactions, Long>
             @Param("accountNumber") String accountNumber,
             @Param("startDate") String startDate,
             @Param("endDate") String endDate);
+    @Query("SELECT t FROM Transactions t " +
+            "WHERE t.transactionDate BETWEEN :startDate AND :endDate ORDER BY t.transactionDate DESC")
+    List<Transactions> findByTransactionDate(
+            @Param("startDate") String startDate,
+            @Param("endDate") String endDate);
 
-//    List<Transactions> findByAccount_IdAndTransactionDateContaining(Long accountId, String transactionDate);
+
+    //    List<Transactions> findByAccount_IdAndTransactionDateContaining(Long accountId, String transactionDate);
 //@Query("SELECT SUM(t.debitAmt) FROM Transactions t WHERE t.account.id = :accountId AND DATE(t.transactionDate) = :date")
 //Double sumDebitAmountByAccountAndDate(@Param("accountId") Long accountId, @Param("date") LocalDate date);
 List<Transactions> findByAccount_IdAndTransactionTypeAndTransactionDateContaining(Long accountId, String transactionType, String transactionDate);
