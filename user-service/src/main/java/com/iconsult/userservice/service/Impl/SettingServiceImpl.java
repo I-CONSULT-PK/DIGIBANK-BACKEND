@@ -136,7 +136,7 @@ public class SettingServiceImpl implements SettingService {
     }
 
     @Override
-    public CustomResponseEntity updateDevicePin(String id, SettingDTO settingDTO) {
+    public CustomResponseEntity updateDevicePin(SettingDTO settingDTO) {
 
         try
         {
@@ -161,7 +161,7 @@ public class SettingServiceImpl implements SettingService {
                 return CustomResponseEntity.error("Sequential new pins are not allowed");
             }
 
-            Device existingDevice = settingRepository.findById(Long.valueOf(id))
+            Device existingDevice = settingRepository.findByUnique1(settingDTO.getUnique())
                     .orElseThrow(() -> new RuntimeException("Device Does Not Exist!"));
 
             if(existingDevice.getPinStatus().equals(PinStatus.INACTIVE)){

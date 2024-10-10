@@ -3,6 +3,8 @@ package com.example.Quartz.controller;
 
 import com.example.Quartz.model.dto.request.ScheduleBillPaymentRequest;
 import com.example.Quartz.model.dto.request.ScheduleFundTransferDto;
+import com.example.Quartz.model.dto.request.ScheduleMobileTopUpPaymentRequest;
+import com.example.Quartz.service.MobileTopUpQuartzService;
 import com.example.Quartz.model.dto.request.ScheduleIbftFundTransferDto;
 import com.example.Quartz.service.QuartzService;
 import com.zanbeel.customUtility.exception.GlobalExceptionHandler;
@@ -19,6 +21,9 @@ public class DummyController extends GlobalExceptionHandler {
     @Autowired
     QuartzService quartzService;
 
+    @Autowired
+    MobileTopUpQuartzService mobileTopUpQuartzService;
+
     @PostMapping("/scheduleFundTransfer")
     public CustomResponseEntity getAllBanks(@Valid @RequestBody ScheduleFundTransferDto fundTransferDto,  @RequestHeader("Authorization") String bearerToken) throws SchedulerException {
         return this.quartzService.scheduleFundTransfer(fundTransferDto,bearerToken);
@@ -33,5 +38,11 @@ public class DummyController extends GlobalExceptionHandler {
     @PostMapping("/scheduleIbftFundTransfer")
     public CustomResponseEntity scheduleIbftFundTransfer(@Valid @RequestBody ScheduleIbftFundTransferDto fundTransferDto, @RequestHeader("Authorization") String bearerToken) throws SchedulerException {
         return this.quartzService.scheduleIbftFundTransfer(fundTransferDto,bearerToken);
+    }
+
+    @PostMapping("/schedulemobileTop")
+    public CustomResponseEntity scheduleMobileTop(@Valid @RequestBody ScheduleMobileTopUpPaymentRequest scheduleMobileTopUpPaymentRequest, @RequestHeader("Authorization") String bearerToken)
+    {
+        return this.mobileTopUpQuartzService.scheduleMobileTopUp(scheduleMobileTopUpPaymentRequest,bearerToken);
     }
 }

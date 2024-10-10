@@ -5,11 +5,13 @@ import com.iconsult.userservice.model.dto.response.TopPackageTransactionDto;
 import com.iconsult.userservice.model.dto.response.TopUpPaymentTransactionDto;
 import com.iconsult.userservice.model.entity.Account;
 import com.iconsult.userservice.model.entity.AccountCDDetails;
+import com.iconsult.userservice.model.entity.ScheduleMobileTopUpPayment;
 import com.iconsult.userservice.model.entity.Transactions;
 import com.iconsult.userservice.model.mapper.TopUpPackageTransactionMapper;
 import com.iconsult.userservice.model.mapper.TopUpTransactionMapper;
 import com.iconsult.userservice.repository.AccountCDDetailsRepository;
 import com.iconsult.userservice.repository.AccountRepository;
+import com.iconsult.userservice.repository.ScheduleMobileTopUpPaymentRepository;
 import com.iconsult.userservice.repository.TransactionRepository;
 import com.iconsult.userservice.service.TopUpService;
 import com.zanbeel.customUtility.model.CustomResponseEntity;
@@ -46,6 +48,9 @@ public class TopUpServiceImpl implements TopUpService {
     @Autowired
     private TransactionRepository transactionRepository;
 
+    @Autowired
+    ScheduleMobileTopUpPaymentRepository scheduleMobileTopUpPaymentRepository;
+
     private String URL = "http://localhost:8089/v1/topup/topUpTransaction";
     private String PackageURL = "http://localhost:8089/v1/packages/all";
 
@@ -53,7 +58,7 @@ public class TopUpServiceImpl implements TopUpService {
 
 
     @Override
-    public CustomResponseEntity getMobileNumberAndPlanDetail(String phoneNumber, Double amount, String carrier, String plan, String accountNumber) {
+    public CustomResponseEntity getMobileNumberAndPlanDetail(String phoneNumber, Double amount, String carrier, String plan, String accountNumber ) {
         // Fetch account details from repository
         Account fetchAccountNumber;
         try {
@@ -440,6 +445,222 @@ public class TopUpServiceImpl implements TopUpService {
 
 
 
+    @Override
+    public CustomResponseEntity schdulePackageTransaction(Long packageId, String accountNumber, String mobileNumber,Long schduleId) {
+        // Check if account exists
+        Account account = accountRepository.findByAccountNumber(accountNumber);
+        if (account == null) {
+            return CustomResponseEntity.error("Account doesn't exist");
+        }
+
+        // Build URI with query parameters
+        URI uri;
+        try {
+            uri = UriComponentsBuilder.fromHttpUrl(BundleTransactionURL)
+                    .queryParam("packageId", packageId)
+                    .queryParam("mobileNumber", mobileNumber)
+                    .build()
+                    .toUri();
+        } catch (Exception e) {
+            LOGGER.error("Error building URI: {}", e.getMessage());
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error("Error building URI");
+        }
+
+        // Log the full request URL
+        LOGGER.info("Request URL: {}", uri);
+
+        // Set headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Create HttpEntity with headers
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        // Make HTTP GET request
+        ResponseEntity<CustomResponseEntity> response;
+        try {
+            response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    entity,
+                    CustomResponseEntity.class
+            );
+        } catch (Exception e) {
+            LOGGER.error("Error making HTTP request: {}", e.getMessage());
+            return CustomResponseEntity.error("Error making HTTP request");
+        }
+
+        // Process the response
+        CustomResponseEntity<?> responseBody = response.getBody();
+        if (responseBody == null) {
+            LOGGER.error("Response body is null");
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error("Response body is null");
+        }
+
+        if (!responseBody.isSuccess()) {
+            String errorMessage = responseBody.getMessage(); // Get error message from response body
+            LOGGER.error("Error from response: {}", errorMessage);
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error(errorMessage);
+        }
+
+        // Extract amount from response data
+        Double billAmount;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) responseBody.getData();
+            Object billObject = data.get("package details");
+
+            if (billObject instanceof Map) {
+                Map<String,Object> topUpMap = (Map<String,Object>) billObject;
+                Object priceObject = topUpMap.get("price");
+                billAmount = ((Number) priceObject).doubleValue();
+            } else {
+                LOGGER.error("Invalid amount received in response: {}", billObject);
+                ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+                scheduleMobileTopUpPayment.setStatus("In-Completed");
+                scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+                return CustomResponseEntity.error("Invalid amount received in response");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error processing response data: {}", e.getMessage());
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error("Error processing response data");
+        }
+
+        // Check account balance
+        Double accountBalance = account.getAccountBalance();
+        if (accountBalance == null) {
+            accountBalance = 0.0;
+        }
+//        Double singleDayTopUpLimit = account.getSingleDayBillPayLimit();
+        Double singleDayTopUpLimit = account.getSingleDayTopUpLimit();
+        // 1. Fetch today's transactions and sum their debit amounts
+//                        LocalDate today2 = LocalDate.now();
+        Double totalDebitToday = calculateTodayTotalDebit(account.getId());
+
+        // 2. Check if the new transaction amount plus today's total exceeds the limit
+        if (totalDebitToday + billAmount > singleDayTopUpLimit) {
+            LOGGER.warn("Daily transaction limit exceeded for account number: {}", account.getAccountNumber());
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return new CustomResponseEntity<>(1002, "Daily transaction limit exceeded ....");
+        }
+
+        if (accountBalance < billAmount) {
+            LOGGER.error("Insufficient balance. Current balance: {}, Required amount: {}", accountBalance, billAmount);
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error("Insufficient balance");
+        }
+
+        // Record the balance before the deduction
+        Double previousBalance = accountBalance;
+
+        // Perform the deduction
+        Double newBalance = accountBalance - billAmount;
+
+        // Create transaction DTO
+        TopPackageTransactionDto transactionDto = new TopPackageTransactionDto();
+        transactionDto.setAccountNumber(account.getAccountNumber());
+        transactionDto.setDebitAmount(billAmount);
+        transactionDto.setCreditAmount(0.0);
+        transactionDto.setCurrentBalance(newBalance);
+        transactionDto.setTransactionId(generateRandomReference());
+        transactionDto.setTransactionDate(formatter.format(new Date()));
+        transactionDto.setIbanCode(account.getIbanCode());
+        transactionDto.setTransactionNarration("Top-up transaction");
+        transactionDto.setTransactionType("TOPUP");
+
+        Transactions transaction;
+        try {
+            transaction = TopUpPackageTransactionMapper.toEntity(transactionDto, account);
+        } catch (Exception e) {
+            LOGGER.error("Error mapping DTO to entity: {}", e.getMessage());
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error("Error mapping DTO to entity");
+        }
+
+        // Update or create AccountCDDetails
+        try {
+            AccountCDDetails updateLastDebitAmount = accountCDDetailsRepository.findByAccount_Id(account.getId());
+            if (updateLastDebitAmount != null) {
+                // Update existing AccountCDDetails
+                updateLastDebitAmount.setDebit(billAmount);
+                updateLastDebitAmount.setAccount(account);
+                updateLastDebitAmount.setActualBalance(newBalance); // Set the current balance
+                updateLastDebitAmount.setPreviousBalance(previousBalance); // Balance before deduction
+                updateLastDebitAmount.setCredit(0.0);
+            } else {
+                // Create new AccountCDDetails if not found
+                updateLastDebitAmount = new AccountCDDetails();
+                updateLastDebitAmount.setDebit(billAmount);
+                updateLastDebitAmount.setAccount(account);
+                updateLastDebitAmount.setActualBalance(newBalance); // Set the current balance
+                updateLastDebitAmount.setPreviousBalance(previousBalance); // Balance before deduction
+                updateLastDebitAmount.setCredit(0.0);
+            }
+            accountCDDetailsRepository.save(updateLastDebitAmount);
+        } catch (Exception e) {
+            LOGGER.error("Error updating or creating AccountCDDetails: {}", e.getMessage());
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error("Error updating or creating AccountCDDetails");
+        }
+
+        // Save transaction
+        try {
+            transactionsGenericDao.saveOrUpdate(transaction);
+        } catch (Exception e) {
+            LOGGER.error("Error saving transaction: {}", e.getMessage());
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error("Error saving transaction");
+        }
+
+        // Update account balance in repository
+        try {
+            account.setAccountBalance(newBalance);
+            accountRepository.save(account);
+        } catch (Exception e) {
+            LOGGER.error("Error updating account balance: {}", e.getMessage());
+            ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+            scheduleMobileTopUpPayment.setStatus("In-Completed");
+            scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+            return CustomResponseEntity.error("Error updating account balance");
+        }
+
+        // Combine additional details with existing response data
+        @SuppressWarnings("unchecked")
+        Map<String, Object> responseData = (Map<String, Object>) responseBody.getData();
+        responseData.put("transactionId", transactionDto.getTransactionId());
+        responseData.put("date", formatter.format(new Date()));
+        responseData.put("mobileNumber", mobileNumber);
+
+        // Return the updated response
+        ScheduleMobileTopUpPayment scheduleMobileTopUpPayment = scheduleMobileTopUpPaymentRepository.findById(schduleId).orElse(null);
+        scheduleMobileTopUpPayment.setStatus("Completed");
+        scheduleMobileTopUpPaymentRepository.save(scheduleMobileTopUpPayment);
+        return null;
+    }
 
 
 

@@ -57,7 +57,7 @@ public class BillPaymentController {
 
         try {
             // Call service method to process the request
-            CustomResponseEntity response = billPaymentService.schdeuleUtilityBillPay(scheduleBillPaymentRequest);
+            CustomResponseEntity response = billPaymentService.schedulePayBill(scheduleBillPaymentRequest);
 
             // Return the response with HTTP 200 OK
             return new ResponseEntity<>(response, HttpStatus.OK);

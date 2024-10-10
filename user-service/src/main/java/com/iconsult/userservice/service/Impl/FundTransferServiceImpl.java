@@ -10,11 +10,7 @@ import com.iconsult.userservice.model.dto.response.FetchAccountDto;
 import com.iconsult.userservice.model.dto.response.StatementDetailDto;
 import com.iconsult.userservice.model.entity.*;
 import com.iconsult.userservice.model.mapper.TransactionsMapper;
-import com.iconsult.userservice.repository.AccountCDDetailsRepository;
-import com.iconsult.userservice.repository.AccountRepository;
-import com.iconsult.userservice.repository.CustomerRepository;
-import com.iconsult.userservice.repository.ScheduledTransactionsRepository;
-import com.iconsult.userservice.repository.TransactionRepository;
+import com.iconsult.userservice.repository.*;
 import com.iconsult.userservice.service.FundTransferService;
 import com.iconsult.userservice.service.NotificationService;
 import com.iconsult.userservice.service.UserActivityService;
@@ -84,6 +80,9 @@ public class FundTransferServiceImpl implements FundTransferService {
     CustomerRepository customerRepository;
 
     @Autowired
+    BankRepository bankRepository;
+
+    @Autowired
     BeneficiaryServiceClient beneficiaryServiceClient;
     @Autowired
     private NotificationService notificationService;
@@ -91,7 +90,7 @@ public class FundTransferServiceImpl implements FundTransferService {
     @Autowired
     private AccountCDDetailsRepository accountCDDetailsRepository;
 
-//    @Autowired
+    //    @Autowired
 //    private Scheduler scheduler;
     @Autowired
     private ScheduledTransactionsRepository scheduledTransactionsRepository;
@@ -106,14 +105,15 @@ public class FundTransferServiceImpl implements FundTransferService {
             Map<String, Object> params = new HashMap<>();
             params.put("isActive", true);
 
-            List<Bank> bankList = bankGenericDao.findWithQuery(jpql, params);
+//            List<Bank> bankList = bankGenericDao.findWithQuery(jpql, params);
+            List<Bank> banks = bankRepository.findAll();
 
-            if (bankList.isEmpty()) {
+            if (banks.isEmpty()) {
                 LOGGER.info("No Banks Exist!");
                 return CustomResponseEntity.error("No Banks Exist!");
             }
 
-            return new CustomResponseEntity<>(bankList, "Bank List");
+            return new CustomResponseEntity<>(banks, "Bank List");
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
             return CustomResponseEntity.error("Unable to Process!");
@@ -173,6 +173,7 @@ public class FundTransferServiceImpl implements FundTransferService {
             return CustomResponseEntity.error("Unable to Process!");
         }
     }
+
     private Double calculateTotalDailyAmount(String account) {
 
         LocalDate today = LocalDate.now();
@@ -204,15 +205,16 @@ public class FundTransferServiceImpl implements FundTransferService {
         }
         return false;
     }
+
     public CustomResponseEntity fundTransfer(FundTransferDto cbsTransferDto) {
-            CustomResponseEntity sender =  regex.checkAccountNumberFormat(cbsTransferDto.getSenderAccountNumber());
-            CustomResponseEntity res =  regex.checkAccountNumberFormat(cbsTransferDto.getReceiverAccountNumber());
-            if(!sender.isSuccess()){
-                return sender;
-            }
-            if(!res.isSuccess()){
-                return res;
-            }
+        CustomResponseEntity sender = regex.checkAccountNumberFormat(cbsTransferDto.getSenderAccountNumber());
+        CustomResponseEntity res = regex.checkAccountNumberFormat(cbsTransferDto.getReceiverAccountNumber());
+        if (!sender.isSuccess()) {
+            return sender;
+        }
+        if (!res.isSuccess()) {
+            return res;
+        }
 
         try {
             // Build the URI for the POST request
@@ -253,17 +255,30 @@ public class FundTransferServiceImpl implements FundTransferService {
                     Optional<Account> senderAccount = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
                     params.put("accountNumber", cbsTransferDto.getReceiverAccountNumber());
                     Optional<Account> receiverAccount = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
-                    if (senderAccount.isEmpty()){
+                    if (senderAccount.isEmpty()) {
                         return CustomResponseEntity.error("Invalid Account Number");
                     } else if (receiverAccount.isEmpty()) {
                         return CustomResponseEntity.error("Invalid Receiver account");
                     }
                     if (senderAccount.isPresent() && receiverAccount.isPresent()) {
-                        if(senderAccount.get().getTransactionLimit() < cbsTransferDto.getAmount()) {
+                        if (senderAccount.get().getTransactionLimit() < cbsTransferDto.getAmount()) {
                             return CustomResponseEntity.error("Account limit is lower than the transfer money");
                         }
-                        if (isTransactionAllowed(senderAccount.get().getAccountNumber(),cbsTransferDto.getAmount(),senderAccount.get().getSingleDayLimit()) == false){
+                        if (isTransactionAllowed(senderAccount.get().getAccountNumber(), cbsTransferDto.getAmount(), senderAccount.get().getSingleDayLimit()) == false) {
                             return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+                        }
+
+                        if(senderAccount.get().getCustomer().getId().equals(receiverAccount.get().getCustomer().getId())){
+                            if (isTransactionAllowed(senderAccount.get().getAccountNumber(),cbsTransferDto.getAmount(),senderAccount.get().getSingleDayOwnLimit()) == false){
+                                return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+                            }
+                        }
+                        if(cbsTransferDto.getSingleDayQRLimit() != null) {
+                            if (cbsTransferDto.getSingleDayQRLimit().equals("qrpay")) {
+                                if (isTransactionAllowed(senderAccount.get().getAccountNumber(), cbsTransferDto.getAmount(), senderAccount.get().getSingleDayQRLimit()) == false) {
+                                    return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
+                                }
+                            }
                         }
                         // 2. Apply credit and debit logic
                         double senderBalance = senderAccount.get().getAccountBalance();
@@ -350,7 +365,7 @@ public class FundTransferServiceImpl implements FundTransferService {
                         fundsTransferReceiver.setStatus("COMPLETED");
 
                         fundsTransferReceiver.setTransactionId(
-                                map.get("paymentReference") != null ? map.get("paymentReference") : null );
+                                map.get("paymentReference") != null ? map.get("paymentReference") : null);
 
 //                        fundsTransferReceiver.setTransactionId(map.get("paymentReference"));
                         fundsTransferReceiver.setDebitAmt(0.0);
@@ -367,18 +382,18 @@ public class FundTransferServiceImpl implements FundTransferService {
                         UserActivityRequest userActivity = new UserActivityRequest();
                         userActivity.setActivityDate(LocalDateTime.now());
                         userActivity.setCustomerId(senderAccount.get().getCustomer());
-                        userActivity.setUserActivity("Transferred an amount of Rs. "+cbsTransferDto.getAmount()
-                            +" from Account No: "+cbsTransferDto.getSenderAccountNumber()
-                            +" To Account No :"+receiverAccount.get().getAccountNumber());
+                        userActivity.setUserActivity("Transferred an amount of Rs. " + cbsTransferDto.getAmount()
+                                + " from Account No: " + cbsTransferDto.getSenderAccountNumber()
+                                + " To Account No :" + receiverAccount.get().getAccountNumber());
                         userActivity.setPkr(cbsTransferDto.getAmount());
                         userActivityService.saveUserActivity(userActivity);
 
                         NotificationEvent notificationEvent = new NotificationEvent();
                         notificationEvent.setNotificationType("Funds Transfer");
-                        notificationEvent.setMessage("An amount of "+cbsTransferDto.getAmount()+
-                                " has been successfully transferred from your account '"+
-                                cbsTransferDto.getSenderAccountNumber()+"' to account '" +
-                                cbsTransferDto.getReceiverAccountNumber()+"'.");
+                        notificationEvent.setMessage("An amount of " + cbsTransferDto.getAmount() +
+                                " has been successfully transferred from your account '" +
+                                cbsTransferDto.getSenderAccountNumber() + "' to account '" +
+                                cbsTransferDto.getReceiverAccountNumber() + "'.");
                         notificationEvent.setRecipientId(senderAccount.get().getCustomer().getId());
                         notificationEvent.setChannel("EMAIL");
                         notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
@@ -415,7 +430,7 @@ public class FundTransferServiceImpl implements FundTransferService {
         Map<String, Object> params = new HashMap<>();
         params.put("accountNumber", fundTransferDto.getSenderAccountNumber());
 
-        Optional<Account> account  = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
+        Optional<Account> account = Optional.ofNullable(accountGenericDao.findOneWithQuery(jpql, params));
 //        Account account = accountRepository.getAccountByAccountNumber(fundTransferDto.getFromAccountNumber());
         if (!account.isPresent()) {
             return CustomResponseEntity.error("sender account not found within DiGi Bank!");
@@ -425,7 +440,7 @@ public class FundTransferServiceImpl implements FundTransferService {
         // 1% of transaction
         double transactionFee = fundTransferDto.getAmount() * 0.01;
         double totalAmount = fundTransferDto.getAmount() + transactionFee;
-        if(account.get().getTransactionLimit() < totalAmount) {
+        if (account.get().getTransactionLimit() < totalAmount) {
             return CustomResponseEntity.error("Account limit is lower than the transfer money");
         }
 
@@ -435,7 +450,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 //            map.put("currentBalance", account.get().getAccountBalance());
             return CustomResponseEntity.error("Insufficient balance!");
         }
-        if (isTransactionAllowed(account.get().getAccountNumber(),totalAmount,account.get().getSingleDayLimit()) == false){
+        if (isTransactionAllowed(account.get().getAccountNumber(), totalAmount, account.get().getSingleDayLimit()) == false) {
             return CustomResponseEntity.error("Single Day Account limit is lower than the transfer money");
         }
 
@@ -480,8 +495,8 @@ public class FundTransferServiceImpl implements FundTransferService {
                     AccountCDDetails senderAccountCDDetails = accountCDDetailsRepository.findByAccount_Id(account.get().getId());
 
                     if (senderAccountCDDetails != null) {
-                        senderAccountCDDetails.setActualBalance(senderBalance-transactionFee);
-                        senderAccountCDDetails.setDebit(fundTransferDto.getAmount()+transactionFee);
+                        senderAccountCDDetails.setActualBalance(senderBalance - transactionFee);
+                        senderAccountCDDetails.setDebit(fundTransferDto.getAmount() + transactionFee);
                         senderAccountCDDetails.setPreviousBalance(account.get().getAccountBalance());
 
                     } else {
@@ -516,17 +531,17 @@ public class FundTransferServiceImpl implements FundTransferService {
                     UserActivityRequest userActivity = new UserActivityRequest();
                     userActivity.setActivityDate(LocalDateTime.now());
                     userActivity.setCustomerId(senderAccountCDDetails.getAccount().getCustomer());
-                    userActivity.setUserActivity("From : "+fundTransferDto.getSenderAccountNumber()+" To : "+fundTransferDto.getReceiverAccountNumber()
-                            +" Amount : "+fundTransferDto.getAmount());
+                    userActivity.setUserActivity("From : " + fundTransferDto.getSenderAccountNumber() + " To : " + fundTransferDto.getReceiverAccountNumber()
+                            + " Amount : " + fundTransferDto.getAmount());
                     userActivity.setPkr(fundTransferDto.getAmount());
                     userActivityService.saveUserActivity(userActivity);
 
                     NotificationEvent notificationEvent = new NotificationEvent();
                     notificationEvent.setNotificationType("Funds Transfer");
-                    notificationEvent.setMessage("An amount of "+fundTransferDto.getAmount()+
-                            " has been successfully transferred from your account '"+
-                            fundTransferDto.getSenderAccountNumber()+"' to account '" +
-                            fundTransferDto.getReceiverAccountNumber()+"'.");
+                    notificationEvent.setMessage("An amount of " + fundTransferDto.getAmount() +
+                            " has been successfully transferred from your account '" +
+                            fundTransferDto.getSenderAccountNumber() + "' to account '" +
+                            fundTransferDto.getReceiverAccountNumber() + "'.");
                     notificationEvent.setRecipientId(account.get().getCustomer().getId());
                     notificationEvent.setChannel("EMAIL");
                     notificationEvent.setTimeStamp(new Timestamp(System.currentTimeMillis()));
@@ -557,38 +572,38 @@ public class FundTransferServiceImpl implements FundTransferService {
         LocalDate endDt = LocalDate.parse(endDate);
         Account account = accountRepository.findByAccountNumber(accountNumber);
 
-        if(startDt.isAfter(endDt)){
+        if (startDt.isAfter(endDt)) {
             return new CustomResponseEntity<>("Start date cannot be after end date.");
         }
         List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, startDate, endDate);
-        if(transactions.isEmpty()) {
-           return new CustomResponseEntity<>("no transactions found against this account number within this date range");
+        if (transactions.isEmpty()) {
+            return new CustomResponseEntity<>("no transactions found against this account number within this date range");
         }
-            List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
+        List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
 
-            StatementDetailDto statementDetailDto = new StatementDetailDto();
-            Transactions tran = transactions.get(0);
+        StatementDetailDto statementDetailDto = new StatementDetailDto();
+        Transactions tran = transactions.get(0);
 
-            if (tran.getBankCode() != null) {
-                statementDetailDto.setBankCode(tran.getBankCode());
-            }
-            statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
-            statementDetailDto.setIBAN(tran.getIbanCode());
-            statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " + tran.getAccount().getCustomer().getLastName());
-            statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
-            statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
-            Date accountOpenDate = tran.getAccount().getAccountOpenDate();
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-            statementDetailDto.setAccountOpenDate(formatter.format(accountOpenDate));
-            statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
-            statementDetailDto.setCurrency(tran.getCurrency());
+        if (tran.getBankCode() != null) {
+            statementDetailDto.setBankCode(tran.getBankCode());
+        }
+        statementDetailDto.setAccountNumber(tran.getAccount().getAccountNumber());
+        statementDetailDto.setIBAN(tran.getIbanCode());
+        statementDetailDto.setAccountTitle(tran.getAccount().getCustomer().getFirstName() + " " + tran.getAccount().getCustomer().getLastName());
+        statementDetailDto.setRegisteredAddress(tran.getAccount().getCustomer().getRegisteredAddress());
+        statementDetailDto.setRegisteredContact(tran.getAccount().getCustomer().getMobileNumber());
+        Date accountOpenDate = tran.getAccount().getAccountOpenDate();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        statementDetailDto.setAccountOpenDate(formatter.format(accountOpenDate));
+        statementDetailDto.setNatureOfAccount(tran.getNatureOfAccount());
+        statementDetailDto.setCurrency(tran.getCurrency());
 
-            CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
-            response.setData(transactionDTOs);
+        CustomResponseEntity<List<TransactionsDTO>> response = new CustomResponseEntity<>();
+        response.setData(transactionDTOs);
 
-            Map<String, Object> map = new HashMap<>();
-            map.put("AccountDetail", statementDetailDto);
-            map.put("transactionList", response);
+        Map<String, Object> map = new HashMap<>();
+        map.put("AccountDetail", statementDetailDto);
+        map.put("transactionList", response);
 
 
         if (!transactionDTOs.isEmpty()) {
@@ -597,7 +612,7 @@ public class FundTransferServiceImpl implements FundTransferService {
             UserActivityRequest userActivity = new UserActivityRequest();
             userActivity.setActivityDate(LocalDateTime.now());
             userActivity.setCustomerId(account.getCustomer());
-      //      userActivity.setCustomerId(String.valueOf(account.getCustomer().getId()));
+            //      userActivity.setCustomerId(String.valueOf(account.getCustomer().getId()));
             userActivity.setUserActivity("User Generated The Account Statements");
             userActivity.setPkr(0.0);
             userActivityService.saveUserActivity(userActivity);
@@ -619,7 +634,7 @@ public class FundTransferServiceImpl implements FundTransferService {
         Account account = accountRepository.findByAccountNumber(accountNumber);
 
         List<Transactions> transactions = transactionRepository.findTransactionsByAccountNumberAndDateRange(accountNumber, start, end);
-        if(transactions.isEmpty()) {
+        if (transactions.isEmpty()) {
             return new CustomResponseEntity<>("invalid account number");
         }
         List<TransactionsDTO> transactionDTOs = TransactionsMapper.toDTOList(transactions);
@@ -710,15 +725,15 @@ public class FundTransferServiceImpl implements FundTransferService {
 
 
     @Override
-    public CustomResponseEntity setOneDayLimit(String accountNumber,Long customerId, Double ondDayLimit) {
+    public CustomResponseEntity setOneDayLimit(String accountNumber, Long customerId, Double ondDayLimit) {
         CustomResponseEntity accountFormat = regex.checkAccountNumberFormat(accountNumber);
-        if (!accountFormat.isSuccess()){
+        if (!accountFormat.isSuccess()) {
             return accountFormat;
         }
-        if(ondDayLimit > 1000000){
+        if (ondDayLimit > 1000000) {
             return CustomResponseEntity.error("The one-day limit cannot exceed one million");
         }
-        if (ondDayLimit<1){
+        if (ondDayLimit < 1) {
             return CustomResponseEntity.error("The one-day limit can't be  less than 1");
         }
         Customer customer = customerRepository.findById(customerId).orElse(null);
@@ -727,13 +742,13 @@ public class FundTransferServiceImpl implements FundTransferService {
         params.put("accountNumber", accountNumber);
         params.put("customer", customer);
         Account account = accountGenericDao.findOneWithQuery(jpql, params);
-        if(Objects.isNull(account)){
+        if (Objects.isNull(account)) {
             return new CustomResponseEntity<>("Account Does Not Exist");
 
         }
         account.setSingleDayLimit(ondDayLimit);
         accountGenericDao.saveOrUpdate(account);
-        CustomResponseEntity customResponse = new CustomResponseEntity<>( "One Day Transaction limit set to : " + ondDayLimit);
+        CustomResponseEntity customResponse = new CustomResponseEntity<>("One Day Transaction limit set to : " + ondDayLimit);
         return customResponse;
 
     }
@@ -839,11 +854,11 @@ public class FundTransferServiceImpl implements FundTransferService {
 
         String senderAccountNumber = fundTransferDto.getSenderAccountNumber();
         String receiverAccountNumber = fundTransferDto.getReceiverAccountNumber();
-        Double transferAmount =fundTransferDto.getTransferAmount();
-        String bankName =fundTransferDto.getBankName();
+        Double transferAmount = fundTransferDto.getTransferAmount();
+        String bankName = fundTransferDto.getBankName();
         String purpose = fundTransferDto.getPurpose();
         LocalDateTime date = fundTransferDto.getLocalDate();
-        Long scheduleId =fundTransferDto.getScheduledId() ;
+        Long scheduleId = fundTransferDto.getScheduledId();
 
         CustomResponseEntity sender = regex.checkAccountNumberFormat(senderAccountNumber);
         CustomResponseEntity res = regex.checkAccountNumberFormat(receiverAccountNumber);
@@ -956,7 +971,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 //                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 //                        String formattedDate = dateFormat.format(date);
                         String input = date.toString();
-                        String inputModified = input.replace ( "T" , " " );
+                        String inputModified = input.replace("T", " ");
 //                            String formattedDate = LocalDate.now().format(formatter);
 //                        receiverAccount.get().getAccountCdDetails().setCredit(cbsTransferDto.getTransferAmount());
 //                        receiverAccount.get().getAccountCdDetails().setPreviousBalance(receiverAccount.get().getAccountBalance());
@@ -1057,11 +1072,11 @@ public class FundTransferServiceImpl implements FundTransferService {
     public CustomResponseEntity scheduleIbftFundTransfer(ScheduleIbftFundTransferDto fundTransferDto) {
         String senderAccountNumber = fundTransferDto.getSenderAccountNumber();
         String receiverAccountNumber = fundTransferDto.getReceiverAccountNumber();
-        Double transferAmount =fundTransferDto.getAmount();
-        String bankCode =fundTransferDto.getBankCode();
+        Double transferAmount = fundTransferDto.getAmount();
+        String bankCode = fundTransferDto.getBankCode();
         String purpose = fundTransferDto.getPurpose();
         LocalDateTime date = fundTransferDto.getLocalDate();
-        Long scheduleId =fundTransferDto.getScheduledId() ;
+        Long scheduleId = fundTransferDto.getScheduledId();
 
         CustomResponseEntity sender = regex.checkAccountNumberFormat(senderAccountNumber);
         CustomResponseEntity res = regex.checkAccountNumberFormat(receiverAccountNumber);
@@ -1136,7 +1151,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 //                        double receiverBalance = receiverAccount.get().getAccountBalance();
 //                            double transferAmount = cbsTransferDto.getTransferAmount();
 
-                        Double currentbalance =  transferAmount;
+                        Double currentbalance = transferAmount;
 
                         AccountCDDetails senderAccountCDDetails;
                         AccountCDDetails senderAccountCDDetails2 = accountCDDetailsRepository.findByAccount_Id(senderAccount.get().getId());
@@ -1163,7 +1178,7 @@ public class FundTransferServiceImpl implements FundTransferService {
 //                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 //                        String formattedDate = dateFormat.format(date);
                         String input = date.toString();
-                        String inputModified = input.replace ( "T" , " " );
+                        String inputModified = input.replace("T", " ");
                         accountCDDetailsRepository.save(senderAccountCDDetails);
                         senderAccount.get().setAccountCdDetails(senderAccountCDDetails);
                         accountRepository.save(senderAccount.get());

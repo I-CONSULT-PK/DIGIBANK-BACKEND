@@ -22,7 +22,7 @@ public class ScheduleBillPayment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private   Long Id;
 
-    private String consumerNumber;
+    private String billId;
 
     private  String serviceCode;
 

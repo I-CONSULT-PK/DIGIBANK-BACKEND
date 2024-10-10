@@ -157,7 +157,7 @@ public class QuartzServiceImpl implements QuartzService {
         try {
         ScheduleBillPayment scheduleBillPayment = new ScheduleBillPayment();
         scheduleBillPayment.setAccountNumber(scheduleBillPaymentRequest.getAccountNumber());
-        scheduleBillPayment.setConsumerNumber(scheduleBillPaymentRequest.getConsumerNumber());
+        scheduleBillPayment.setBillId(String.valueOf(scheduleBillPaymentRequest.getBillId()));
         scheduleBillPayment.setUtilityType(scheduleBillPaymentRequest.getUtilityType());
         scheduleBillPayment.setServiceCode(scheduleBillPaymentRequest.getServiceCode());
         scheduleBillPayment.setBillPaymentDate(scheduleBillPaymentRequest.getLocalDate().toString());

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 public class ScheduleBillPaymentRequest {
 
-    private String consumerNumber;
+    private Long billId;
 
     private String serviceCode;
 

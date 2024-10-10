@@ -9,4 +9,6 @@ public interface TopUpService {
     CustomResponseEntity getAllNetworkPackages();
 
     CustomResponseEntity packageTransaction(Long packageId, String accountNumber, String mobileNumber);
+
+    CustomResponseEntity schdulePackageTransaction(Long packageId, String accountNumber, String mobileNumber,Long schduleId);
 }

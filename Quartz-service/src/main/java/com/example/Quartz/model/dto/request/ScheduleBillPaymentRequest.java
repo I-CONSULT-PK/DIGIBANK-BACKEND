@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 public class ScheduleBillPaymentRequest implements Serializable {
 
-    private String consumerNumber;
+    private Long billId;
 
     private String serviceCode;
 

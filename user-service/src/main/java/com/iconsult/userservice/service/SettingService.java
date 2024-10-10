@@ -16,7 +16,7 @@ public interface SettingService {
     CustomResponseEntity updateProfile(CustomerDto customerDto);
     CustomResponseEntity setDevicePin(Long id, SettingDTO settingDTO);
 
-    CustomResponseEntity<Device> updateDevicePin(String id, SettingDTO settingDTO);
+    CustomResponseEntity<Device> updateDevicePin(SettingDTO settingDTO);
 
     CustomResponseEntity deactivatePin(Long customerId, String devicePin);
 }

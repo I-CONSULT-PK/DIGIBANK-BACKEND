@@ -10,7 +10,7 @@ public interface BillPaymentService  {
 
     CustomResponseEntity payBill(Long billId, String accountNumber);
 
-    CustomResponseEntity schdeuleUtilityBillPay(ScheduleBillPaymentRequest scheduleBillPaymentRequest);
+    CustomResponseEntity schedulePayBill(ScheduleBillPaymentRequest scheduleBillPaymentRequest);
 
     CustomResponseEntity getAllBillProviders(String utilityType);
 

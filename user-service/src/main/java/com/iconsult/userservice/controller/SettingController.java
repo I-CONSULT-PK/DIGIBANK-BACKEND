@@ -28,10 +28,10 @@ public class SettingController {
         return this.settingService.setDevicePin(id, settingDTO);
     }
 
-    @PutMapping("/updateDevicePin/{id}")
-    public CustomResponseEntity updateDevicePin(@PathVariable("id") String id, @RequestBody SettingDTO settingDTO)
+    @PutMapping("/updateDevicePin")
+    public CustomResponseEntity updateDevicePin(@RequestBody SettingDTO settingDTO)
     {
-        return this.settingService.updateDevicePin(id, settingDTO);
+        return this.settingService.updateDevicePin(settingDTO);
     }
 
     @PostMapping("/setTransactionLimit")
